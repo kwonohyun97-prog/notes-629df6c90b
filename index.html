@@ -1234,7 +1234,7 @@ details.card .in { padding: 0 16px 16px; display: flex; flex-direction: column; 
         <div class="grid2" style="margin-top:6px"><a class="btn" href="${mapQ(s.name + ", " + s.addr)}" target="_blank" rel="noopener">지도</a><button class="btn primary" data-ride="stay:${s.days[0]}">택시 · 우버</button></div></div>`).join("")}</div></details>
       <details class="card"><summary>말하기 카드 (영어)</summary><div class="in">
         <p class="muted" style="margin:0">영어로 말하면 영어로 대답해줘요. 🇪🇸 버튼을 누르면 스페인어도 보여요.</p>
-        ${D.talk.map(t => `<div class="phrase"><div class="muted">${esc(t.ko)}</div>${sayBox(t.en, t.es, "")}</div>`).join("")}</div></details>
+        ${D.talk.map(g => `<p class="sec-title">${esc(g.group)}</p>${g.items.map(t => `<div class="phrase"><div class="muted">${esc(t.ko)}</div>${sayBox(t.en, t.es, "")}</div>`).join("")}`).join("")}</div></details>
       <details class="card"><summary>스페인어 한마디 (인사 · 감사)</summary><div class="in">
         <p class="muted" style="margin:0">인사와 감사는 현지어로 한마디 해주면 다들 좋아해요.</p>
         ${D.hola.map(h => `<div class="phrase"><div class="muted">${esc(h.ko)}</div><div class="es">${esc(h.es)}</div><div class="pron">${esc(h.pron)}</div></div>`).join("")}</div></details>
@@ -1277,10 +1277,10 @@ details.card .in { padding: 0 16px 16px; display: flex; flex-direction: column; 
         <button class="btn primary" data-taxicard="1">택시 기사에게 보여줄 화면</button>
         ${t.gmap ? `<a class="btn" href="${esc(t.gmap)}" target="_blank" rel="noopener">구글맵으로 위치 보기</a>` : ""}
       </div>
-      <div class="say"><p class="eyebrow">호텔 · 식당에 택시 불러달라고 할 때</p>
-        ${sayBox("Could you call a big taxi for us, please? There are four of us with luggage.", "¿Nos puede pedir un taxi grande, por favor? Somos cuatro con maletas.", "큰 택시 한 대 불러주실 수 있나요? 4명이고 짐이 있어요.")}
-        <div style="height:12px"></div>
-        ${sayBox("Could you call a taxi for us, please?", "¿Nos puede pedir un taxi, por favor?", "택시 불러주실 수 있나요? (짐 없을 때)")}</div>
+      <div class="say"><p class="eyebrow">호텔 프런트에서 택시 불러달라고 할 때</p>
+        ${sayBox("Excuse me, could you call a taxi for us, please? A large one if possible — there are four of us with luggage.", "Perdone, ¿nos podría pedir un taxi, por favor? Uno grande si es posible: somos cuatro con maletas.", "실례합니다, 택시 좀 불러주실 수 있나요? 가능하면 큰 차로요. 4명이고 짐이 있어요.")}</div>
+      <div class="say"><p class="eyebrow">식당에서 계산하면서 택시 부탁할 때</p>
+        ${sayBox("Could you call a taxi for us, please? There are four of us.", "¿Nos podría pedir un taxi, por favor? Somos cuatro.", "택시 좀 불러주실 수 있나요? 4명이에요.")}</div>
       <p class="note">4명이 짐과 함께 타면 일반 택시는 좁을 수 있어요. 우버에서는 큰 차(XL)를 고르면 돼요.</p></div>`;
     $("#ride").hidden = false; $("#ride .close").focus();
   }
@@ -1301,7 +1301,7 @@ details.card .in { padding: 0 16px 16px; display: flex; flex-direction: column; 
   }
   function openTaxi(t) {
     $("#taxi").innerHTML = `<div class="wrap"><button class="btn close" data-close="taxi">닫기</button>
-      ${sayBox("Please take us to:", "Por favor, llévenos a:", "", { big: true })}
+      ${sayBox("Hi! Could you take us to this address, please?", "¡Hola! ¿Nos lleva a esta dirección, por favor?", "", { big: true })}
       <div class="big">${esc(t.name)}</div>${t.addr ? `<div class="big addr" style="font-size:26px">${esc(t.addr)}</div>` : ""}
       <div class="ko">기사님께 이 화면을 보여주세요</div></div>`;
     $("#ride").hidden = true; $("#taxi").hidden = false; $("#taxi .close").focus();
@@ -1376,7 +1376,7 @@ details.card .in { padding: 0 16px 16px; display: flex; flex-direction: column; 
 </template>
 <script>
 (() => {
-  const KEY = "es26:key", BUILD = "ac82b5d395";
+  const KEY = "es26:key", BUILD = "711afe716f";
   const ub64 = s => Uint8Array.from(atob(s), c => c.charCodeAt(0));
   const tob64 = u => btoa(String.fromCharCode(...u));
   const get = k => { try { return localStorage.getItem(k); } catch (e) { return null; } };
