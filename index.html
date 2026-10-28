@@ -249,7 +249,7 @@ html, body, .app, main, .view, button, a, .btn, .tabs, .days, .seg, [data-route]
 .top { touch-action: none; }   /* 머리띠를 끌어서 화면 전체가 밀리지 않게 */
 /* 탭마다 따로 스크롤 (인스타처럼): 페이지 전환 때 스크롤을 옮기지 않아서 아이폰에서 깜빡이지 않음 · 보던 위치도 탭마다 기억 */
 main { flex: 1; min-height: 0; position: relative; margin: -24px -16px 0; }
-.view { position: absolute; inset: 0; overflow-y: auto; overscroll-behavior-y: contain; -webkit-overflow-scrolling: touch; padding: 24px 16px 104px; }
+.view { position: absolute; inset: 0; overflow-y: auto; overscroll-behavior-y: contain; -webkit-overflow-scrolling: touch; padding: 24px 16px calc(98px + env(safe-area-inset-bottom, 0px)); }   /* 하단 바(70 + 홈 막대) 위로 28px 여유 */
 small.ap { font-size: .72em; font-weight: 700; margin-right: 2px; letter-spacing: 0; font-family: var(--sans); }
 
 /* 상단 */
@@ -258,7 +258,7 @@ small.ap { font-size: .72em; font-weight: 700; margin-right: 2px; letter-spacing
   background: radial-gradient(120% 170% at 100% 0%, var(--glow), transparent 55%), linear-gradient(120deg, var(--g1), var(--g2) 58%, var(--g3));
   border-radius: 0 0 24px 24px; box-shadow: 0 10px 24px -14px var(--g1); }
 .top .brand { font-size: 13px; font-weight: 700; letter-spacing: .02em; opacity: .92; white-space: nowrap; }
-.top h1 { font-family: var(--title-font, var(--display)); font-weight: var(--title-w, 800); font-size: var(--title-size, 31px); line-height: 1.12; margin: 3px 0 0; letter-spacing: var(--title-ls, -.01em); text-shadow: 0 1px 2px rgba(0,0,0,.12); }
+.top h1 { white-space: nowrap; font-family: var(--title-font, var(--display)); font-weight: var(--title-w, 800); font-size: min(var(--title-size, 31px), 8vw); line-height: 1.12; margin: 3px 0 0; letter-spacing: var(--title-ls, -.01em); text-shadow: 0 1px 2px rgba(0,0,0,.12); }
 /* 제목 글씨 시안 고르기 */
 .tfgrid { display: flex; flex-direction: column; gap: 10px; }
 .tfopt { position: relative; display: flex; flex-direction: column; align-items: flex-start; gap: 2px; padding: 0; border-radius: 16px; border: 2px solid var(--line); background: var(--surface); cursor: pointer; text-align: left; overflow: hidden; min-width: 0; }
@@ -270,7 +270,8 @@ small.ap { font-size: .72em; font-weight: 700; margin-right: 2px; letter-spacing
 .tfopt[aria-pressed="true"] { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft); }
 .tfopt[aria-pressed="true"]::after { content: "✓"; position: absolute; top: 8px; right: 8px; width: 24px; height: 24px; border-radius: 50%; display: grid; place-items: center; font-size: 14px; font-weight: 800; color: var(--g1); background: #fff; }
 .clock { text-align: right; font-size: 12px; color: rgba(255,255,255,.92); line-height: 1.35; font-variant-numeric: tabular-nums; background: rgba(0,0,0,.16); border-radius: 12px; padding: 6px 10px; flex: none; }
-.clock b { font-size: 16px; color: #fff; font-weight: 800; font-variant-numeric: tabular-nums; }
+.clock b { display: block; font-size: 16px; line-height: 1.2; color: #fff; font-weight: 800; font-variant-numeric: tabular-nums; }
+.clock .cd { font-size: 11px; opacity: .9; white-space: nowrap; }
 
 /* 공통 */
 .stack { display: flex; flex-direction: column; gap: 14px; padding-top: 16px; }
@@ -582,7 +583,7 @@ details.card .in { padding: 0 16px 16px; display: flex; flex-direction: column; 
 <div class="app">
   <header class="top">
     <div><div class="brand">🇪🇸 스페인 가족여행 일정<span class="offl" id="offl" hidden>오프라인 · 저장된 정보</span></div><h1 id="title">오늘</h1></div>
-    <div class="clock" aria-live="polite"><div>스페인 <b id="es-time">--:--</b></div><div id="kr-time">한국 --:--</div></div>
+    <div class="clock" aria-live="polite"><div class="cd">스페인 <span id="es-date"></span></div><b id="es-time">--:--</b><div class="cd" id="kr-time">한국 --:--</div></div>
   </header>
   <main>
     <section class="view" id="v-today" data-view="today"></section>
@@ -723,10 +724,13 @@ details.card .in { padding: 0 16px 16px; display: flex; flex-direction: column; 
     const idx = Math.floor((Date.UTC(n.y, n.m - 1, n.d) - Date.UTC(2026, 10, 1)) / 86400000) + 1;
     return { idx, now: n.h * 60 + n.mi };
   }
+  const WD1 = ["일", "월", "화", "수", "목", "금", "토"];
+  const mdw = z => `${z.m}/${z.d} (${WD1[new Date(Date.UTC(z.y, z.m - 1, z.d)).getUTCDay()]})`;   // 11/2 (월)
   function tick() {
     const e = zoneNow("Europe/Madrid"), k = zoneNow("Asia/Seoul");
+    $("#es-date").textContent = mdw(e);
     $("#es-time").textContent = apPlain(pad(e.h) + ":" + pad(e.mi));
-    $("#kr-time").textContent = "한국 " + apPlain(pad(k.h) + ":" + pad(k.mi));
+    $("#kr-time").textContent = `한국 ${mdw(k)} ` + apPlain(pad(k.h) + ":" + pad(k.mi));
   }
 
   function toast(msg) { const t = $("#toast"); t.textContent = msg; t.hidden = false; clearTimeout(toast.h); toast.h = setTimeout(() => t.hidden = true, 1600); }
@@ -1786,7 +1790,7 @@ details.card .in { padding: 0 16px 16px; display: flex; flex-direction: column; 
 </template>
 <script>
 (() => {
-  const KEY = "es26:key", BUILD = "5a90a31059";
+  const KEY = "es26:key", BUILD = "61328267e0";
   const ub64 = s => Uint8Array.from(atob(s), c => c.charCodeAt(0));
   const tob64 = u => btoa(String.fromCharCode(...u));
   const get = k => { try { return localStorage.getItem(k); } catch (e) { return null; } };
