@@ -332,6 +332,7 @@ small.ap { font-size: .72em; font-weight: 700; margin-right: 2px; letter-spacing
 .tmap .zoom { position: absolute; right: 10px; top: 10px; display: flex; flex-direction: column; gap: 6px; }
 .tmap .zoom button { width: 40px; height: 40px; border-radius: 10px; border: 1px solid var(--line); background: var(--surface); font-size: 22px; font-weight: 700; cursor: pointer; line-height: 1; }
 .tmap .play { position: absolute; left: 50%; bottom: 12px; transform: translateX(-50%); min-height: 46px; padding: 8px 18px; border-radius: 999px; border: 0; background: var(--m-route); color: #fff; font-weight: 700; font-size: 16px; cursor: pointer; box-shadow: 0 4px 14px rgba(0,0,0,.18); white-space: nowrap; }
+.tmap .allbtn { position: absolute; right: 10px; top: 102px; width: 40px; height: 40px; border-radius: 10px; border: 1px solid var(--line); background: var(--surface); color: var(--ink); font-size: 12px; font-weight: 800; cursor: pointer; padding: 0; }
 .mapfoot { font-size: 11px; color: var(--muted); padding: 6px 16px 10px; }
 .stops { display: flex; flex-direction: column; }
 .stopitem { display: grid; grid-template-columns: 30px 1fr; gap: 10px; padding: 10px 16px; border-top: 1px solid var(--line); align-items: start; }
@@ -369,6 +370,11 @@ small.ap { font-size: .72em; font-weight: 700; margin-right: 2px; letter-spacing
 .ev .pl { font-size: 15px; color: var(--muted); margin-top: 3px; }
 .ev .tk { margin-top: 6px; }
 .ev .go { margin-top: 10px; min-height: 42px; font-size: 15px; }
+.ev[data-route] { cursor: pointer; margin-inline: -8px; padding-inline: 8px; border-radius: 12px; -webkit-tap-highlight-color: transparent; transition: background-color .2s; }
+.ev[data-route]:active { background: var(--surface-2); }
+.ev.on { background: var(--accent-soft); }
+.ev .evmap { margin-left: auto; flex: none; align-self: flex-start; margin-top: 3px; font-size: 12px; font-weight: 700; color: var(--accent); background: var(--accent-soft); border-radius: 999px; padding: 2px 8px; }
+.ev.on .evmap { background: var(--surface); }
 
 /* 티켓 */
 .wcard { display: flex; flex-direction: column; gap: 6px; }
@@ -530,7 +536,6 @@ details.card .in { padding: 0 16px 16px; display: flex; flex-direction: column; 
   }
   const statusPill = s => `<span class="pill ${s === "완료" ? "ok" : s === "미예약" ? "todo" : "warn"}">${esc(s)}</span>`;
   const mapQ = q => "https://www.google.com/maps/search/?api=1&query=" + encodeURIComponent(q);
-  const mapLL = ll => "https://www.google.com/maps/search/?api=1&query=" + ll[0] + "," + ll[1];
 
   /* ---------- 움직이는 동선 지도 ---------- */
   const SC = D.scenes;
@@ -619,6 +624,8 @@ details.card .in { padding: 0 16px 16px; display: flex; flex-direction: column; 
     const pins = ((S.pins && SC.pins[S.pins]) || []).map(p => ({ ...p, p: P1(p.ll) }));
     let W = 0, H = 0, dpr = 1, cam = null, C = mapColors();
     let prog = { leg: -1, f: 0 }, active = -1, marker = null, raf = 0, timer = 0, playing = false, played = false, alive = true, startK = 0;
+    let focus = null;   // 일정을 눌렀을 때: { legs: [구간 번호], stops: Set(지점 번호) }
+    const allBtn = host.querySelector(".allbtn");
 
     function ensure() {
       if (!W || !H) size();
@@ -685,11 +692,13 @@ details.card .in { padding: 0 16px 16px; display: flex; flex-direction: column; 
       // 동선
       const STY = { car: [[], 5], foot: [[1, 8], 5], train: [[14, 9], 5], flight: [[9, 9], 4] };
       const col = L => (L.mode === "train" || L.mode === "flight") ? C.rail : L.back ? C.back : C.route;
-      legs.forEach(L => { if (!vis(L.bb)) return; ctx.setLineDash([]); ctx.strokeStyle = C.halo; ctx.lineWidth = STY[L.mode][1] + 5; trace(L.xy); ctx.stroke(); });
+      const inF = i => !focus || focus.legs.includes(i);
+      legs.forEach((L, i) => { if (!vis(L.bb) || !inF(i)) return; ctx.setLineDash([]); ctx.strokeStyle = C.halo; ctx.lineWidth = STY[L.mode][1] + (focus ? 8 : 5); trace(L.xy); ctx.stroke(); });
       legs.forEach((L, i) => {
         if (!vis(L.bb)) return;
+        if (!inF(i)) { ctx.setLineDash(STY[L.mode][0]); ctx.lineWidth = STY[L.mode][1]; ctx.strokeStyle = col(L); ctx.globalAlpha = .13; trace(L.xy); ctx.stroke(); ctx.globalAlpha = 1; return; }
         const [dash, w] = STY[L.mode], done = prog.leg < 0 ? 1 : i < prog.leg ? 1 : i > prog.leg ? 0 : prog.f;
-        ctx.setLineDash(dash); ctx.lineWidth = w; ctx.strokeStyle = col(L);
+        ctx.setLineDash(dash); ctx.lineWidth = focus ? w + 1.5 : w; ctx.strokeStyle = col(L);
         if (done < 1) { ctx.globalAlpha = .3; trace(L.xy); ctx.stroke(); ctx.globalAlpha = 1; }
         if (done > 0) { traceTo(L, done); ctx.stroke(); }
       });
@@ -710,17 +719,17 @@ details.card .in { padding: 0 16px 16px; display: flex; flex-direction: column; 
         return false;
       };
       const focusStops = playing && z < 10.5 && prog.leg >= 0 && legs[prog.leg] ? [legs[prog.leg].a, legs[prog.leg].b] : null;   // 멀리서 볼 땐 지금 구간의 출발·도착만
-      const S2 = stops.filter(s => !s.off && (!focusStops || focusStops.includes(s))).map(s => ({ s, X: sx(s.p[0]), Y: sy(s.p[1]) })).filter(o => o.X > -40 && o.X < W + 40 && o.Y > -40 && o.Y < H + 40);
+      const S2 = stops.filter((s, si) => !s.off && (!focusStops || focusStops.includes(s)) && (!focus || focus.stops.has(si))).map(s => ({ s, X: sx(s.p[0]), Y: sy(s.p[1]) })).filter(o => o.X > -40 && o.X < W + 40 && o.Y > -40 && o.Y < H + 40);
       S2.forEach(o => placed.push([o.X - 14, o.Y - 14, o.X + 14, o.Y + 14]));
       // 주변 장소 · 추천 식당
-      if (z >= 13.3) pois.forEach(p => {
+      if (z >= 13.3 && !focus) pois.forEach(p => {
         const X = sx(p.p[0]), Y = sy(p.p[1]); if (X < -10 || X > W + 10 || Y < -10 || Y > H + 10) return;
         ctx.fillStyle = C.kinds[p.kind] || C.label; ctx.strokeStyle = C.halo; ctx.lineWidth = 2;
         ctx.beginPath(); if (p.kind === "plaza") { ctx.moveTo(X, Y - 6); ctx.lineTo(X + 6, Y); ctx.lineTo(X, Y + 6); ctx.lineTo(X - 6, Y); ctx.closePath(); } else if (p.kind === "market" || p.kind === "station") ctx.rect(X - 5, Y - 5, 10, 10); else ctx.arc(X, Y, 5.5, 0, 7);
         ctx.fill(); ctx.stroke();
         p._xy = [X, Y];
       });
-      if (z >= 13.3) pins.forEach(p => {
+      if (z >= 13.3 && !focus) pins.forEach(p => {
         const X = sx(p.p[0]), Y = sy(p.p[1]); if (X < -10 || X > W + 10 || Y < -10 || Y > H + 10) return;
         ctx.fillStyle = C.star; ctx.strokeStyle = "#fff"; ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(X, Y, 8, 0, 7); ctx.fill(); ctx.stroke();
         ctx.fillStyle = "#fff"; ctx.font = `700 10px ${FONT}`; ctx.textAlign = "center"; ctx.textBaseline = "middle"; ctx.fillText("★", X, Y + .5);
@@ -808,7 +817,7 @@ details.card .in { padding: 0 16px 16px; display: flex; flex-direction: column; 
     }
     function play() {
       if (!ensure()) return;
-      cancel(); playing = played = true; playBtn.textContent = "■ 멈추기";
+      cancel(); playing = played = true; playBtn.textContent = "■ 멈추기"; setFocus(null);
       let k0 = startK; startK = 0;
       while (stops[S.seq[k0]] && stops[S.seq[k0]].off && k0 < legs.length) k0++;
       prog = { leg: k0, f: 0 }; active = S.seq[k0]; marker = null;
@@ -817,18 +826,52 @@ details.card .in { padding: 0 16px 16px; display: flex; flex-direction: column; 
       animateTo({ x: a.p[0], y: a.p[1], z: a.z }, k0 ? 600 : 1000, () => wait(k0 ? 400 : 800, () => runLeg(k0)));
     }
     function finish(anim) {
-      cancel(); playing = false; prog = { leg: -1, f: 0 }; marker = null; active = -1; startK = 0;
+      cancel(); playing = false; prog = { leg: -1, f: 0 }; marker = null; active = -1; startK = 0; setFocus(null);
       playBtn.textContent = played ? "▶ 다시 보기" : "▶ 동선 따라가기"; restChip();
       if (anim) animateTo(restCam(), 1300); else { cam = restCam(); draw(); }
     }
     function fly(i, k) {
-      cancel(); playing = false; prog = { leg: -1, f: 0 }; marker = null; active = i;
+      cancel(); playing = false; prog = { leg: -1, f: 0 }; marker = null; active = i; setFocus(null);
       startK = k >= 0 && k < legs.length ? k : 0;
       playBtn.textContent = startK ? "▶ 여기서부터 재생" : "▶ 동선 따라가기";
       const s = stops[i]; setChip(`${circ(s.n)} ${s.name}${s.sub ? " · " + apPlain(s.sub) : ""}`);
       animateTo({ x: s.p[0], y: s.p[1], z: Math.max(s.z, 14.6) }, 900);
       host.scrollIntoView({ block: "nearest", behavior: REDUCE ? "auto" : "smooth" });
     }
+    function setFocus(f) { focus = f; if (allBtn) allBtn.hidden = !f; }
+    const fmtMin = sec => { const m = Math.max(1, Math.round(sec / 60)); return m >= 60 ? `${Math.floor(m / 60)}시간${m % 60 ? " " + (m % 60) + "분" : ""}` : `${m}분`; };
+    // 일정 누르기: 직전 일정 위치(seq p) → 이 일정 위치(seq k) 경로만 보여주기
+    function route(p, k) {
+      if (!ensure()) return;
+      cancel(); playing = false; played = true; marker = null; prog = { leg: -1, f: 0 };
+      const ls = []; for (let i = p; i < k; i++) if (legs[i] && !legs[i].a.off && !legs[i].b.off) ls.push(i);
+      const b = stops[S.seq[k]]; active = S.seq[k];
+      let target;
+      if (!ls.length) {
+        setFocus({ legs: [], stops: new Set([S.seq[k]]) });
+        setChip(`${circ(b.n)} ${b.name} · 같은 곳 (이동 없음)`);
+        target = { x: b.p[0], y: b.p[1], z: Math.max(b.z, 14.6) };
+      } else {
+        const st = new Set(); ls.forEach(i => { st.add(S.seq[i]); st.add(S.seq[i + 1]); });
+        setFocus({ legs: ls, stops: st });
+        const a = stops[S.seq[ls[0]]], lt = ls.map(i => legs[i]);
+        const rail = lt.filter(L => L.mode === "train" || L.mode === "flight"), sec = lt.filter(L => L.mode === "car" || L.mode === "foot").reduce((s, L) => s + (L.sec || 0), 0);
+        const txt = lt.length === 1 ? legText(lt[0]) : [...rail.map(legText), sec ? `이동 약 ${fmtMin(sec)}` : ""].filter(Boolean).join(" + ");
+        setChip(`${circ(a.n)} ${a.name} → ${circ(b.n)} ${b.name} · ${txt}`);
+        const pts = []; lt.forEach(L => { pts.push([L.bb[0], L.bb[1]], [L.bb[2], L.bb[3]]); }); st.forEach(si => pts.push(stops[si].p));
+        // 위 안내 글자(약 64px) · 아래 재생 버튼(약 72px) · 오른쪽 확대 버튼을 피해서 맞추기
+        const PT = 92, PB = 78, PX = 56;
+        let a0 = Infinity, b0 = Infinity, c0 = -Infinity, d0 = -Infinity;
+        pts.forEach(([x, y]) => { a0 = Math.min(a0, x); b0 = Math.min(b0, y); c0 = Math.max(c0, x); d0 = Math.max(d0, y); });
+        const zz = Math.min(Math.log2((W - PX * 2) / Math.max(c0 - a0, 1e-7)), Math.log2((H - PT - PB) / Math.max(d0 - b0, 1e-7)), 16);
+        target = { x: (a0 + c0) / 2, y: (b0 + d0) / 2 - (PT - PB) / 2 / 2 ** zz, z: zz };
+      }
+      startK = ls.length ? ls[0] : (k < legs.length ? k : 0); playBtn.textContent = "▶ 여기서부터 재생";
+      draw();
+      host.scrollIntoView({ block: "center", behavior: REDUCE ? "auto" : "smooth" });
+      wait(REDUCE ? 0 : 380, () => animateTo(target, 1000));
+    }
+    if (allBtn) allBtn.addEventListener("click", () => finish(true));
     playBtn.addEventListener("click", () => playing ? finish(true) : play());
     host.querySelectorAll(".zoom button").forEach(b => b.addEventListener("click", () => { if (playing) finish(false); animateTo({ ...cam, z: cam.z + (+b.dataset.z) }, 280); }));
     let drag = null;
@@ -843,7 +886,7 @@ details.card .in { padding: 0 16px 16px; display: flex; flex-direction: column; 
     const mq = matchMedia("(prefers-color-scheme: dark)"), onTheme = () => { C = mapColors(); draw(); };
     mq.addEventListener("change", onTheme);
     if (document.fonts && document.fonts.ready) document.fonts.ready.then(() => draw());
-    return { fly, destroy() { alive = false; cancel(); ro.disconnect(); io.disconnect(); mq.removeEventListener("change", onTheme); } };
+    return { fly, route, destroy() { alive = false; cancel(); ro.disconnect(); io.disconnect(); mq.removeEventListener("change", onTheme); } };
   }
 
   function dayMaps(d, withList) {
@@ -863,7 +906,7 @@ details.card .in { padding: 0 16px 16px; display: flex; flex-direction: column; 
         const no = S.stops.slice(0, si + 1).filter(x => !x.off).length;
         return `<div class="stopitem"><button class="no" data-fly="${d}:${si}:${i}" aria-label="${no}번 지도에서 보기">${no}</button><div><div class="nm">${esc(s.name)}${again ? ' <span class="muted" style="font-weight:500">(다시)</span>' : ""}</div>
           ${s.sub && !again ? `<div class="sub">${ap(s.sub)}</div>` : ""}
-          ${s.off ? "" : `<div class="btns"><a class="btn sm" href="${mapLL(s.ll)}" target="_blank" rel="noopener">지도</a><button class="btn sm" data-ride="stop:${d}:${si}">택시 · 우버</button></div>`}</div></div>
+          ${s.off ? "" : `<div class="btns"><a class="btn sm" href="${mapQ(s.q || s.name)}" target="_blank" rel="noopener">지도</a><button class="btn sm" data-ride="stop:${d}:${si}">택시 · 우버</button></div>`}</div></div>
           ${lg ? `<div class="legline"><i class="lc ${lc}"></i><b>${esc(legText(lg))}</b>${back ? " · 돌아가는 길" : ""}</div>` : ""}`;
       }).join("")}</div>`;
     }
@@ -871,6 +914,7 @@ details.card .in { padding: 0 16px 16px; display: flex; flex-direction: column; 
       <div class="tmap" data-day="${d}"><canvas aria-label="${esc(city)} 동선 지도" role="img"></canvas>
         <div class="chip"><span>동선</span></div>
         <div class="zoom"><button data-z="1" aria-label="확대">+</button><button data-z="-1" aria-label="축소">−</button></div>
+        <button class="allbtn" hidden aria-label="전체 동선 보기">전체</button>
         <button class="play">▶ 동선 따라가기</button></div>
       <div class="legend"><span><i class="lc go"></i>가는 길</span><span><i class="lc back"></i>돌아가는 길</span><span><i class="lc rail"></i>기차 · 비행기</span><span><i class="lc foot"></i>걷기 (점선)</span></div>
       <div class="mapfoot">지도 데이터 © OpenStreetMap contributors · 이동 시간은 길이 막히지 않을 때 기준${S.note ? " · " + esc(S.note) : ""}</div>${list}</div>`;
@@ -928,8 +972,9 @@ details.card .in { padding: 0 16px 16px; display: flex; flex-direction: column; 
     const evs = evsOf(d).map(e => {
       const m = e.food && mealByKey[e.food];
       const cnt = m ? m.places.length : 0;
-      return `<div class="ev" style="--cat:${CAT[e.cat]}"><div class="t">${ap(e.time)}</div><div>
-        <div class="ti"><span class="dot"></span>${esc(e.title)}</div>
+      const rt = e.route ? ` data-route="${d}:${e.route[0]}:${e.route[1]}" role="button" tabindex="0" aria-label="${esc(e.title)} 경로를 지도에서 보기"` : "";
+      return `<div class="ev" style="--cat:${CAT[e.cat]}"${rt}><div class="t">${ap(e.time)}</div><div>
+        <div class="ti"><span class="dot"></span><span>${esc(e.title)}</span>${e.route ? `<span class="evmap">${e.route[0] === e.route[1] ? "위치" : "경로"} ↓</span>` : ""}</div>
         ${e.note ? `<div class="no">${ap(e.note)}</div>` : ""}
         ${e.place ? `<div class="pl">${esc(e.place)}</div>` : ""}
         ${e.ticket ? `<div class="tk"><span class="pill">${esc(e.ticket)}</span></div>` : ""}
@@ -1054,9 +1099,10 @@ details.card .in { padding: 0 16px 16px; display: flex; flex-direction: column; 
   /* ---------- 택시 · 우버 ---------- */
   function rideTarget(spec) {
     const [kind, a, b] = spec.split(":");
-    if (kind === "stay") { const s = stayOf(+a); return s && { name: s.name, addr: s.addr, ll: s.ll, city: cityOf(+a) }; }
-    if (kind === "stop") { const s = D.scenes.days[a].stops[+b]; return { name: s.name, addr: "", ll: s.ll, city: cityOf(+a) }; }
-    if (kind === "food") { const m = mealByKey[mealKey], p = m.places[+a]; const nm = String(p.name).split("\n")[0]; return { name: nm, addr: String(p.where).split("\n").find(l => /\(/.test(l)) || "", ll: p.ll, city: m.region }; }
+    if (kind === "stay") { const s = stayOf(+a); return s && { name: s.name, addr: s.addr, ll: s.ll, city: cityOf(+a), gmap: mapQ(s.name + ", " + s.addr) }; }
+    if (kind === "stop") { const s = D.scenes.days[a].stops[+b]; return { name: s.name, addr: "", ll: s.ll, city: cityOf(+a), gmap: mapQ(s.q || s.name) }; }
+    if (kind === "food") { const m = mealByKey[mealKey], p = m.places[+a]; const nm = String(p.name).split("\n")[0], addr = String(p.where).split("\n").find(l => /\(/.test(l)) || "";
+      return { name: nm, addr, ll: p.ll, city: m.region, gmap: p.cid ? "https://maps.google.com/?cid=" + p.cid : mapQ(nm + ", " + m.region) }; }
   }
   function uberUrl(t) {
     const q = new URLSearchParams({ action: "setPickup", pickup: "my_location", "dropoff[latitude]": t.ll[0], "dropoff[longitude]": t.ll[1], "dropoff[nickname]": t.name });
@@ -1075,7 +1121,7 @@ details.card .in { padding: 0 16px 16px; display: flex; flex-direction: column; 
         ${t.ll ? `<a class="btn uber" href="${uberUrl(t)}" target="_blank" rel="noopener">Uber로 부르기 (목적지 자동 입력)</a>` : ""}
         ${avail === "few" ? `<p class="note">그라나다는 우버 기사가 적어 오래 기다릴 수 있어요. 호텔이나 식당에 택시를 불러달라고 하는 게 빨라요.</p>` : ""}
         <button class="btn primary" data-taxicard="1">택시 기사에게 보여줄 화면</button>
-        ${t.ll ? `<a class="btn" href="${mapLL(t.ll)}" target="_blank" rel="noopener">구글맵으로 위치 보기</a>` : ""}
+        ${t.gmap ? `<a class="btn" href="${esc(t.gmap)}" target="_blank" rel="noopener">구글맵으로 위치 보기</a>` : ""}
       </div>
       <div class="say"><p class="eyebrow">호텔 · 식당에 택시 불러달라고 할 때</p>
         <div class="es">¿Nos puede pedir un taxi grande, por favor? Somos cuatro con maletas.</div>
@@ -1125,7 +1171,7 @@ details.card .in { padding: 0 16px 16px; display: flex; flex-direction: column; 
 
   document.addEventListener("click", e => {
     const b = e.target.closest("button, a");
-    if (!b) return;
+    if (!b) { const ev = e.target.closest("[data-route]"); if (ev) showRoute(ev); return; }
     const ds = b.dataset;
     if (ds.tab) show(ds.tab);
     else if (ds.go) show(ds.go);
@@ -1145,6 +1191,13 @@ details.card .in { padding: 0 16px 16px; display: flex; flex-direction: column; 
     const c = e.target.closest("[data-check]"); if (!c) return;
     const all = store.get("checks", {}); all[c.dataset.check] = c.checked; store.set("checks", all);
   });
+  function showRoute(el) {
+    const [d, p, k] = el.dataset.route.split(":").map(Number);
+    const m = MAPS[d + ":v-plan"]; if (!m) return;
+    el.closest(".tl").querySelectorAll(".ev.on").forEach(x => x.classList.remove("on")); el.classList.add("on");
+    m.route(p, k);
+  }
+  document.addEventListener("keydown", e => { const ev = e.target.closest && e.target.closest("[data-route]"); if (ev && (e.key === "Enter" || e.key === " ") && e.target === ev) { e.preventDefault(); showRoute(ev); } });
   document.addEventListener("keydown", e => { if (e.key === "Escape") ["taxi", "ride"].forEach(id => $("#" + id).hidden = true); });
 
   { const tf = store.get("tf", null); if (tf && (D.titleOpts || []).some(t => t.id === tf)) document.documentElement.dataset.tf = tf; }
@@ -1156,7 +1209,7 @@ details.card .in { padding: 0 16px 16px; display: flex; flex-direction: column; 
 </template>
 <script>
 (() => {
-  const KEY = "es26:key", BUILD = "55053ad258";
+  const KEY = "es26:key", BUILD = "21a73663bf";
   const ub64 = s => Uint8Array.from(atob(s), c => c.charCodeAt(0));
   const tob64 = u => btoa(String.fromCharCode(...u));
   const get = k => { try { return localStorage.getItem(k); } catch (e) { return null; } };
