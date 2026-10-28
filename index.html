@@ -650,7 +650,7 @@ details.card .in { padding: 0 16px 16px; display: flex; flex-direction: column; 
       if (W > 0 && H > 0 && (!cam || !isFinite(cam.x) || !isFinite(cam.y) || !isFinite(cam.z))) cam = restCam();
       return W > 0 && H > 0;
     }
-    function size() { const r = host.getBoundingClientRect(); W = r.width; H = r.height; dpr = Math.min(2.5, window.devicePixelRatio || 1); canvas.width = Math.round(W * dpr); canvas.height = Math.round(H * dpr); }
+    function size() { const r = host.getBoundingClientRect(); W = r.width; H = r.height; dpr = Math.min(2, window.devicePixelRatio || 1); canvas.width = Math.round(W * dpr); canvas.height = Math.round(H * dpr); }
     function fit(pts, pad) {
       let a = Infinity, b = Infinity, c = -Infinity, d = -Infinity;
       pts.forEach(([x, y]) => { a = Math.min(a, x); b = Math.min(b, y); c = Math.max(c, x); d = Math.max(d, y); });
@@ -918,12 +918,25 @@ details.card .in { padding: 0 16px 16px; display: flex; flex-direction: column; 
     canvas.addEventListener("wheel", e => { if (playing) return; e.preventDefault(); cam = { ...cam, z: Math.min(17, Math.max(4, cam.z - e.deltaY / 400)) }; draw(); }, { passive: false });
     const ro = new ResizeObserver(() => { const had = !!W; size(); if (!had) { cam = restCam(); restChip(); } draw(); });
     ro.observe(host);
-    const io = new IntersectionObserver(es => es.forEach(en => { if (en.isIntersecting && en.intersectionRatio > .55 && !played && !REDUCE && ensure()) play(); }), { threshold: [0, .6] });
+    // 아이폰은 앱이 뒤로 갔다 오거나 메모리가 부족하면 캔버스 그림을 비워버림 → 다시 보일 때마다 새로 그리기
+    function redraw() { if (!alive) return; const r = host.getBoundingClientRect(); if (!r.width || !r.height) return; size(); if (!cam || !isFinite(cam.x) || !isFinite(cam.y) || !isFinite(cam.z)) cam = restCam(); draw(); }
+    const io = new IntersectionObserver(es => es.forEach(en => {
+      if (!en.isIntersecting) return;
+      if (!playing) redraw();
+      if (en.intersectionRatio > .55 && !played && !REDUCE && ensure()) play();
+    }), { threshold: [0, .6] });
+    const onShow = () => { if (document.visibilityState === "visible") setTimeout(redraw, 60); };
+    document.addEventListener("visibilitychange", onShow); window.addEventListener("pageshow", onShow);
+    canvas.addEventListener("contextrestored", redraw);
     io.observe(host);
     const mq = matchMedia("(prefers-color-scheme: dark)"), onTheme = () => { C = mapColors(); draw(); };
     mq.addEventListener("change", onTheme);
     if (document.fonts && document.fonts.ready) document.fonts.ready.then(() => draw());
-    return { fly, route, destroy() { alive = false; cancel(); ro.disconnect(); io.disconnect(); mq.removeEventListener("change", onTheme); } };
+    return { fly, route, destroy() {
+      alive = false; cancel(); ro.disconnect(); io.disconnect(); mq.removeEventListener("change", onTheme);
+      document.removeEventListener("visibilitychange", onShow); window.removeEventListener("pageshow", onShow);
+      canvas.width = canvas.height = 0;   // 캔버스 메모리 바로 돌려주기 (아이폰은 한도를 넘으면 새 지도가 하얗게 나옴)
+    } };
   }
 
   function dayMaps(d, withList) {
@@ -1273,7 +1286,7 @@ details.card .in { padding: 0 16px 16px; display: flex; flex-direction: column; 
 </template>
 <script>
 (() => {
-  const KEY = "es26:key", BUILD = "20aa15238a";
+  const KEY = "es26:key", BUILD = "4b46fcd253";
   const ub64 = s => Uint8Array.from(atob(s), c => c.charCodeAt(0));
   const tob64 = u => btoa(String.fromCharCode(...u));
   const get = k => { try { return localStorage.getItem(k); } catch (e) { return null; } };
