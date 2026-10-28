@@ -32,7 +32,7 @@ img { max-width: 100%; }
 #lock p { margin: 0; font-size: 17px; opacity: .9; }
 #lock input { font-size: 26px; text-align: center; letter-spacing: .15em; padding: 14px; border-radius: 14px; border: 0; width: 100%; box-sizing: border-box; background: #fff; color: #16202C; box-shadow: 0 6px 18px -8px rgba(0,0,0,.35); }
 #lock button { font-size: 19px; font-weight: 700; min-height: 56px; border-radius: 14px; border: 0; background: rgba(0,0,0,.28); color: #fff; cursor: pointer; }
-#lock #lockhelp { background: none; color: #fff; min-height: 0; }
+#lock #lockhelp { background: rgba(255,255,255,.16); color: #fff; min-height: 0; text-decoration: none; border-radius: 999px; padding: 10px 18px; font-size: 15px; align-self: center; }
 #lock label { font-size: 16px; display: flex; gap: 8px; justify-content: center; align-items: center; }
 #lock label input { width: 22px; height: 22px; }
 #lock .err { color: #fff; font-weight: 700; min-height: 1.4em; }
@@ -373,7 +373,11 @@ small.ap { font-size: .72em; font-weight: 700; margin-right: 2px; letter-spacing
 .tmap .allbtn { position: absolute; right: 10px; top: 102px; width: 40px; height: 40px; border-radius: 10px; border: 1px solid var(--line); background: var(--surface); color: var(--ink); font-size: 12px; font-weight: 800; cursor: pointer; padding: 0; }
 .mapfoot { font-size: 11px; color: var(--muted); padding: 6px 16px 10px; }
 .stops { display: flex; flex-direction: column; }
-.stopitem { display: grid; grid-template-columns: 30px 1fr; gap: 10px; padding: 10px 16px; border-top: 1px solid var(--line); align-items: start; }
+.stopitem { display: grid; grid-template-columns: 30px 1fr auto; gap: 10px; padding: 10px 16px; border-top: 1px solid var(--line); align-items: center; }
+.stopitem .sacts { display: flex; gap: 8px; }
+.iconbtn { width: 40px; height: 40px; border-radius: 50%; border: 0; display: grid; place-items: center; background: var(--accent-soft); color: var(--accent); cursor: pointer; -webkit-tap-highlight-color: transparent; }
+.iconbtn:active { opacity: .7; }
+.iconbtn .ico { width: 19px; height: 19px; stroke-width: 2; }
 .stopitem .no { width: 26px; height: 26px; border-radius: 50%; background: var(--m-route); color: #fff; font-weight: 700; font-size: 14px; display: grid; place-items: center; margin-top: 2px; border: 0; cursor: pointer; }
 .stopitem .nm { font-size: 17px; font-weight: 700; }
 .stopitem .sub { font-size: 15px; color: var(--muted); }
@@ -408,8 +412,13 @@ small.ap { font-size: .72em; font-weight: 700; margin-right: 2px; letter-spacing
 .ev .pl { font-size: 15px; color: var(--muted); margin-top: 3px; }
 .ev .tk { margin-top: 6px; }
 .ev .go { margin-top: 10px; min-height: 42px; font-size: 15px; }
+.nowcard { padding: 12px 14px; }
+.nowline { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; font-size: 17px; }
+.nowline .muted { font-size: 14px; }
+.mini button.nowrow { background: var(--accent-soft); border-radius: 10px; margin-inline: -8px; padding-inline: 8px; border-top-color: transparent; }
+.mini button.nowrow .ti { font-weight: 800; }
 .ev.now { margin-inline: -8px; padding-inline: 8px; border-radius: 12px; background: var(--accent-soft); box-shadow: inset 4px 0 0 var(--accent); }
-.ev .nowpill { flex: none; font-size: 12px; font-weight: 800; color: #fff; background: var(--accent); border-radius: 999px; padding: 2px 8px; }
+.nowpill { flex: none; font-size: 12px; font-weight: 800; color: #fff; background: var(--accent); border-radius: 999px; padding: 2px 8px; }
 .ev[data-route] { cursor: pointer; margin-inline: -8px; padding-inline: 8px; border-radius: 12px; -webkit-tap-highlight-color: transparent; transition: background-color .2s; }
 .ev[data-route]:active { background: var(--surface-2); }
 .ev.on { background: var(--accent-soft); }
@@ -473,6 +482,15 @@ small.ap { font-size: .72em; font-weight: 700; margin-right: 2px; letter-spacing
 .live .tel { display: inline-flex; align-items: center; gap: 5px; padding: 4px 12px 4px 10px; border-radius: 999px; background: var(--accent-soft); color: var(--accent); font-size: 14px; font-weight: 700; text-decoration: none; white-space: nowrap; -webkit-tap-highlight-color: transparent; }
 .live .tel:active { opacity: .7; }
 .live .tel svg { width: 15px; height: 15px; stroke: currentColor; fill: none; stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round; }
+.place .one { display: flex; gap: 8px; align-items: flex-start; font-size: 15px; line-height: 1.45; }
+.place .one .ico { width: 17px; height: 17px; margin-top: 2px; color: var(--muted); }
+details.moreinfo { margin-top: -2px; }
+details.moreinfo > summary { list-style: none; cursor: pointer; display: flex; align-items: center; justify-content: center; min-height: 40px; border-radius: 10px; color: var(--muted); font-size: 14px; font-weight: 700; -webkit-tap-highlight-color: transparent; }
+details.moreinfo > summary::-webkit-details-marker { display: none; }
+details.moreinfo > summary::after { content: "위치 · 가격 · 후기 자세히 보기 ▾"; }
+details.moreinfo[open] > summary::after { content: "접기 ▴"; }
+details.moreinfo > summary:active { background: var(--surface-2); }
+details.moreinfo .kv { margin: 6px 0 4px; }
 .kv { display: grid; grid-template-columns: 76px 1fr; gap: 8px 10px; font-size: 16px; margin: 0; }
 .kv dt { color: var(--muted); font-size: 14px; font-weight: 700; padding-top: 2px; }
 .kv dd { margin: 0; white-space: pre-line; }
@@ -644,7 +662,8 @@ details.card .in { padding: 0 16px 16px; display: flex; flex-direction: column; 
     globe: '<circle cx="12" cy="12" r="8.5"/><path d="M3.5 12h17M12 3.5c2.6 2.8 2.6 14.2 0 17M12 3.5c-2.6 2.8-2.6 14.2 0 17"/>',
     phone: '<path d="M5 4h4l2 5-2.5 1.5a11 11 0 0 0 5 5L15 13l5 2v4a2 2 0 0 1-2 2A16 16 0 0 1 3 6a2 2 0 0 1 2-2"/>',
     check: '<rect x="4" y="4" width="16" height="16" rx="4"/><path d="M8 12.5l2.7 2.7L16.2 9.5"/>',
-    sos: '<path d="M12 3.5l9 16H3z"/><path d="M12 10v4M12 16.8v.01"/>'
+    sos: '<path d="M12 3.5l9 16H3z"/><path d="M12 10v4M12 16.8v.01"/>',
+    pin: '<path d="M12 21s-6.5-5.6-6.5-11a6.5 6.5 0 0 1 13 0c0 5.4-6.5 11-6.5 11z"/><circle cx="12" cy="10" r="2.3"/>'
   };
   const ico = (n, cls) => `<svg class="ico${cls ? " " + cls : ""}" viewBox="0 0 24 24" aria-hidden="true">${IC[n] || IC.star}</svg>`;
   const KIND_IC = { "비행기": "plane", "기차": "train", "숙소": "bed", "입장권": "ticket", "투어": "landmark", "경기": "ball", "렌터카": "car" };
@@ -1195,7 +1214,7 @@ details.card .in { padding: 0 16px 16px; display: flex; flex-direction: column; 
         const no = S.stops.slice(0, si + 1).filter(x => !x.off).length;
         return `<div class="stopitem"><button class="no" data-fly="${d}:${si}:${i}" aria-label="${no}번 지도에서 보기">${no}</button><div><div class="nm">${esc(s.name)}${again ? ' <span class="muted" style="font-weight:500">(다시)</span>' : ""}</div>
           ${s.sub && !again ? `<div class="sub">${ap(s.sub)}</div>` : ""}
-          ${s.off ? "" : `<div class="btns"><a class="btn sm" href="${mapQ(s.q || s.name)}" target="_blank" rel="noopener">지도</a><button class="btn sm" data-ride="stop:${d}:${si}">택시 · 우버</button></div>`}</div></div>
+          </div>${s.off ? "" : `<div class="sacts"><a class="iconbtn" href="${mapQ(s.q || s.name)}" target="_blank" rel="noopener" aria-label="${esc(s.name)} 구글 지도">${ico("pin")}</a><button class="iconbtn" data-ride="stop:${d}:${si}" aria-label="${esc(s.name)} 택시 · 우버">${ico("car")}</button></div>`}</div>
           ${lg ? `<div class="legline"><i class="lc ${lc}"></i><b>${esc(legText(lg))}</b>${back ? " · 돌아가는 길" : ""}</div>` : ""}`;
       }).join("")}</div>`;
     }
@@ -1224,6 +1243,7 @@ details.card .in { padding: 0 16px 16px; display: flex; flex-direction: column; 
     const evs = evsOf(d);
     const live = !before && !after;
     const next = live ? (evs.find(e => mins(e) >= now) || null) : evs[0];
+    const cur = live ? [...evs].reverse().find(e => mins(e) <= now) || null : null;   // 지금 하고 있는 일정
     const left = next && live ? mins(next) - now : null;
     const leftTxt = left == null ? "" : left < 60 ? `${left}분 뒤` : `${Math.floor(left / 60)}시간 ${left % 60}분 뒤`;
     const label = before ? `출발까지 D-${1 - idx} · 첫날 미리보기` : after ? "여행이 끝났어요 · 마지막 날" : `Day ${d} / 10`;
@@ -1235,6 +1255,7 @@ details.card .in { padding: 0 16px 16px; display: flex; flex-direction: column; 
         <div class="date">${esc(D.dates[d - 1])}</div>
         <div class="flow">${esc(D.flow[d - 1])}</div>
       </div>
+      ${cur ? `<div class="card nowcard"><div class="nowline"><span class="nowpill">지금</span><span class="evi sm" style="--cat:${CAT[cur.cat]}">${ico(evIco(cur))}</span><b>${esc(cur.title)}</b><span class="muted">${ap(String(cur.time).split("\n")[0])}</span></div></div>` : ""}
       ${next ? `<div class="card"><p class="eyebrow">${live ? "다음 일정" : "첫 일정"}</p>
         <div class="next"><div class="t" style="color:${CAT[next.cat]}">${ap(String(next.time).split("\n")[0])}</div>
         <div><div class="ti">${esc(next.title)}</div>${next.note ? `<div class="muted pre">${ap(next.note)}</div>` : ""}</div>
@@ -1247,7 +1268,7 @@ details.card .in { padding: 0 16px 16px; display: flex; flex-direction: column; 
       ${tickets.length ? `<div class="card"><p class="eyebrow">오늘 챙길 티켓 · 예약</p><div class="mini">${tickets.map(w =>
         `<button data-wday="${d}"><span class="t tk">${ico(kindIco(w.kind))}${esc(w.kind)}</span><span class="ti">${esc(w.title)}${w.who ? ` · <b>${esc(w.who)}</b>` : ""}</span></button>`).join("")}</div></div>` : ""}
       <div class="card"><p class="eyebrow">${live ? "오늘" : esc(D.dates[d - 1])} 전체 일정</p><div class="mini">${evs.map(e =>
-        `<button data-plan="${d}" class="${live && mins(e) < now && e !== next ? "past" : ""}"><span class="t">${ap(String(e.time).split("\n")[0])}</span><span class="ti"><span class="evi sm" style="--cat:${CAT[e.cat]}">${ico(evIco(e))}</span>${esc(e.title)}</span></button>`).join("")}</div>
+        `<button data-plan="${d}" class="${e === cur ? "nowrow" : live && mins(e) < now && e !== next ? "past" : ""}"><span class="t">${ap(String(e.time).split("\n")[0])}</span><span class="ti"><span class="evi sm" style="--cat:${CAT[e.cat]}">${ico(evIco(e))}</span>${esc(e.title)}</span></button>`).join("")}</div>
         <div class="btns" style="margin-top:8px"><button class="btn" data-plan="${d}">자세히 보기</button></div></div>
       ${dayMaps(d, false)}
     </div>`;
@@ -1361,6 +1382,15 @@ details.card .in { padding: 0 16px 16px; display: flex; flex-direction: column; 
             <span class="goicon" aria-hidden="true"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="6.5"/><path d="M16 16l4.2 4.2"/></svg></span></a>
           <div class="meta"><span class="rt">${esc(rate)} <span class="muted" style="font-weight:500">${esc(cnt || "")}</span></span>${walk ? `<span>${esc(walk)}</span>` : ""}</div>
           ${p.pid && D.placesKey ? `<div class="live" data-pid="${esc(p.pid)}"></div>` : ""}</div></div>
+        ${p.feature ? `<div class="one">${ico("star")}<span>${esc(String(p.feature).split("\n")[0])}</span></div>` : ""}
+        ${p.menu ? `<div class="one">${ico("fork")}<span>${esc(String(p.menu).split("\n").slice(0, 2).join(" · "))}</span></div>` : ""}
+        <div class="grid2">
+          <a class="btn primary" href="https://maps.google.com/?cid=${esc(p.cid)}" target="_blank" rel="noopener">리뷰 · 지도</a>
+          ${p.ll ? `<button class="btn primary" data-ride="food:${i}">택시 · 우버</button>` : `<a class="btn primary" href="https://www.google.com/search?q=${encodeURIComponent(nm + " " + city)}" target="_blank" rel="noopener">구글 검색</a>`}
+          <a class="btn" href="${gImg(nm + " " + city + " comida")}" target="_blank" rel="noopener">음식 사진</a>
+          <a class="btn" href="${gImg(nm + " " + city + " carta menú")}" target="_blank" rel="noopener">메뉴판 사진</a>
+        </div>
+        <details class="moreinfo"><summary></summary>
         <dl class="kv">
           <dt>위치</dt><dd>${esc(loc)}</dd>
           ${p.feature ? `<dt>특징</dt><dd>${esc(p.feature)}</dd>` : ""}
@@ -1368,13 +1398,7 @@ details.card .in { padding: 0 16px 16px; display: flex; flex-direction: column; 
           ${p.price ? `<dt>가격 (유로)</dt><dd>${esc(p.price)}</dd>` : ""}
           ${p.reviews ? `<dt>후기</dt><dd>${esc(p.reviews)}</dd>` : ""}
           ${p.memo ? `<dt>메모</dt><dd>${ap(p.memo)}</dd>` : ""}
-        </dl>
-        <div class="grid2">
-          <a class="btn primary" href="https://maps.google.com/?cid=${esc(p.cid)}" target="_blank" rel="noopener">리뷰 · 지도</a>
-          ${p.ll ? `<button class="btn primary" data-ride="food:${i}">택시 · 우버</button>` : `<a class="btn primary" href="https://www.google.com/search?q=${encodeURIComponent(nm + " " + city)}" target="_blank" rel="noopener">구글 검색</a>`}
-          <a class="btn" href="${gImg(nm + " " + city + " comida")}" target="_blank" rel="noopener">음식 사진</a>
-          <a class="btn" href="${gImg(nm + " " + city + " carta menú")}" target="_blank" rel="noopener">메뉴판 사진</a>
-        </div></article>`;
+        </dl></details></article>`;
     }).join("");
     paint($("#v-food"), `<div class="days" role="group" aria-label="날짜">${chips}</div>`, `
       <div class="stack" style="padding-top:8px">
@@ -1648,12 +1672,13 @@ details.card .in { padding: 0 16px 16px; display: flex; flex-direction: column; 
 </template>
 <script>
 (() => {
-  const KEY = "es26:key", BUILD = "22673e31e5";
+  const KEY = "es26:key", BUILD = "33883915c1";
   const ub64 = s => Uint8Array.from(atob(s), c => c.charCodeAt(0));
   const tob64 = u => btoa(String.fromCharCode(...u));
   const get = k => { try { return localStorage.getItem(k); } catch (e) { return null; } };
   const put = (k, v) => { try { v === null ? localStorage.removeItem(k) : localStorage.setItem(k, v); } catch (e) {} };
   if ("serviceWorker" in navigator) navigator.serviceWorker.register("sw.js").catch(() => {});
+  if (navigator.standalone === true || matchMedia("(display-mode: standalone)").matches) document.getElementById("lockhelp").hidden = true;   // 이미 설치된 앱에서는 설치 안내 숨김
   let ENC = null;
   async function loadEnc() {
     if (!ENC) ENC = await (await fetch("data.enc", { cache: "no-cache" })).json();
