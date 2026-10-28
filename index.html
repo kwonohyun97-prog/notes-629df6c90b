@@ -15,7 +15,7 @@
 <title>🇪🇸 스페인 가족여행 일정</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Gothic+A1:wght@800&family=IBM+Plex+Mono:wght@500;600&family=IBM+Plex+Sans+KR:wght@400;500;700&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Black+Han+Sans&family=Do+Hyeon&family=Gothic+A1:wght@800&family=IBM+Plex+Mono:wght@500;600&family=IBM+Plex+Sans+KR:wght@400;500;700&family=Jua&display=swap">
 <style>
 :root { --g1: #0B3A8F; --g2: #1769D0; --g3: #22B5C0; --glow: rgba(255,255,255,.22); }
 @media (prefers-color-scheme: dark) { :root { --g1: #0A2463; --g2: #1849A6; --g3: #0F7C8C; --glow: rgba(255,255,255,.1); } }
@@ -151,7 +151,7 @@ img { max-width: 100%; }
 <template id="appshell"><title>🇪🇸 스페인 가족여행 일정</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Gothic+A1:wght@800&family=IBM+Plex+Mono:wght@500;600&family=IBM+Plex+Sans+KR:wght@400;500;700&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Black+Han+Sans&family=Do+Hyeon&family=Gothic+A1:wght@800&family=IBM+Plex+Mono:wght@500;600&family=IBM+Plex+Sans+KR:wght@400;500;700&family=Jua&display=swap">
 <style>
 :root {
   color-scheme: light;
@@ -215,6 +215,10 @@ img { max-width: 100%; }
   --shadow: 0 6px 18px rgba(0, 0, 0, .35);
   --hero-shade: 62%;
 }
+:root, :root[data-tf="a1"], .tfopt[data-tf="a1"] { --title-font: "Gothic A1", var(--sans); --title-w: 800; --title-size: 31px; --title-ls: -.01em; }
+:root[data-tf="bhs"], .tfopt[data-tf="bhs"] { --title-font: "Black Han Sans", var(--sans); --title-w: 400; --title-size: 34px; --title-ls: 0; }
+:root[data-tf="jua"], .tfopt[data-tf="jua"] { --title-font: "Jua", var(--sans); --title-w: 400; --title-size: 33px; --title-ls: 0; }
+:root[data-tf="dohyeon"], .tfopt[data-tf="dohyeon"] { --title-font: "Do Hyeon", var(--sans); --title-w: 400; --title-size: 38px; --title-ls: 0; }
 html { background: var(--bg); }
 * { box-sizing: border-box; }
 [hidden] { display: none !important; }
@@ -231,7 +235,17 @@ small.ap { font-size: .72em; font-weight: 700; margin-right: 2px; letter-spacing
   background: radial-gradient(120% 170% at 100% 0%, var(--glow), transparent 55%), linear-gradient(120deg, var(--g1), var(--g2) 58%, var(--g3));
   border-radius: 0 0 24px 24px; box-shadow: 0 10px 24px -14px var(--g1); }
 .top .brand { font-size: 13px; font-weight: 700; letter-spacing: .02em; opacity: .92; white-space: nowrap; }
-.top h1 { font-family: var(--display); font-weight: var(--display-w, 800); font-size: 31px; line-height: 1.12; margin: 3px 0 0; letter-spacing: -.01em; text-shadow: 0 1px 2px rgba(0,0,0,.12); }
+.top h1 { font-family: var(--title-font, var(--display)); font-weight: var(--title-w, 800); font-size: var(--title-size, 31px); line-height: 1.12; margin: 3px 0 0; letter-spacing: var(--title-ls, -.01em); text-shadow: 0 1px 2px rgba(0,0,0,.12); }
+/* 제목 글씨 시안 고르기 */
+.tfgrid { display: flex; flex-direction: column; gap: 10px; }
+.tfopt { position: relative; display: flex; flex-direction: column; align-items: flex-start; gap: 2px; padding: 0; border-radius: 16px; border: 2px solid var(--line); background: var(--surface); cursor: pointer; text-align: left; overflow: hidden; min-width: 0; }
+.tfopt .smp { width: 100%; padding: 10px 14px 11px; color: #fff; background: linear-gradient(120deg, var(--g1), var(--g2) 58%, var(--g3)); }
+.tfopt .smp small { display: block; font-size: 12px; font-weight: 700; opacity: .9; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.tfopt .smp span { display: block; font-family: var(--title-font); font-weight: var(--title-w); font-size: var(--title-size); letter-spacing: var(--title-ls); line-height: 1.12; margin-top: 2px; }
+.tfopt b { font-size: 15px; padding: 6px 12px 0; }
+.tfopt .muted { font-size: 13px; padding: 0 12px 10px; line-height: 1.35; }
+.tfopt[aria-pressed="true"] { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft); }
+.tfopt[aria-pressed="true"]::after { content: "✓"; position: absolute; top: 8px; right: 8px; width: 24px; height: 24px; border-radius: 50%; display: grid; place-items: center; font-size: 14px; font-weight: 800; color: var(--g1); background: #fff; }
 .clock { text-align: right; font-size: 12px; color: rgba(255,255,255,.92); line-height: 1.35; font-variant-numeric: tabular-nums; background: rgba(0,0,0,.16); border-radius: 12px; padding: 6px 10px; flex: none; }
 .clock b { font-family: var(--mono); font-size: 16px; color: #fff; font-weight: 600; }
 
@@ -1008,11 +1022,15 @@ details.card .in { padding: 0 16px 16px; display: flex; flex-direction: column; 
     const checks = store.get("checks", {});
     const shop = (city, day, rows) => `<div class="cityhead" style="--city:${D.cityColor[city]}"><b>${esc(city)}</b><span>${esc(D.dates[day - 1])} · ${rows.length}곳</span></div><div class="shoplist" style="--city:${D.cityColor[city]}">` + rows.map(r =>
       `<div class="stay"><div class="nm">${esc(String(r[2]).split("\n")[0])}</div><div class="muted">${ap(String(r[7]).split("\n")[0])} · ${esc(String(r[1]).split("\n").slice(1).join(" "))}</div><div class="pre">${esc(String(r[3]).split("\n")[0])}</div><div class="muted">${ap(String(r[4]).split("\n")[0])}</div></div>`).join("") + `</div>`;
+    const curTf = document.documentElement.dataset.tf || D.titleDefault;
+    const titles = (D.titleOpts || []).length ? `<div class="card"><p class="eyebrow">맨 위 제목 글씨 시안 · 눌러서 바꿔보기</p><div class="tfgrid">${D.titleOpts.map(t => `<button class="tfopt" data-tf="${esc(t.id)}" aria-pressed="${t.id === curTf}">
+        <span class="smp"><small>🇪🇸 스페인 가족여행 일정</small><span>오늘 · 식당 고르기</span></span><b>${esc(t.name)}</b><span class="muted">${esc(t.desc)}</span></button>`).join("")}</div>
+        <p class="note" style="margin:10px 0 0">누르면 바로 위 제목이 바뀌어요 (이 휴대폰에서만).</p></div>` : "";
     const icons = (D.iconOpts || []).length ? `<div class="card"><p class="eyebrow">홈 화면 아이콘 시안</p><div class="icopts">${D.iconOpts.map(o => `<div class="icopt">
         <div class="wall"><img src="icon-opt-${esc(o.id)}.png" alt=""><small>🇪🇸 스페인 가족여행 일정</small></div>
         <div><b>${esc(o.name)}</b><div class="muted">${esc(o.desc)}</div></div></div>`).join("")}</div>
         <p class="note" style="margin:10px 0 0">휴대폰 바탕화면에 깔렸을 때 보이는 모양이에요.</p></div>` : "";
-    $("#v-more").innerHTML = `<div class="stack">${icons}
+    $("#v-more").innerHTML = `<div class="stack">${titles}${icons}
       <details class="card"><summary>택시 미리 부탁하기 (호텔)</summary><div class="in">
         <p class="muted" style="margin:0">이른 아침에 떠나는 날은 전날 밤 숙소 프런트에 택시를 예약해 달라고 부탁하세요. 화면을 보여주거나, 문장을 복사해서 Booking.com 앱 메시지로 보내면 돼요.</p>
         ${D.taxiplan.map((t, i) => `<div class="stay"><div class="nm">${esc(D.dates[t.day - 1])} ${ap(t.time)} · ${esc(t.dest)}</div><div class="muted">${esc(t.hotel)} · 부탁할 때: ${esc(t.when)}</div>
@@ -1117,6 +1135,7 @@ details.card .in { padding: 0 16px 16px; display: flex; flex-direction: column; 
     else if (ds.taxiplan !== undefined) openTaxiPlan(+ds.taxiplan);
     else if (ds.meal) { mealKey = ds.meal; store.set("meal", mealKey); if ($("#v-food").hidden) show("food"); else { renderFood(); window.scrollTo(0, 0); } }
     else if (ds.install) { if (window.__showInstall) window.__showInstall(); }
+    else if (ds.tf) { document.documentElement.dataset.tf = ds.tf; store.set("tf", ds.tf); renderMore(); }
     else if (ds.ride) openRide(ds.ride);
     else if (ds.taxicard) { if (rideCur) openTaxi(rideCur); }
     else if (ds.close) $("#" + ds.close).hidden = true;
@@ -1128,6 +1147,7 @@ details.card .in { padding: 0 16px 16px; display: flex; flex-direction: column; 
   });
   document.addEventListener("keydown", e => { if (e.key === "Escape") ["taxi", "ride"].forEach(id => $("#" + id).hidden = true); });
 
+  { const tf = store.get("tf", null); if (tf && (D.titleOpts || []).some(t => t.id === tf)) document.documentElement.dataset.tf = tf; }
   tick(); setInterval(() => { tick(); }, 30000);
   const h = location.hash.replace("#", "");
   show(VIEWS.includes(h) ? h : store.get("tab", "today"));
