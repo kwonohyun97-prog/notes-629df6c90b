@@ -391,12 +391,14 @@ small.ap { font-size: .72em; font-weight: 700; margin-right: 2px; letter-spacing
 .nolink { font-size: 14px; color: var(--muted); background: var(--surface-2); border-radius: 10px; padding: 8px 12px; }
 
 /* 식당 */
-.meals { display: flex; gap: 8px; overflow-x: auto; padding: 14px 16px 6px; margin-inline: -16px; scrollbar-width: none; }
-.meals::-webkit-scrollbar { display: none; }
-.mealchip { flex: none; border: 2px solid var(--line); background: var(--surface); border-radius: 14px; padding: 7px 12px; text-align: left; cursor: pointer; }
-.mealchip b { display: block; font-size: 15px; }
-.mealchip span { font-size: 12px; color: var(--muted); }
-.mealchip[aria-pressed="true"] { border-color: var(--accent); background: var(--accent-soft); }
+/* 식당: 날짜 → 점심 / 저녁 */
+.seg { display: grid; grid-template-columns: 1fr 1fr; gap: 4px; background: var(--surface-2); border-radius: 16px; padding: 4px; }
+.seg button { min-height: 56px; border: 0; border-radius: 12px; background: transparent; color: var(--muted); cursor: pointer; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1px; line-height: 1.2; padding: 6px 4px; }
+.seg button > span { font-size: 18px; font-weight: 700; }
+.seg button em { font-style: normal; font-size: 13px; font-weight: 600; }
+.seg button small { font-size: 12px; font-weight: 600; }
+.seg button[aria-pressed="true"] { color: #fff; background: var(--btn2); background: linear-gradient(135deg, var(--btn1), var(--btn2)); box-shadow: 0 6px 14px -8px var(--btn1); }
+.seg button:disabled { opacity: .45; cursor: default; }
 .place { display: flex; flex-direction: column; gap: 10px; }
 .place .top2 { display: flex; gap: 12px; align-items: flex-start; }
 .rank { flex: none; width: 46px; height: 46px; border-radius: 12px; display: grid; place-items: center; background: var(--surface-2); font-family: var(--mono); font-weight: 600; font-size: 18px; color: var(--muted); }
@@ -1017,12 +1019,28 @@ details.card .in { padding: 0 16px 16px; display: flex; flex-direction: column; 
 
   /* ---------- 식당 ---------- */
   let mealKey = store.get("meal", null);
+  // 끼니 → 날짜 · 점심/저녁 ("11/2 (월) 저녁 (19:30)" → 11/2, 저녁)
+  const mealDate = m => String(m.meal).split(" ")[0];
+  const mealSlot = m => /저녁/.test(m.meal) ? "dinner" : "lunch";
+  const dayIdx = dt => D.dates.findIndex(x => x.startsWith(dt + " ")) + 1;
+  const MEALDAYS = [...new Set(D.meals.map(mealDate))].sort((a, b) => dayIdx(a) - dayIdx(b));
   const gImg = q => "https://www.google.com/search?udm=2&q=" + encodeURIComponent(q);
   function renderFood() {
     if (!mealKey || !mealByKey[mealKey]) mealKey = (D.meals.find(m => m.places.length) || D.meals[0]).key;
     const m = mealByKey[mealKey], city = CITY_EN[m.region] || "";
-    const chips = D.meals.map(x => `<button class="mealchip" aria-pressed="${x.key === mealKey}" data-meal="${x.key}">
-      <b>${esc(x.meal.replace(/ \(\d.*\)/, ""))}</b><span>${esc(x.region)} · ${x.places.length ? x.places.length + "곳" : "준비 중"}</span></button>`).join("");
+    const md = mealDate(m), slot = mealSlot(m), dayMeals = dt => D.meals.filter(x => mealDate(x) === dt);
+    const chips = MEALDAYS.map(dt => {
+      const ms = dayMeals(dt), di = dayIdx(dt), target = ms.find(x => mealSlot(x) === slot) || ms[0];
+      const [mdd, wd] = D.dates[di - 1].split(" ");
+      return `<button class="daychip" style="--city:${colorOf(di)}" aria-pressed="${dt === md}" data-meal="${target.key}"><b>${mdd}</b><span>${wd.replace(/[()]/g, "")} · ${esc(cityOf(di))}</span><i></i></button>`;
+    }).join("");
+    const seg = ["lunch", "dinner"].map(sl => {
+      const x = dayMeals(md).find(y => mealSlot(y) === sl), lab = sl === "lunch" ? "점심" : "저녁";
+      if (!x) return `<button disabled><span>${lab}</span><small>일정 없음</small></button>`;
+      const word = /식사/.test(x.meal) ? "식사" : lab;
+      const sub = String(x.meal).split(" ").slice(2).join(" ").replace(/^(점심|저녁|식사)\s*/, "").replace(/^·\s*/, "").replace(/[()]/g, "").trim();
+      return `<button data-meal="${x.key}" aria-pressed="${x.key === mealKey}"><span>${word}</span>${sub ? `<em>${ap(sub)}</em>` : ""}<small>${x.places.length ? x.places.length + "곳" : "후보 준비 중"}</small></button>`;
+    }).join("");
     const cards = m.places.map((p, i) => {
       const [nm, ...ko] = String(p.name).split("\n");
       const star = String(p.rec || "").includes("⭐");
@@ -1049,8 +1067,9 @@ details.card .in { padding: 0 16px 16px; display: flex; flex-direction: column; 
           ${p.ll ? `<button class="btn" data-ride="food:${i}">택시 · 우버</button>` : `<a class="btn" href="https://www.google.com/search?q=${encodeURIComponent(nm + " " + city)}" target="_blank" rel="noopener">구글 검색</a>`}
         </div></article>`;
     }).join("");
-    $("#v-food").innerHTML = `<div class="meals" role="group" aria-label="끼니">${chips}</div>
+    $("#v-food").innerHTML = `<div class="days" role="group" aria-label="날짜">${chips}</div>
       <div class="stack" style="padding-top:8px">
+        <div class="seg" role="group" aria-label="점심 · 저녁">${seg}</div>
         <div><div class="h2">${esc(m.meal)}</div><div class="muted">${esc(m.region)} · ${esc(m.where)}</div>
         ${m.note ? `<div style="margin-top:6px"><span class="pill warn">${esc(m.note)}</span></div>` : ""}</div>
         ${cards ? `<p class="note">음식 사진 · 메뉴판 사진 버튼을 누르면 구글에서 사람들이 찍은 사진을 바로 볼 수 있어요.</p>` : ""}
@@ -1058,7 +1077,7 @@ details.card .in { padding: 0 16px 16px; display: flex; flex-direction: column; 
         ${m.search && m.search[1] ? `<a class="btn" href="https://www.google.com/maps/search/${encodeURIComponent(m.search[1])}" target="_blank" rel="noopener">근처 식당 직접 찾기 · ${esc(m.search[0])}</a>` : ""}
         ${cards ? `<p class="credit">별점 · 후기: Google 지도 (2026년 10월 기준) · 가격: 각 식당 메뉴판</p>` : ""}
       </div>`;
-    const cur = $("#v-food .mealchip[aria-pressed='true']");
+    const cur = $("#v-food .daychip[aria-pressed='true']");
     if (cur) cur.scrollIntoView({ inline: "center", block: "nearest" });
   }
 
@@ -1209,7 +1228,7 @@ details.card .in { padding: 0 16px 16px; display: flex; flex-direction: column; 
 </template>
 <script>
 (() => {
-  const KEY = "es26:key", BUILD = "21a73663bf";
+  const KEY = "es26:key", BUILD = "b7b1a4a5eb";
   const ub64 = s => Uint8Array.from(atob(s), c => c.charCodeAt(0));
   const tob64 = u => btoa(String.fromCharCode(...u));
   const get = k => { try { return localStorage.getItem(k); } catch (e) { return null; } };
