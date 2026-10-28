@@ -233,6 +233,8 @@ html, body { overscroll-behavior: none; }
 @media (display-mode: standalone) { html { min-height: min(100lvh, calc(100% + env(safe-area-inset-top, 0px))); } }
 * { box-sizing: border-box; }
 [hidden] { display: none !important; }
+body::after { content: ""; display: block; height: 1px; }   /* 문서를 1px 길게 → 아이폰 시계(상태바) 톡 감지용 */
+.top { cursor: pointer; }
 body { background: var(--bg); color: var(--ink); font-family: var(--sans); font-size: 17px; line-height: 1.5; -webkit-text-size-adjust: 100%; }
 a { color: var(--accent); }
 button { font: inherit; color: inherit; }
@@ -1501,7 +1503,20 @@ details.card .in { padding: 0 16px 16px; display: flex; flex-direction: column; 
   // 앱 높이를 실제 보이는 화면 높이에 맞추고, 하단 바가 화면 바닥보다 떠 있으면 바닥에 붙이기 (아이폰 기종 · 상황별 차이 보정)
   addEventListener("resize", () => { if (curView) moveInd(curView, true); });
   // 화면 전체는 항상 맨 위에 고정 (스크롤은 탭 화면 안에서만)
-  addEventListener("scroll", () => { if (window.scrollY) window.scrollTo(0, 0); }, { passive: true });
+  // 아이폰 맨 위 시계(상태바)를 톡 → 지금 보는 탭을 맨 위로.
+  // 아이폰은 시계를 누르면 '문서'를 맨 위로 올림 → 문서를 1px 내려두고(park), 0이 되는 순간 지금 탭을 맨 위로 올린 뒤 다시 1px 내려둠
+  let parking = false;
+  const park = () => { if (window.scrollY !== 1) { parking = true; window.scrollTo(0, 1); requestAnimationFrame(() => requestAnimationFrame(() => { parking = false; })); } };
+  const viewTop = () => { const v = curView && $("#v-" + curView); if (v && v.scrollTop > 0) v.scrollTo({ top: 0, behavior: REDUCE ? "auto" : "smooth" }); };
+  addEventListener("scroll", () => {
+    if (parking) return;
+    if (window.scrollY <= 0) { viewTop(); setTimeout(park, 350); }
+    else if (window.scrollY !== 1) park();
+  }, { passive: true });
+  addEventListener("pageshow", () => setTimeout(park, 50));
+  setTimeout(park, 0); setTimeout(park, 600);
+  // 앱 맨 위 머리띠(제목 · 시계)를 눌러도 맨 위로
+  $(".top").addEventListener("click", viewTop);
   function show(v, fromTab) {
     if (!VIEWS.includes(v)) v = "today";
     if (fromTab && v === curView) { $("#v-" + v).scrollTo({ top: 0, behavior: REDUCE ? "auto" : "smooth" }); return; }   // 같은 탭 한 번 더 → 맨 위로
@@ -1560,7 +1575,7 @@ details.card .in { padding: 0 16px 16px; display: flex; flex-direction: column; 
 </template>
 <script>
 (() => {
-  const KEY = "es26:key", BUILD = "bbaa48249b";
+  const KEY = "es26:key", BUILD = "c9df1cec56";
   const ub64 = s => Uint8Array.from(atob(s), c => c.charCodeAt(0));
   const tob64 = u => btoa(String.fromCharCode(...u));
   const get = k => { try { return localStorage.getItem(k); } catch (e) { return null; } };
