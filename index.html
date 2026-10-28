@@ -688,7 +688,7 @@ details.card .in { padding: 0 16px 16px; display: flex; flex-direction: column; 
       if (W > 0 && H > 0 && (!cam || !isFinite(cam.x) || !isFinite(cam.y) || !isFinite(cam.z))) cam = restCam();
       return W > 0 && H > 0;
     }
-    function size() { const r = host.getBoundingClientRect(); W = r.width; H = r.height; dpr = Math.min(2, window.devicePixelRatio || 1); canvas.width = Math.round(W * dpr); canvas.height = Math.round(H * dpr); }
+    function size() { const r = host.getBoundingClientRect(); W = r.width; H = r.height; dpr = Math.min(3, window.devicePixelRatio || 1); canvas.width = Math.round(W * dpr); canvas.height = Math.round(H * dpr); }
     function fit(pts, pad) {
       let a = Infinity, b = Infinity, c = -Infinity, d = -Infinity;
       pts.forEach(([x, y]) => { a = Math.min(a, x); b = Math.min(b, y); c = Math.max(c, x); d = Math.max(d, y); });
@@ -1211,7 +1211,7 @@ details.card .in { padding: 0 16px 16px; display: flex; flex-direction: column; 
         <p class="muted" style="margin:0">이른 아침에 떠나는 날은 전날 밤 숙소 프런트에 택시를 예약해 달라고 부탁하세요. 화면을 보여주거나, 문장을 복사해서 Booking.com 앱 메시지로 보내면 돼요.</p>
         ${D.taxiplan.map((t, i) => `<div class="stay"><div class="nm">${esc(D.dates[t.day - 1])} ${ap(t.time)} · ${esc(t.dest)}</div><div class="muted">${esc(t.hotel)} · 부탁할 때: ${esc(t.when)}</div>
         <div class="grid2" style="margin-top:6px"><button class="btn primary" data-taxiplan="${i}">프런트에 보여주기</button><button class="btn" data-copy="${esc(t.es)}">문장 복사</button></div></div>`).join("")}</div></details>
-      <details class="card" open><summary>숙소 6곳</summary><div class="in">${D.stays.map((s, i) => `<div class="stay">
+      <details class="card"><summary>숙소 6곳</summary><div class="in">${D.stays.map((s, i) => `<div class="stay">
         <div class="muted">${esc(s.dates)} · ${esc(s.area)}</div><div class="nm">${esc(s.name)}</div><div class="addr">${esc(s.addr)}</div><div class="muted">예약 · ${esc(s.who)}</div>
         <div class="grid2" style="margin-top:6px"><a class="btn" href="${mapQ(s.name + ", " + s.addr)}" target="_blank" rel="noopener">지도</a><button class="btn primary" data-ride="stay:${s.days[0]}">택시 · 우버</button></div></div>`).join("")}</div></details>
       <details class="card"><summary>스페인어 카드</summary><div class="in">${D.phrases.map(([ko, es]) => `<div class="phrase"><div class="muted">${esc(ko)}</div><div class="es">${esc(es)}</div></div>`).join("")}</div></details>
@@ -1309,7 +1309,7 @@ details.card .in { padding: 0 16px 16px; display: flex; flex-direction: column; 
     delete lastKey["v-" + v];
     RENDER[v]();
     store.set("tab", v);
-    window.scrollTo(0, fromTab ? (scrollMem[v] || 0) : 0);
+    window.scrollTo(0, fromTab && v !== "more" ? (scrollMem[v] || 0) : 0);   // 더보기는 항상 접힌 채 맨 위부터
     curView = v;
   }
 
@@ -1354,7 +1354,7 @@ details.card .in { padding: 0 16px 16px; display: flex; flex-direction: column; 
 </template>
 <script>
 (() => {
-  const KEY = "es26:key", BUILD = "47b9b69fe6";
+  const KEY = "es26:key", BUILD = "a0119a358a";
   const ub64 = s => Uint8Array.from(atob(s), c => c.charCodeAt(0));
   const tob64 = u => btoa(String.fromCharCode(...u));
   const get = k => { try { return localStorage.getItem(k); } catch (e) { return null; } };
