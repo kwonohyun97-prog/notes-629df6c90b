@@ -440,7 +440,16 @@ details.card .in { padding: 0 16px 16px; display: flex; flex-direction: column; 
 .tabs .in { max-width: 600px; margin: 0 auto; display: grid; grid-template-columns: repeat(5, 1fr); gap: 2px; }
 .tabs button { background: none; border: 0; display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 6px 2px; min-height: 58px; border-radius: 12px; color: var(--muted); font-size: 13px; font-weight: 700; cursor: pointer; }
 .tabs svg { width: 26px; height: 26px; stroke: currentColor; fill: none; stroke-width: 1.9; stroke-linecap: round; stroke-linejoin: round; }
-.tabs button[aria-current="page"] { color: #fff; background: var(--btn2); background: linear-gradient(135deg, var(--btn1), var(--btn2)); box-shadow: 0 6px 14px -8px var(--btn1); }
+.tabs .in { position: relative; }
+/* 하단 바: 선택 표시 하나가 탭 사이를 미끄러져 이동 + 아이콘이 살짝 통통 */
+.tabs .ind { position: absolute; left: 0; top: 0; height: 100%; width: 0; border-radius: 12px; background: var(--btn2); background: linear-gradient(135deg, var(--btn1), var(--btn2)); box-shadow: 0 6px 14px -8px var(--btn1); transition: transform .42s cubic-bezier(.34, 1.3, .5, 1), width .3s ease; pointer-events: none; }
+.tabs .ind.noanim { transition: none; }
+.tabs button { position: relative; z-index: 1; transition: color .25s ease; }
+.tabs button[aria-current="page"] { color: #fff; }
+.tabs button[aria-current="page"] svg { animation: tabpop .45s cubic-bezier(.34, 1.56, .64, 1); }
+@keyframes tabpop { 0% { transform: scale(.8); } 55% { transform: scale(1.14); } 100% { transform: none; } }
+.daychip { transition: border-color .25s ease, background-color .25s ease; }
+@media (prefers-reduced-motion: reduce) { .tabs .ind { transition: none; } .tabs button[aria-current="page"] svg { animation: none; } }
 
 /* 겹쳐 뜨는 화면 */
 .overlay { position: fixed; inset: 0; z-index: 20; background: var(--bg); display: flex; flex-direction: column; gap: 12px; padding: calc(14px + env(safe-area-inset-top, 0px)) 16px calc(16px + env(safe-area-inset-bottom, 0px)); overflow-y: auto; }
@@ -456,8 +465,8 @@ details.card .in { padding: 0 16px 16px; display: flex; flex-direction: column; 
 .ride .say .es { font-size: 21px; font-weight: 700; line-height: 1.35; }
 .toast { position: fixed; left: 50%; bottom: calc(92px + env(safe-area-inset-bottom, 0px)); transform: translateX(-50%); background: var(--ink); color: var(--bg); font-weight: 700; padding: 10px 18px; border-radius: 999px; z-index: 30; }
 @media (prefers-reduced-motion: no-preference) {
-  .view { animation: fade .18s ease-out; }
-  @keyframes fade { from { opacity: .6; transform: translateY(4px); } to { opacity: 1; transform: none; } }
+  .view { animation: fade .16s ease-out; }
+  @keyframes fade { from { opacity: 0; } to { opacity: 1; } }
 }
 </style>
 
@@ -476,7 +485,7 @@ details.card .in { padding: 0 16px 16px; display: flex; flex-direction: column; 
 </div>
 
 <nav class="tabs" aria-label="메뉴">
-  <div class="in">
+  <div class="in"><span class="ind" aria-hidden="true"></span>
     <button data-tab="today" aria-current="page"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="4.2"/><path d="M12 2.5v2.3M12 19.2v2.3M2.5 12h2.3M19.2 12h2.3M5.3 5.3l1.6 1.6M17.1 17.1l1.6 1.6M5.3 18.7l1.6-1.6M17.1 6.9l1.6-1.6"/></svg>오늘</button>
     <button data-tab="plan"><svg viewBox="0 0 24 24"><rect x="3.5" y="5" width="17" height="15.5" rx="2.5"/><path d="M3.5 9.5h17M8 3v4M16 3v4M7.5 13.5h3M7.5 17h6"/></svg>일정</button>
     <button data-tab="wallet"><svg viewBox="0 0 24 24"><path d="M4 7.5h16v3a2 2 0 0 0 0 4v3H4v-3a2 2 0 0 0 0-4z"/><path d="M14 7.5v10" stroke-dasharray="1.6 2"/></svg>티켓</button>
@@ -495,9 +504,29 @@ details.card .in { padding: 0 16px 16px; display: flex; flex-direction: column; 
   const D = JSON.parse(document.getElementById("data").textContent);
   const $ = s => document.querySelector(s);
   // 칩 줄만 가로로 움직이기 (scrollIntoView는 아이폰에서 화면 전체를 밀어 아래 탭바가 떠 보이는 문제가 있음)
-  function centerChip(el) {
+  function centerChip(el, smooth) {
     if (!el) return; const box = el.parentElement, r = el.getBoundingClientRect(), b = box.getBoundingClientRect();
-    box.scrollLeft += (r.left + r.width / 2) - (b.left + b.width / 2);
+    const left = box.scrollLeft + (r.left + r.width / 2) - (b.left + b.width / 2);
+    if (smooth && !REDUCE && box.scrollTo) box.scrollTo({ left, behavior: "smooth" }); else box.scrollLeft = left;
+  }
+  // 날짜 · 끼니 바꾸기: 칩 줄은 그대로 두고 아래 내용만 바꿈. 다음 날은 오른쪽에서, 이전 날은 왼쪽에서 살짝 밀려 들어옴
+  const lastKey = {};
+  function paint(root, row, pane, key) {
+    const oldRow = root.querySelector(":scope > .days"), oldPane = root.querySelector(":scope > .stack");
+    const prev = lastKey[root.id]; lastKey[root.id] = key;
+    if (!oldRow || !oldPane || prev === undefined || prev === key) {
+      root.innerHTML = row + pane; centerChip(root.querySelector(".daychip[aria-pressed='true']"), false); return;
+    }
+    const t = document.createElement("div"); t.innerHTML = row + pane;
+    const newRow = t.firstElementChild, newPane = t.lastElementChild;
+    if (newRow.children.length === oldRow.children.length) [...newRow.children].forEach((n, i) => {   // 같은 칩의 속성만 바꿔서 선택 표시가 부드럽게 옮겨감
+      const o = oldRow.children[i];
+      [...n.attributes].forEach(a => { if (o.getAttribute(a.name) !== a.value) o.setAttribute(a.name, a.value); });
+      if (o.innerHTML !== n.innerHTML) o.innerHTML = n.innerHTML;
+    }); else oldRow.replaceWith(newRow);
+    oldPane.replaceWith(newPane);
+    if (!REDUCE && newPane.animate) newPane.animate([{ opacity: 0, transform: `translateX(${key > prev ? 28 : -28}px)` }, { opacity: 1, transform: "none" }], { duration: 260, easing: "cubic-bezier(.2, .8, .2, 1)" });
+    centerChip(root.querySelector(".daychip[aria-pressed='true']"), true);
   }
   // 세로로 어떤 요소를 위 머리띠와 아래 탭바 사이 가운데로
   function reveal(el, smooth) {
@@ -1062,7 +1091,7 @@ details.card .in { padding: 0 16px 16px; display: flex; flex-direction: column; 
         ${m ? `<button class="btn go" data-meal="${m.key}">${cnt ? `식당 후보 ${cnt}곳 보기` : "식당 찾아보기"}</button>` : ""}
       </div></div>`;
     }).join("");
-    $("#v-plan").innerHTML = `<div class="days" role="group" aria-label="날짜">${chips}</div>
+    paint($("#v-plan"), `<div class="days" role="group" aria-label="날짜">${chips}</div>`, `
       <div class="stack" style="padding-top:8px">
         <div class="dayhead"><div><div class="date">${esc(D.dates[d - 1])}</div><div class="muted pre">${esc(D.flow[d - 1])}</div></div>
         <span class="pill" style="background:${colorOf(d)};color:#fff">Day ${d}</span></div>
@@ -1070,9 +1099,7 @@ details.card .in { padding: 0 16px 16px; display: flex; flex-direction: column; 
         ${stay ? `<div class="card"><p class="eyebrow">이날 숙소</p><div class="h2">${esc(stay.name)}</div><div class="addr muted">${esc(stay.addr)}</div>
         <div class="grid2" style="margin-top:10px"><a class="btn" href="${mapQ(stay.name + ", " + stay.addr)}" target="_blank" rel="noopener">지도</a><button class="btn primary" data-ride="stay:${d}">택시 · 우버</button></div></div>` : ""}
         ${dayMaps(d, true)}
-      </div>`;
-    const cur = $("#v-plan .daychip[aria-pressed='true']");
-    centerChip(cur);
+      </div>`, d);
     mountMaps($("#v-plan"));
   }
 
@@ -1086,7 +1113,7 @@ details.card .in { padding: 0 16px 16px; display: flex; flex-direction: column; 
       const [md, wd] = D.dates[n - 1].split(" ");
       return `<button class="daychip" style="--city:${colorOf(n)}" aria-pressed="${n === d}" data-wday="${n}"><b>${md}</b><span>${wd.replace(/[()]/g, "")} · ${D.wallet.filter(w => w.day === n).length}개</span><i></i></button>`;
     }).join("");
-    $("#v-wallet").innerHTML = `<div class="days" role="group" aria-label="날짜">${chips}</div>
+    paint($("#v-wallet"), `<div class="days" role="group" aria-label="날짜">${chips}</div>`, `
       <div class="stack" style="padding-top:8px">
       <div class="dayhead"><div><div class="date">${esc(D.dates[d - 1])}</div><div class="muted">${esc(cityOf(d))} · 티켓 · 예약 ${list.length}개</div></div>
         <span class="pill" style="background:${colorOf(d)};color:#fff">Day ${d}</span></div>
@@ -1101,8 +1128,7 @@ details.card .in { padding: 0 16px 16px; display: flex; flex-direction: column; 
         ${(w.open || []).map(l => `<a class="btn primary" href="${esc(l.url)}" target="_blank" rel="noopener">${esc(l.label)}</a>`).join("")}
         ${!(w.open || []).length && w.status !== "미예약" ? `<div class="nolink">티켓 원본 링크 없음 · 메일·앱 링크를 알려주면 버튼이 생겨요</div>` : ""}
         ${w.links ? `<div class="links">${w.links.map(l => `<a href="${esc(l.url)}" target="_blank" rel="noopener">${esc(l.label)} →</a>`).join("")}</div>` : ""}
-      </div>`).join("")}</div>`;
-    centerChip($("#v-wallet .daychip[aria-pressed='true']"));
+      </div>`).join("")}</div>`, d);
   }
 
   /* ---------- 식당 ---------- */
@@ -1155,7 +1181,7 @@ details.card .in { padding: 0 16px 16px; display: flex; flex-direction: column; 
           ${p.ll ? `<button class="btn" data-ride="food:${i}">택시 · 우버</button>` : `<a class="btn" href="https://www.google.com/search?q=${encodeURIComponent(nm + " " + city)}" target="_blank" rel="noopener">구글 검색</a>`}
         </div></article>`;
     }).join("");
-    $("#v-food").innerHTML = `<div class="days" role="group" aria-label="날짜">${chips}</div>
+    paint($("#v-food"), `<div class="days" role="group" aria-label="날짜">${chips}</div>`, `
       <div class="stack" style="padding-top:8px">
         <div class="seg" role="group" aria-label="점심 · 저녁">${seg}</div>
         <div><div class="h2">${esc(m.meal)}</div><div class="muted">${esc(m.region)} · ${esc(m.where)}</div>
@@ -1164,9 +1190,7 @@ details.card .in { padding: 0 16px 16px; display: flex; flex-direction: column; 
         ${cards ? `<p class="note">음식 사진 · 메뉴판 사진 버튼을 누르면 구글에서 사람들이 찍은 사진을 바로 볼 수 있어요.</p>` : ""}
         ${cards || `<div class="card"><div class="h2">아직 후보가 없어요</div><p class="muted">위 버튼으로 근처 식당을 바로 찾아볼 수 있어요.</p></div>`}
         ${cards ? `<p class="credit">별점 · 후기: Google 지도 (2026년 10월 기준) · 가격: 각 식당 메뉴판</p>` : ""}
-      </div>`;
-    const cur = $("#v-food .daychip[aria-pressed='true']");
-    centerChip(cur);
+      </div>`, dayIdx(md) * 2 + (slot === "dinner" ? 1 : 0));
   }
 
   /* ---------- 더보기 ---------- */
@@ -1265,29 +1289,42 @@ details.card .in { padding: 0 16px 16px; display: flex; flex-direction: column; 
   /* ---------- 탭 ---------- */
   const VIEWS = ["today", "plan", "wallet", "food", "more"];
   const RENDER = { today: renderToday, plan: renderPlan, wallet: renderWallet, food: renderFood, more: renderMore };
-  function show(v) {
+  const scrollMem = {}; let curView = null;
+  function moveInd(v, instant) {
+    const ind = $(".tabs .ind"), b = $(`.tabs button[data-tab="${v}"]`); if (!ind || !b) return;
+    if (instant) ind.classList.add("noanim");
+    ind.style.width = b.offsetWidth + "px"; ind.style.transform = `translateX(${b.offsetLeft}px)`;
+    if (instant) { void ind.offsetWidth; ind.classList.remove("noanim"); }
+  }
+  addEventListener("resize", () => { if (curView) moveInd(curView, true); });
+  function show(v, fromTab) {
     if (!VIEWS.includes(v)) v = "today";
+    if (fromTab && v === curView) { window.scrollTo({ top: 0, behavior: REDUCE ? "auto" : "smooth" }); return; }   // 같은 탭 한 번 더 → 맨 위로
+    if (curView) scrollMem[curView] = window.scrollY;
     VIEWS.forEach(x => { $("#v-" + x).hidden = x !== v; });
     document.querySelectorAll(".tabs button").forEach(b => b.setAttribute("aria-current", b.dataset.tab === v ? "page" : "false"));
+    moveInd(v, !curView);
     $("#title").textContent = TITLES[v];
     destroyMaps();
+    delete lastKey["v-" + v];
     RENDER[v]();
     store.set("tab", v);
-    window.scrollTo(0, 0);
+    window.scrollTo(0, fromTab ? (scrollMem[v] || 0) : 0);
+    curView = v;
   }
 
   document.addEventListener("click", e => {
     const b = e.target.closest("button, a");
     if (!b) { const ev = e.target.closest("[data-route]"); if (ev) showRoute(ev); return; }
     const ds = b.dataset;
-    if (ds.tab) show(ds.tab);
+    if (ds.tab) show(ds.tab, true);
     else if (ds.go) show(ds.go);
     else if (ds.plan) { planDay = +ds.plan; store.set("planDay", planDay); show("plan"); }
     else if (ds.day) { planDay = +ds.day; store.set("planDay", planDay); destroyMaps(); renderPlan(); }
     else if (ds.fly) { const [fd, fi, fk] = ds.fly.split(":"); const m = MAPS[fd + ":v-plan"] || MAPS[fd + ":v-today"]; if (m) m.fly(+fi, fk === undefined ? -1 : +fk); }
     else if (ds.taxiplan !== undefined) openTaxiPlan(+ds.taxiplan);
-    else if (ds.meal) { mealKey = ds.meal; store.set("meal", mealKey); if ($("#v-food").hidden) show("food"); else { renderFood(); window.scrollTo(0, 0); } }
-    else if (ds.wday) { walletDay = +ds.wday; store.set("walletDay", walletDay); if ($("#v-wallet").hidden) show("wallet"); else { renderWallet(); window.scrollTo(0, 0); } }
+    else if (ds.meal) { mealKey = ds.meal; store.set("meal", mealKey); if ($("#v-food").hidden) show("food"); else renderFood(); }
+    else if (ds.wday) { walletDay = +ds.wday; store.set("walletDay", walletDay); if ($("#v-wallet").hidden) show("wallet"); else renderWallet(); }
     else if (ds.install) { if (window.__showInstall) window.__showInstall(); }
     else if (ds.tf) { document.documentElement.dataset.tf = ds.tf; store.set("tf", ds.tf); renderMore(); }
     else if (ds.ride) openRide(ds.ride);
@@ -1317,7 +1354,7 @@ details.card .in { padding: 0 16px 16px; display: flex; flex-direction: column; 
 </template>
 <script>
 (() => {
-  const KEY = "es26:key", BUILD = "d677f29f16";
+  const KEY = "es26:key", BUILD = "47b9b69fe6";
   const ub64 = s => Uint8Array.from(atob(s), c => c.charCodeAt(0));
   const tob64 = u => btoa(String.fromCharCode(...u));
   const get = k => { try { return localStorage.getItem(k); } catch (e) { return null; } };
