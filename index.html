@@ -343,13 +343,16 @@ small.ap { font-size: .72em; font-weight: 700; margin-right: 2px; letter-spacing
 .mapcard { padding: 0; overflow: hidden; }
 .mapcard .cap { padding: 12px 16px 10px; display: flex; justify-content: space-between; gap: 10px; align-items: baseline; flex-wrap: wrap; }
 .mapcard .cap b { font-size: 18px; }
-.tmap { position: relative; width: 100%; max-width: 100%; aspect-ratio: 5 / 4; background: var(--m-land); overflow: hidden; touch-action: none;   /* 지도 위 손가락은 모두 지도가 받음 (페이지 스크롤은 지도 바깥에서) */ }
+.tmap { position: relative; width: 100%; max-width: 100%; aspect-ratio: 5 / 4; background: var(--m-land); overflow: hidden; touch-action: pan-y;   /* 평소: 한 손가락은 페이지 스크롤 */ }
 .tmap canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block; cursor: grab; -webkit-transform: translateZ(0); transform: translateZ(0); }   /* 아이폰: 캔버스가 화면에 안 그려지는 문제 피하기 */
 .tmap .chip { position: absolute; left: 10px; top: 10px; right: 64px; pointer-events: none; }
 .tmap .chip span { display: inline-block; background: var(--surface); color: var(--ink); border: 1px solid var(--line); border-radius: 12px; padding: 6px 10px; font-size: 15px; font-weight: 700; box-shadow: var(--shadow); line-height: 1.35; }
 .tmap .zoom { position: absolute; right: 10px; top: 10px; display: flex; flex-direction: column; gap: 6px; }
 .tmap .zoom button { width: 40px; height: 40px; border-radius: 10px; border: 1px solid var(--line); background: var(--surface); font-size: 22px; font-weight: 700; cursor: pointer; line-height: 1; }
 .tmap .play { position: absolute; left: 50%; bottom: 12px; transform: translateX(-50%); min-height: 46px; padding: 8px 18px; border-radius: 999px; border: 0; background: var(--m-route); color: #fff; font-weight: 700; font-size: 16px; cursor: pointer; box-shadow: 0 4px 14px rgba(0,0,0,.18); white-space: nowrap; }
+.tmap.live { touch-action: none; }   /* 지도를 한 번 톡 → 켜짐: 한 손가락이 지도 이동 */
+.tmap.live::after { content: ""; position: absolute; inset: 0; border: 3px solid var(--accent); pointer-events: none; }
+.tmap .maphint { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); background: rgba(10, 15, 26, .72); color: #fff; font-size: 14px; font-weight: 700; padding: 8px 12px; border-radius: 12px; pointer-events: none; white-space: nowrap; z-index: 2; }
 .tmap .allbtn { position: absolute; right: 10px; top: 102px; width: 40px; height: 40px; border-radius: 10px; border: 1px solid var(--line); background: var(--surface); color: var(--ink); font-size: 12px; font-weight: 800; cursor: pointer; padding: 0; }
 .mapfoot { font-size: 11px; color: var(--muted); padding: 6px 16px 10px; }
 .stops { display: flex; flex-direction: column; }
@@ -1017,30 +1020,56 @@ details.card .in { padding: 0 16px 16px; display: flex; flex-direction: column; 
       const r = canvas.getBoundingClientRect(), [mx, my] = tMid(t), k = 2 ** cam.z;
       pinch = { d: tDist(t), z: cam.z, wx: cam.x + (mx - r.left - W / 2) / k, wy: cam.y + (my - r.top - H / 2) / k };
     };
+    // 지도 켜짐/꺼짐: 꺼져 있을 땐 한 손가락이 페이지 스크롤 (스크롤하다 지도에 닿아도 지도가 안 움직임)
+    // 지도를 한 번 톡 → 켜짐(테두리) → 한 손가락으로 지도 이동. 지도 바깥을 누르거나 6초 동안 안 만지면 꺼짐. 두 손가락은 언제나 지도.
+    const hint = host.querySelector(".maphint"), view = host.closest(".view");
+    let live = false, liveTimer = 0, tapC = null, lastScroll = -1e9, hintTimer = 0, hintAt = -1e9;
+    const onViewScroll = () => { lastScroll = performance.now(); };
+    if (view) view.addEventListener("scroll", onViewScroll, { passive: true });
+    const showHint = (t, ms) => { if (!hint) return; hint.textContent = t; hint.hidden = false; clearTimeout(hintTimer); hintTimer = setTimeout(() => { hint.hidden = true; }, ms || 1600); };
+    const touchLive = () => { clearTimeout(liveTimer); liveTimer = setTimeout(() => setLive(false), 6000); };
+    function setLive(v) {
+      if (live === v) { if (v) touchLive(); return; }
+      live = v; host.classList.toggle("live", v);
+      if (v) { touchLive(); showHint("지도 움직이기 켜짐 · 바깥을 누르면 꺼져요", 1400); } else { clearTimeout(liveTimer); }
+    }
+    const offIfOutside = e => { if (live && !host.contains(e.target)) setLive(false); };
+    document.addEventListener("touchstart", offIfOutside, { capture: true, passive: true });
     canvas.addEventListener("touchstart", e => {
       if (!ensure()) return;
-      e.preventDefault(); grab();
-      if (e.touches.length >= 2) { drag = null; startPinch(e.touches); return; }
+      if (e.touches.length >= 2) { e.preventDefault(); grab(); drag = null; tapC = null; setLive(true); startPinch(e.touches); return; }
       const t = e.touches[0], now = performance.now();
-      if (lastTap && now - lastTap.t < 300 && Math.hypot(t.clientX - lastTap.x, t.clientY - lastTap.y) < 30) { lastTap = null; drag = null; zoomAt(t.clientX, t.clientY, 1); return; }
-      lastTap = { t: now, x: t.clientX, y: t.clientY };
-      startDrag(t.clientX, t.clientY);
+      if (lastTap && now - lastTap.t < 300 && Math.hypot(t.clientX - lastTap.x, t.clientY - lastTap.y) < 30) {   // 두 번 톡 → 그 자리 확대
+        e.preventDefault(); lastTap = null; tapC = null; drag = null; grab(); setLive(true); zoomAt(t.clientX, t.clientY, 1); return;
+      }
+      tapC = { t: now, x: t.clientX, y: t.clientY, scrolling: now - lastScroll < 450 };   // 스크롤 중 멈추려고 톡 → 켜지지 않게
+      if (live) { e.preventDefault(); grab(); touchLive(); startDrag(t.clientX, t.clientY); }
     }, { passive: false });
     canvas.addEventListener("touchmove", e => {
-      e.preventDefault();
       if (pinch && e.touches.length >= 2) {
+        e.preventDefault();
         const r = canvas.getBoundingClientRect(), [mx, my] = tMid(e.touches);
         const z = Math.min(17, Math.max(4, pinch.z + Math.log2(tDist(e.touches) / pinch.d))), k = 2 ** z;
         cam = { x: pinch.wx - (mx - r.left - W / 2) / k, y: pinch.wy - (my - r.top - H / 2) / k, z };
-        paint();
-      } else if (drag && e.touches.length === 1) {
-        const t = e.touches[0]; if (lastTap && Math.hypot(t.clientX - lastTap.x, t.clientY - lastTap.y) > 10) lastTap = null;
-        moveDrag(t.clientX, t.clientY);
+        paint(); touchLive(); return;
       }
+      const t = e.touches[0]; if (!t) return;
+      const moved = tapC && Math.hypot(t.clientX - tapC.x, t.clientY - tapC.y) > 10;
+      if (moved) { tapC = null; lastTap = null; }
+      if (live && drag && e.touches.length === 1) { e.preventDefault(); touchLive(); moveDrag(t.clientX, t.clientY); }
+      else if (!live && moved && performance.now() - hintAt > 15000) { hintAt = performance.now(); showHint("한 번 누르면 지도를 움직일 수 있어요"); }
     }, { passive: false });
     ["touchend", "touchcancel"].forEach(ev => canvas.addEventListener(ev, e => {
-      if (pinch && e.touches.length === 1) { pinch = null; startDrag(e.touches[0].clientX, e.touches[0].clientY); return; }   // 두 손가락 → 한 손가락: 끊김 없이 이어서 이동
-      if (e.touches.length === 0) { pinch = null; endDrag(); }
+      if (pinch && e.touches.length === 1) { pinch = null; startDrag(e.touches[0].clientX, e.touches[0].clientY); return; }   // 두 손가락 → 한 손가락: 이어서 이동
+      if (e.touches.length) return;
+      pinch = null;
+      if (live) endDrag();
+      const now = performance.now();
+      if (ev === "touchend" && tapC && now - tapC.t < 350) {   // 톡 (움직임 없음)
+        lastTap = { t: now, x: tapC.x, y: tapC.y };
+        if (!live && !tapC.scrolling) setLive(true);
+      }
+      tapC = null; drag = live ? drag : null;
     }));
     ["gesturestart", "gesturechange", "gestureend"].forEach(t => canvas.addEventListener(t, e => e.preventDefault()));   // 아이폰: 페이지 전체 확대 막기
     canvas.addEventListener("wheel", e => { if (playing) return; e.preventDefault(); stopGlide(); cam = { ...cam, z: Math.min(17, Math.max(4, cam.z - e.deltaY / 400)) }; paint(); }, { passive: false });
@@ -1059,7 +1088,7 @@ details.card .in { padding: 0 16px 16px; display: flex; flex-direction: column; 
       else blanks = 0;
     }
     const io = new IntersectionObserver(es => es.forEach(en => {
-      if (!en.isIntersecting) return;
+      if (!en.isIntersecting) { setLive(false); return; }
       if (!playing) heal();
       if (en.intersectionRatio > .55 && !played && !REDUCE && ensure()) play();
     }), { threshold: [0, .6] });
@@ -1072,7 +1101,8 @@ details.card .in { padding: 0 16px 16px; display: flex; flex-direction: column; 
     mq.addEventListener("change", onTheme);
     if (document.fonts && document.fonts.ready) document.fonts.ready.then(() => draw());
     return { fly, route, destroy() {
-      alive = false; cancel(); stopGlide(); cancelAnimationFrame(frame); ro.disconnect(); io.disconnect(); mq.removeEventListener("change", onTheme);
+      alive = false; cancel(); stopGlide(); cancelAnimationFrame(frame); clearTimeout(liveTimer); clearTimeout(hintTimer); ro.disconnect();
+      document.removeEventListener("touchstart", offIfOutside, { capture: true }); if (view) view.removeEventListener("scroll", onViewScroll); io.disconnect(); mq.removeEventListener("change", onTheme);
       document.removeEventListener("visibilitychange", onShow); window.removeEventListener("pageshow", onShow);
       canvas.width = canvas.height = 0;   // 캔버스 메모리 바로 돌려주기 (아이폰은 한도를 넘으면 새 지도가 하얗게 나옴)
     } };
@@ -1104,6 +1134,7 @@ details.card .in { padding: 0 16px 16px; display: flex; flex-direction: column; 
         <div class="chip"><span>동선</span></div>
         <div class="zoom"><button data-z="1" aria-label="확대">+</button><button data-z="-1" aria-label="축소">−</button></div>
         <button class="allbtn" hidden aria-label="전체 동선 보기">전체</button>
+        <div class="maphint" hidden></div>
         <button class="play">▶ 동선 따라가기</button></div>
       <div class="legend"><span><i class="lc go"></i>가는 길</span><span><i class="lc back"></i>돌아가는 길</span><span><i class="lc rail"></i>기차 · 비행기</span><span><i class="lc foot"></i>걷기 (점선)</span></div>
       <div class="mapfoot">지도 데이터 © OpenStreetMap contributors · 이동 시간은 길이 막히지 않을 때 기준${S.note ? " · " + esc(S.note) : ""}</div>${list}</div>`;
@@ -1507,7 +1538,7 @@ details.card .in { padding: 0 16px 16px; display: flex; flex-direction: column; 
 </template>
 <script>
 (() => {
-  const KEY = "es26:key", BUILD = "6bce88a597";
+  const KEY = "es26:key", BUILD = "7669b2e766";
   const ub64 = s => Uint8Array.from(atob(s), c => c.charCodeAt(0));
   const tob64 = u => btoa(String.fromCharCode(...u));
   const get = k => { try { return localStorage.getItem(k); } catch (e) { return null; } };
