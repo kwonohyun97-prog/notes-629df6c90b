@@ -1658,9 +1658,9 @@ details.card .in { padding: 0 16px 16px; display: flex; flex-direction: column; 
     const old = h.cloneNode(true); old.removeAttribute("id"); old.classList.add("ghost"); old.setAttribute("aria-hidden", "true");
     h.parentNode.appendChild(old);
     h.textContent = text;
-    const ease = "cubic-bezier(.2, .8, .2, 1)";
-    old.animate([{ transform: "none", opacity: 1 }, { transform: `translateX(${-dir * 24}px)`, opacity: 0 }], { duration: 180, easing: ease, fill: "forwards" });
-    h.animate([{ transform: `translateX(${dir * 24}px)`, opacity: 0 }, { transform: "none", opacity: 1 }], { duration: 240, easing: ease });
+    const ease = "cubic-bezier(.33, 1, .68, 1)";   // 차분하게 감속 (튕김 없음)
+    old.animate([{ transform: "none", opacity: 1 }, { transform: `translateX(${-dir * 4}px)`, opacity: 0 }], { duration: 140, easing: "ease-out", fill: "forwards" });
+    h.animate([{ transform: `translateX(${dir * 8}px)`, opacity: 0 }, { transform: "none", opacity: 1 }], { duration: 260, easing: ease });
     setTimeout(() => old.remove(), 260);
   }
   function moveInd(v, instant) {
@@ -1770,7 +1770,7 @@ details.card .in { padding: 0 16px 16px; display: flex; flex-direction: column; 
 </template>
 <script>
 (() => {
-  const KEY = "es26:key", BUILD = "46c75dfa3f";
+  const KEY = "es26:key", BUILD = "42e24bc502";
   const ub64 = s => Uint8Array.from(atob(s), c => c.charCodeAt(0));
   const tob64 = u => btoa(String.fromCharCode(...u));
   const get = k => { try { return localStorage.getItem(k); } catch (e) { return null; } };
