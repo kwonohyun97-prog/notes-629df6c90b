@@ -393,6 +393,8 @@ small.ap { font-size: .72em; font-weight: 700; margin-right: 2px; letter-spacing
 .ev .pl { font-size: 15px; color: var(--muted); margin-top: 3px; }
 .ev .tk { margin-top: 6px; }
 .ev .go { margin-top: 10px; min-height: 42px; font-size: 15px; }
+.ev.now { margin-inline: -8px; padding-inline: 8px; border-radius: 12px; background: var(--accent-soft); box-shadow: inset 4px 0 0 var(--accent); }
+.ev .nowpill { flex: none; font-size: 12px; font-weight: 800; color: #fff; background: var(--accent); border-radius: 999px; padding: 2px 8px; }
 .ev[data-route] { cursor: pointer; margin-inline: -8px; padding-inline: 8px; border-radius: 12px; -webkit-tap-highlight-color: transparent; transition: background-color .2s; }
 .ev[data-route]:active { background: var(--surface-2); }
 .ev.on { background: var(--accent-soft); }
@@ -1206,9 +1208,10 @@ details.card .in { padding: 0 16px 16px; display: flex; flex-direction: column; 
   /* ---------- 일정 ---------- */
   let planDay = null;   // 앱을 새로 켜면 그날 날짜부터
   function renderPlan() {
-    const { idx } = tripDay();
+    const { idx, now } = tripDay();
     if (!planDay) planDay = idx >= 1 && idx <= 10 ? idx : 1;
     const d = planDay, stay = stayOf(d);
+    const nowEv = d === idx ? [...evsOf(d)].reverse().find(e => mins(e) <= now) || null : null;   // 오늘이면 지금 하고 있는 일정
     const chips = D.dates.map((dt, i) => {
       const n = i + 1, [md, wd] = dt.split(" ");
       return `<button class="daychip" style="--city:${colorOf(n)}" aria-pressed="${n === d}" data-day="${n}"><b>${md}</b><span>${wd.replace(/[()]/g, "")} · ${esc(cityOf(n))}</span><i></i></button>`;
@@ -1217,8 +1220,9 @@ details.card .in { padding: 0 16px 16px; display: flex; flex-direction: column; 
       const m = e.food && mealByKey[e.food];
       const cnt = m ? m.places.length : 0;
       const rt = e.route ? ` data-route="${d}:${e.route[0]}:${e.route[1]}" role="button" tabindex="0" aria-label="${esc(e.title)} 경로를 지도에서 보기"` : "";
-      return `<div class="ev" style="--cat:${CAT[e.cat]}"${rt}><div class="t">${ap(e.time)}</div><div>
-        <div class="ti"><span class="dot"></span><span>${esc(e.title)}</span>${e.route ? `<span class="evmap">${e.route[0] === e.route[1] ? "위치" : "경로"} ↓</span>` : ""}</div>
+      const isNow = e === nowEv;
+      return `<div class="ev${isNow ? " now" : ""}" style="--cat:${CAT[e.cat]}"${rt}><div class="t">${ap(e.time)}</div><div>
+        <div class="ti"><span class="dot"></span><span>${esc(e.title)}</span>${isNow ? `<span class="nowpill">지금</span>` : ""}${e.route ? `<span class="evmap">${e.route[0] === e.route[1] ? "위치" : "경로"} ↓</span>` : ""}</div>
         ${e.note ? `<div class="no">${ap(e.note)}</div>` : ""}
         ${e.place ? `<div class="pl">${esc(e.place)}</div>` : ""}
         ${e.ticket ? `<div class="tk"><span class="pill">${esc(e.ticket)}</span></div>` : ""}
@@ -1517,6 +1521,23 @@ details.card .in { padding: 0 16px 16px; display: flex; flex-direction: column; 
   setTimeout(park, 0); setTimeout(park, 600);
   // 앱 맨 위 머리띠(제목 · 시계)를 눌러도 맨 위로
   $(".top").addEventListener("click", viewTop);
+  // 여행 중에는 일정 · 티켓 · 식당 탭을 열 때 '지금'에 맞는 날짜와 끼니로 맞춤 (직접 고른 지 10분이 안 지났으면 그대로)
+  const picked = { plan: 0, wallet: 0, food: 0 };
+  function nowMealKey() {   // 오후 3시 전 → 오늘 점심, 그 뒤 → 오늘 저녁, 밤 9시 반 넘으면 → 내일 점심 (없으면 다음 끼니)
+    const { idx, now } = tripDay();
+    const di = now >= 21 * 60 + 30 ? idx + 1 : idx, target = di * 2 + (now >= 15 * 60 && now < 21 * 60 + 30 ? 1 : 0);
+    const ord = m => dayIdx(mealDate(m)) * 2 + (mealSlot(m) === "dinner" ? 1 : 0);
+    const pick = D.meals.slice().sort((a, b) => ord(a) - ord(b)).find(m => ord(m) >= target);
+    return pick ? pick.key : null;
+  }
+  function autoPick(v) {
+    const { idx } = tripDay();
+    if (!(v in picked) || idx < 1 || idx > 10 || Date.now() - picked[v] < 10 * 60e3) return false;
+    if (v === "plan") planDay = idx;
+    else if (v === "wallet") walletDay = null;   // 오늘(없으면 다음 날) 티켓
+    else if (v === "food") mealKey = nowMealKey() || mealKey;
+    return true;
+  }
   function show(v, fromTab) {
     if (!VIEWS.includes(v)) v = "today";
     if (fromTab && v === curView) { $("#v-" + v).scrollTo({ top: 0, behavior: REDUCE ? "auto" : "smooth" }); return; }   // 같은 탭 한 번 더 → 맨 위로
@@ -1527,9 +1548,11 @@ details.card .in { padding: 0 16px 16px; display: flex; flex-direction: column; 
     $("#title").textContent = TITLES[v];
     destroyMaps();
     delete lastKey["v-" + v];
+    const auto = autoPick(v);
     RENDER[v]();
-    $("#v-" + v).scrollTop = fromTab && v !== "more" ? (scrollMem[v] || 0) : 0;   // 더보기는 항상 접힌 채 맨 위부터
+    $("#v-" + v).scrollTop = fromTab && v !== "more" && !auto ? (scrollMem[v] || 0) : 0;   // 더보기는 항상 접힌 채 맨 위부터
     curView = v;
+    if (auto && v === "plan") { const nowEl = $("#v-plan .ev.now"); if (nowEl) reveal(nowEl, false); }   // 지금 일정이 보이게
   }
 
   document.addEventListener("click", e => {
@@ -1538,12 +1561,12 @@ details.card .in { padding: 0 16px 16px; display: flex; flex-direction: column; 
     const ds = b.dataset;
     if (ds.tab) show(ds.tab, true);
     else if (ds.go) show(ds.go);
-    else if (ds.plan) { planDay = +ds.plan; show("plan"); }
-    else if (ds.day) { planDay = +ds.day; destroyMaps(); renderPlan(); }
+    else if (ds.plan) { planDay = +ds.plan; picked.plan = Date.now(); show("plan"); }
+    else if (ds.day) { planDay = +ds.day; picked.plan = Date.now(); destroyMaps(); renderPlan(); }
     else if (ds.fly) { const [fd, fi, fk] = ds.fly.split(":"); const m = MAPS[fd + ":v-plan"] || MAPS[fd + ":v-today"]; if (m) m.fly(+fi, fk === undefined ? -1 : +fk); }
     else if (ds.taxiplan !== undefined) openTaxiPlan(+ds.taxiplan);
-    else if (ds.meal) { mealKey = ds.meal; if ($("#v-food").hidden) show("food"); else renderFood(); }
-    else if (ds.wday) { walletDay = +ds.wday; if ($("#v-wallet").hidden) show("wallet"); else renderWallet(); }
+    else if (ds.meal) { mealKey = ds.meal; picked.food = Date.now(); if ($("#v-food").hidden) show("food"); else renderFood(); }
+    else if (ds.wday) { walletDay = +ds.wday; picked.wallet = Date.now(); if ($("#v-wallet").hidden) show("wallet"); else renderWallet(); }
     else if (ds.install) { if (window.__showInstall) window.__showInstall(); }
     else if (ds.tf) { document.documentElement.dataset.tf = ds.tf; store.set("tf", ds.tf); renderMore(); }
     else if (ds.ride) openRide(ds.ride);
@@ -1575,7 +1598,7 @@ details.card .in { padding: 0 16px 16px; display: flex; flex-direction: column; 
 </template>
 <script>
 (() => {
-  const KEY = "es26:key", BUILD = "8312b32e34";
+  const KEY = "es26:key", BUILD = "8ce2c38e15";
   const ub64 = s => Uint8Array.from(atob(s), c => c.charCodeAt(0));
   const tob64 = u => btoa(String.fromCharCode(...u));
   const get = k => { try { return localStorage.getItem(k); } catch (e) { return null; } };
