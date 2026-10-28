@@ -431,6 +431,16 @@ details.card .in { padding: 0 16px 16px; display: flex; flex-direction: column; 
 .phrase { border-top: 1px solid var(--line); padding-top: 10px; }
 .phrase:first-child { border-top: 0; padding-top: 0; }
 .phrase .es { font-size: 21px; font-weight: 700; line-height: 1.3; }
+.phrase .pron { font-size: 16px; font-weight: 700; color: var(--accent); }
+/* 현지인에게 하는 말: 영어 기본 + 🇪🇸 스페인어 펼치기 */
+.say2 { display: flex; flex-direction: column; gap: 8px; }
+.say2 .en { font-size: 21px; font-weight: 700; line-height: 1.35; }
+.say2 .es2 { display: flex; flex-direction: column; align-items: flex-start; gap: 6px; font-size: 19px; font-weight: 700; line-height: 1.35; color: var(--accent); background: var(--accent-soft); border-radius: 12px; padding: 8px 12px; }
+.say2 .ko2 { font-size: 15px; color: var(--muted); }
+.say2 .act { display: flex; gap: 8px; flex-wrap: wrap; }
+.say2 .act .btn { flex: 0 1 auto; }
+.say2.big2 .en { font-size: 28px; line-height: 1.3; }
+.say2.big2 .es2 { font-size: 23px; }
 .num { font-family: var(--mono); font-size: 22px; font-weight: 600; user-select: all; }
 .check { display: flex; gap: 10px; align-items: center; min-height: 40px; font-size: 17px; }
 .check input { width: 22px; height: 22px; accent-color: var(--accent); }
@@ -550,6 +560,14 @@ details.card .in { padding: 0 16px 16px; display: flex; flex-direction: column; 
   const stayOf = d => D.stays.find(s => s.days.includes(d));
   const evsOf = d => D.events.filter(e => e.day === d).sort((a, b) => a.start - b.start);
   const mins = e => { const m = String(e.time).match(/(\d{1,2}):(\d{2})/); return m ? (+m[1]) * 60 + (+m[2]) : e.start * 60; };
+
+  // 현지인에게 하는 말: 영어가 기본 (스페인어로 말하면 스페인어로 대답이 와서), 🇪🇸 버튼을 누르면 스페인어도
+  function sayBox(en, es, ko, opt = {}) {
+    return `<div class="say2${opt.big ? " big2" : ""}"><div class="en">${esc(en)}</div>
+      <div class="es2" hidden><span>${esc(es)}</span>${opt.copy ? `<button class="btn sm" data-copy="${esc(es)}">스페인어 복사</button>` : ""}</div>
+      ${ko ? `<div class="ko2">${esc(ko)}</div>` : ""}
+      <div class="act"><button class="btn sm" data-lang="1" aria-pressed="false">🇪🇸 스페인어</button>${opt.copy ? `<button class="btn sm" data-copy="${esc(en)}">영어 복사</button>` : ""}</div></div>`;
+  }
 
   /* 시간: 13:35 → 오후 1:35 */
   function apWord(h) { return h === 0 || h === 24 ? "밤" : h < 6 ? "새벽" : h < 12 ? "오전" : "오후"; }
@@ -1210,11 +1228,16 @@ details.card .in { padding: 0 16px 16px; display: flex; flex-direction: column; 
       <details class="card"><summary>택시 미리 부탁하기 (호텔)</summary><div class="in">
         <p class="muted" style="margin:0">이른 아침에 떠나는 날은 전날 밤 숙소 프런트에 택시를 예약해 달라고 부탁하세요. 화면을 보여주거나, 문장을 복사해서 Booking.com 앱 메시지로 보내면 돼요.</p>
         ${D.taxiplan.map((t, i) => `<div class="stay"><div class="nm">${esc(D.dates[t.day - 1])} ${ap(t.time)} · ${esc(t.dest)}</div><div class="muted">${esc(t.hotel)} · 부탁할 때: ${esc(t.when)}</div>
-        <div class="grid2" style="margin-top:6px"><button class="btn primary" data-taxiplan="${i}">프런트에 보여주기</button><button class="btn" data-copy="${esc(t.es)}">문장 복사</button></div></div>`).join("")}</div></details>
+        <div class="grid2" style="margin-top:6px"><button class="btn primary" data-taxiplan="${i}">프런트에 보여주기</button><button class="btn" data-copy="${esc(t.en)}">영어 문장 복사</button></div></div>`).join("")}</div></details>
       <details class="card"><summary>숙소 6곳</summary><div class="in">${D.stays.map((s, i) => `<div class="stay">
         <div class="muted">${esc(s.dates)} · ${esc(s.area)}</div><div class="nm">${esc(s.name)}</div><div class="addr">${esc(s.addr)}</div><div class="muted">예약 · ${esc(s.who)}</div>
         <div class="grid2" style="margin-top:6px"><a class="btn" href="${mapQ(s.name + ", " + s.addr)}" target="_blank" rel="noopener">지도</a><button class="btn primary" data-ride="stay:${s.days[0]}">택시 · 우버</button></div></div>`).join("")}</div></details>
-      <details class="card"><summary>스페인어 카드</summary><div class="in">${D.phrases.map(([ko, es]) => `<div class="phrase"><div class="muted">${esc(ko)}</div><div class="es">${esc(es)}</div></div>`).join("")}</div></details>
+      <details class="card"><summary>말하기 카드 (영어)</summary><div class="in">
+        <p class="muted" style="margin:0">영어로 말하면 영어로 대답해줘요. 🇪🇸 버튼을 누르면 스페인어도 보여요.</p>
+        ${D.talk.map(t => `<div class="phrase"><div class="muted">${esc(t.ko)}</div>${sayBox(t.en, t.es, "")}</div>`).join("")}</div></details>
+      <details class="card"><summary>스페인어 한마디 (인사 · 감사)</summary><div class="in">
+        <p class="muted" style="margin:0">인사와 감사는 현지어로 한마디 해주면 다들 좋아해요.</p>
+        ${D.hola.map(h => `<div class="phrase"><div class="muted">${esc(h.ko)}</div><div class="es">${esc(h.es)}</div><div class="pron">${esc(h.pron)}</div></div>`).join("")}</div></details>
       <details class="card"><summary>비상 연락처</summary><div class="in">${D.emergency.map(e => `<div class="stay"><div class="nm">${esc(e.name)}</div>
         <div class="row" style="justify-content:space-between"><span class="num">${esc(e.num)}</span><button class="btn" data-copy="${esc(e.num)}">복사</button></div><div class="muted">${esc(e.memo)}</div></div>`).join("")}</div></details>
       <details class="card"><summary>쇼핑</summary><div class="in">${shop("마드리드", 4, D.shop.madrid)}${shop("바르셀로나", 9, D.shop.barcelona)}
@@ -1255,32 +1278,30 @@ details.card .in { padding: 0 16px 16px; display: flex; flex-direction: column; 
         ${t.gmap ? `<a class="btn" href="${esc(t.gmap)}" target="_blank" rel="noopener">구글맵으로 위치 보기</a>` : ""}
       </div>
       <div class="say"><p class="eyebrow">호텔 · 식당에 택시 불러달라고 할 때</p>
-        <div class="es">¿Nos puede pedir un taxi grande, por favor? Somos cuatro con maletas.</div>
-        <div class="muted" style="margin-top:6px">큰 택시 한 대 불러주실 수 있나요? 4명이고 짐이 있어요.</div>
-        <div class="es" style="margin-top:10px">¿Nos puede pedir un taxi, por favor?</div>
-        <div class="muted" style="margin-top:6px">택시 불러주실 수 있나요? (짐 없을 때)</div></div>
+        ${sayBox("Could you call a big taxi for us, please? There are four of us with luggage.", "¿Nos puede pedir un taxi grande, por favor? Somos cuatro con maletas.", "큰 택시 한 대 불러주실 수 있나요? 4명이고 짐이 있어요.")}
+        <div style="height:12px"></div>
+        ${sayBox("Could you call a taxi for us, please?", "¿Nos puede pedir un taxi, por favor?", "택시 불러주실 수 있나요? (짐 없을 때)")}</div>
       <p class="note">4명이 짐과 함께 타면 일반 택시는 좁을 수 있어요. 우버에서는 큰 차(XL)를 고르면 돼요.</p></div>`;
     $("#ride").hidden = false; $("#ride .close").focus();
   }
   function taxiCards(list, title) {
     if (!list.length) return "";
     return `<div class="card"><p class="eyebrow">${esc(title)}</p>${list.map(t => `<div class="h2" style="font-size:18px">${esc(D.dates[t.day - 1])} ${ap(t.time)} → ${esc(t.dest)}</div>
-      <div class="muted">${esc(t.when)}</div><div class="grid2" style="margin-top:10px"><button class="btn primary" data-taxiplan="${D.taxiplan.indexOf(t)}">프런트에 보여주기</button><button class="btn" data-copy="${esc(t.es)}">문장 복사</button></div>`).join("")}</div>`;
+      <div class="muted">${esc(t.when)}</div><div class="grid2" style="margin-top:10px"><button class="btn primary" data-taxiplan="${D.taxiplan.indexOf(t)}">프런트에 보여주기</button><button class="btn" data-copy="${esc(t.en)}">영어 문장 복사</button></div>`).join("")}</div>`;
   }
   function openTaxiPlan(i) {
     const t = D.taxiplan[i]; if (!t) return;
     $("#ride").hidden = true;
     $("#taxi").innerHTML = `<div class="wrap"><button class="btn close" data-close="taxi">닫기</button>
       <p class="eyebrow">프런트 직원에게 보여주세요</p>
-      <div class="big" style="font-size:27px">${esc(t.es)}</div>
-      <div class="ko">${esc(t.ko)}</div>
+      ${sayBox(t.en, t.es, t.ko, { big: true, copy: true })}
       <div class="say" style="background:var(--surface-2);border-radius:14px;padding:14px"><div class="muted">${esc(t.hotel)} → ${esc(t.dest)}</div><div style="margin-top:6px">${esc(t.tip)}</div></div>
-      <button class="btn" data-copy="${esc(t.es)}">문장 복사 (앱 메시지로 보내기)</button></div>`;
+      <p class="note" style="margin:0">숙소에 앱 메시지로 보낼 때는 영어 복사 버튼을 누른 뒤 붙여넣으세요.</p></div>`;
     $("#taxi").hidden = false; $("#taxi .close").focus();
   }
   function openTaxi(t) {
     $("#taxi").innerHTML = `<div class="wrap"><button class="btn close" data-close="taxi">닫기</button>
-      <div class="es">Por favor, lléveme a:</div>
+      ${sayBox("Please take us to:", "Por favor, llévenos a:", "", { big: true })}
       <div class="big">${esc(t.name)}</div>${t.addr ? `<div class="big addr" style="font-size:26px">${esc(t.addr)}</div>` : ""}
       <div class="ko">기사님께 이 화면을 보여주세요</div></div>`;
     $("#ride").hidden = true; $("#taxi").hidden = false; $("#taxi .close").focus();
@@ -1330,6 +1351,7 @@ details.card .in { padding: 0 16px 16px; display: flex; flex-direction: column; 
     else if (ds.ride) openRide(ds.ride);
     else if (ds.taxicard) { if (rideCur) openTaxi(rideCur); }
     else if (ds.close) $("#" + ds.close).hidden = true;
+    else if (ds.lang) { const es = b.closest(".say2").querySelector(".es2"); es.hidden = !es.hidden; b.setAttribute("aria-pressed", String(!es.hidden)); b.textContent = es.hidden ? "🇪🇸 스페인어" : "스페인어 숨기기"; }
     else if (ds.copy !== undefined) copy(ds.copy, b);
   });
   document.addEventListener("change", e => {
@@ -1354,7 +1376,7 @@ details.card .in { padding: 0 16px 16px; display: flex; flex-direction: column; 
 </template>
 <script>
 (() => {
-  const KEY = "es26:key", BUILD = "a0119a358a";
+  const KEY = "es26:key", BUILD = "ac82b5d395";
   const ub64 = s => Uint8Array.from(atob(s), c => c.charCodeAt(0));
   const tob64 = u => btoa(String.fromCharCode(...u));
   const get = k => { try { return localStorage.getItem(k); } catch (e) { return null; } };
