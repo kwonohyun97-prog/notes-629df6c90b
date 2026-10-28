@@ -1492,29 +1492,60 @@ details.card .in { padding: 0 16px 16px; display: flex; flex-direction: column; 
   }
 
   /* ---------- 더보기 ---------- */
-  /* ---------- 날씨 (Open-Meteo · 키 없음 · 도시 하나 1KB · 3시간 저장) ---------- */
+  /* ---------- 날씨: 구글 날씨 API (10일 · 한국어 설명) → 구글 예보가 아직 없는 날짜만 Open-Meteo로 채움 ----------
+     도시 하나에 압축 1KB 안팎 · 3시간에 한 번만 받음 · 인터넷 없으면 마지막에 받은 것 */
   const CITY_LL = { "마드리드": [40.4168, -3.7038], "그라나다": [37.1773, -3.5986], "마요르카": [39.5696, 2.6502], "바르셀로나": [41.3874, 2.1686] };
-  const WX = c => c === 0 ? ["☀️", "맑음"] : c <= 2 ? ["🌤️", "구름 조금"] : c === 3 ? ["☁️", "흐림"] : c <= 48 ? ["🌫️", "안개"] : c <= 57 ? ["🌦️", "이슬비"] : c <= 67 ? ["🌧️", "비"] : c <= 77 ? ["🌨️", "눈"] : c <= 82 ? ["🌦️", "소나기"] : ["⛈️", "뇌우"];
+  const TRIP_DATES = Array.from({ length: 10 }, (_, k) => `2026-11-${pad(k + 1)}`);
+  const madTime = iso => new Intl.DateTimeFormat("en-GB", { timeZone: "Europe/Madrid", hour: "2-digit", minute: "2-digit", hourCycle: "h23" }).format(new Date(iso));
+  const gwEmoji = t => t === "CLEAR" ? "☀️" : t === "MOSTLY_CLEAR" ? "🌤️" : t === "PARTLY_CLOUDY" ? "⛅" : /THUNDER/.test(t) ? "⛈️" : /SNOW|SLEET|HAIL/.test(t) ? "🌨️"
+    : /RAIN|SHOWER|DRIZZLE/.test(t) ? (/LIGHT|CHANCE|SCATTERED/.test(t) ? "🌦️" : "🌧️") : /FOG|HAZE|MIST/.test(t) ? "🌫️" : /WIND/.test(t) ? "💨" : /CLOUD/.test(t) ? "☁️" : "🌤️";
+  const OM = c => c === 0 ? ["☀️", "맑음"] : c <= 2 ? ["🌤️", "구름 조금"] : c === 3 ? ["☁️", "흐림"] : c <= 48 ? ["🌫️", "안개"] : c <= 57 ? ["🌦️", "이슬비"] : c <= 67 ? ["🌧️", "비"] : c <= 77 ? ["🌨️", "눈"] : c <= 82 ? ["🌦️", "소나기"] : ["⛈️", "뇌우"];
+  const GW_FIELDS = "forecastDays(displayDate,maxTemperature/degrees,minTemperature/degrees,sunEvents/sunsetTime,daytimeForecast/weatherCondition/type,daytimeForecast/weatherCondition/description/text,daytimeForecast/precipitation/probability/percent)";
+  async function wxGoogle(city) {
+    if (!D.placesKey) return {};
+    const [la, lo] = CITY_LL[city];
+    const q = new URLSearchParams({ key: D.placesKey, "location.latitude": la, "location.longitude": lo, days: 10, pageSize: 10, languageCode: "ko", fields: GW_FIELDS });
+    const r = await fetch(`https://weather.googleapis.com/v1/forecast/days:lookup?${q}`); if (!r.ok) throw new Error("weather " + r.status);
+    const out = {};
+    ((await r.json()).forecastDays || []).forEach(f => {
+      const dd = f.displayDate || {}, wc = (f.daytimeForecast || {}).weatherCondition || {};
+      out[`${dd.year}-${pad(dd.month)}-${pad(dd.day)}`] = { e: gwEmoji(wc.type || ""), lab: (wc.description || {}).text || "", min: f.minTemperature?.degrees, max: f.maxTemperature?.degrees,
+        rain: f.daytimeForecast?.precipitation?.probability?.percent, sun: f.sunEvents?.sunsetTime ? madTime(f.sunEvents.sunsetTime) : "" };
+    });
+    return out;
+  }
+  async function wxOpenMeteo(city) {
+    const [la, lo] = CITY_LL[city];
+    const r = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${la}&longitude=${lo}&daily=weather_code,temperature_2m_max,temperature_2m_min,precipitation_probability_max,sunset&timezone=Europe%2FMadrid&start_date=2026-11-01&end_date=2026-11-10`);
+    if (!r.ok) throw new Error("open-meteo " + r.status);
+    const w = (await r.json()).daily, out = {};
+    w.time.forEach((t, i) => { if (w.weather_code[i] == null) return; const [e, lab] = OM(w.weather_code[i]);
+      out[t] = { e, lab, min: w.temperature_2m_min[i], max: w.temperature_2m_max[i], rain: w.precipitation_probability_max[i], sun: String(w.sunset[i] || "").slice(11, 16) }; });
+    return out;
+  }
   const wxPending = {};
+  ["마드리드", "그라나다", "마요르카", "바르셀로나"].forEach(c => { try { localStorage.removeItem("es26:wx:" + c); } catch (e) {} });   // 예전 형식 정리
   function wxCity(city) {
-    const c = store.get("wx:" + city, null);
+    const c = store.get("wx2:" + city, null);
     if (c && Date.now() - c.t < 3 * 3600e3) return Promise.resolve(c.d);
     if (navigator.onLine === false) return Promise.resolve(c ? c.d : null);
     if (wxPending[city]) return wxPending[city];
-    const [la, lo] = CITY_LL[city];
-    return wxPending[city] = fetch(`https://api.open-meteo.com/v1/forecast?latitude=${la}&longitude=${lo}&daily=weather_code,temperature_2m_max,temperature_2m_min,precipitation_probability_max,sunset&timezone=Europe%2FMadrid&start_date=2026-11-01&end_date=2026-11-10`)
-      .then(r => r.ok ? r.json() : Promise.reject()).then(j => { store.set("wx:" + city, { t: Date.now(), d: j.daily }); return j.daily; })
-      .catch(() => c ? c.d : null).finally(() => { delete wxPending[city]; });
+    return wxPending[city] = (async () => {
+      let d = {};
+      try { d = await wxGoogle(city); } catch (e) {}
+      if (TRIP_DATES.some(t => !d[t])) { try { d = { ...(await wxOpenMeteo(city)), ...d }; } catch (e) {} }   // 구글이 없는 날짜만 채움
+      if (!Object.keys(d).length) return c ? c.d : null;
+      store.set("wx2:" + city, { t: Date.now(), d }); return d;
+    })().finally(() => { delete wxPending[city]; });
   }
   function fillWx(root) {
     if (!root) return;
     root.querySelectorAll("[data-wx]").forEach(el => {
-      const d = +el.dataset.wx, city = cityOf(d); if (!CITY_LL[city]) return;
+      const d = +el.dataset.wx, c0 = cityOf(d), city = c0 === "귀국" && d <= 9 ? "바르셀로나" : c0; if (!CITY_LL[city]) return;   // 11/9 귀국날은 출발 전까지 바르셀로나
       wxCity(city).then(w => {
-        if (!w || !el.isConnected) return;
-        const i = w.time.indexOf(`2026-11-${pad(d)}`); if (i < 0 || w.weather_code[i] == null) return;
-        const [em, lab] = WX(w.weather_code[i]), sun = String(w.sunset[i] || "").slice(11, 16), rain = w.precipitation_probability_max[i];
-        el.innerHTML = `<span class="wxe">${em}</span><span>${lab} ${Math.round(w.temperature_2m_min[i])}°/${Math.round(w.temperature_2m_max[i])}°${rain != null ? ` · 비 ${rain}%` : ""}${sun ? ` · 일몰 ${+sun.slice(0, 2) % 12 || 12}:${sun.slice(3, 5)}` : ""}</span>`;
+        const x = w && w[`2026-11-${pad(d)}`]; if (!x || !el.isConnected) return;
+        const sun = x.sun ? ` · 일몰 ${+x.sun.slice(0, 2) % 12 || 12}:${x.sun.slice(3, 5)}` : "";
+        el.innerHTML = `<span class="wxe">${x.e}</span><span>${esc(x.lab)} ${Math.round(x.min)}°/${Math.round(x.max)}°${x.rain != null ? ` · 비 ${x.rain}%` : ""}${sun}</span>`;
         el.hidden = false;
       });
     });
@@ -1755,7 +1786,7 @@ details.card .in { padding: 0 16px 16px; display: flex; flex-direction: column; 
 </template>
 <script>
 (() => {
-  const KEY = "es26:key", BUILD = "07760065dc";
+  const KEY = "es26:key", BUILD = "5a90a31059";
   const ub64 = s => Uint8Array.from(atob(s), c => c.charCodeAt(0));
   const tob64 = u => btoa(String.fromCharCode(...u));
   const get = k => { try { return localStorage.getItem(k); } catch (e) { return null; } };
