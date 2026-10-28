@@ -253,7 +253,7 @@ small.ap { font-size: .72em; font-weight: 700; margin-right: 2px; letter-spacing
 
 /* 지도 (직접 그리는 동선 지도) */
 :root {
-  --m-sea: #CFE0EB; --m-land: #F1F3F4; --m-park: #D8EAD6; --m-river: #A9C7DD; --m-road: #FFFFFF; --m-case: #D3D9DF;
+  --m-sea: #BFD5E5; --m-land: #F2F3F1; --m-park: #D8EAD6; --m-river: #A9C7DD; --m-road: #FFFFFF; --m-case: #D3D9DF;
   --m-route: #D2334A; --m-back: #0E8A7E; --m-rail: #1F4E8C; --m-label: #16202C; --m-halo: rgba(255,255,255,.94); --m-coast: #B9D3E4;
 }
 @media (prefers-color-scheme: dark) {
@@ -550,7 +550,8 @@ details.card .in { padding: 0 16px 16px; display: flex; flex-direction: column; 
     const chip = host.querySelector(".chip span"), playBtn = host.querySelector(".play");
     const regions = Object.keys(SC.regions).filter(n => S.stops.some(s => !s.off && inBB(s.ll, SC.regions[n].bbox)));
     const hasIsland = regions.includes("mallorca");
-    const stops = S.stops.map((s, i) => ({ ...s, n: i + 1, p: P1(s.ll), z: s.off ? 4.6 : (inBB(s.ll, SC.regions.mallorca.bbox) ? 11.6 : 14.2) }));
+    let cnt = 0;
+    const stops = S.stops.map((s, i) => ({ ...s, n: s.off ? 0 : ++cnt, p: P1(s.ll), z: s.off ? 4.6 : (inBB(s.ll, SC.regions.mallorca.bbox) ? 11.6 : 14.2) }));
     const legs = S.legs.map((L, i) => {
       const g = proj(decPoly(L.line)), xy = g.xy, n = xy.length / 2, cum = new Float64Array(n);
       for (let k = 1; k < n; k++) cum[k] = cum[k - 1] + Math.hypot(xy[2 * k] - xy[2 * k - 2], xy[2 * k + 1] - xy[2 * k - 1]);
@@ -563,6 +564,11 @@ details.card .in { padding: 0 16px 16px; display: flex; flex-direction: column; 
     let W = 0, H = 0, dpr = 1, cam = null, C = mapColors();
     let prog = { leg: -1, f: 0 }, active = -1, marker = null, raf = 0, timer = 0, playing = false, played = false, alive = true, startK = 0;
 
+    function ensure() {
+      if (!W || !H) size();
+      if (W > 0 && H > 0 && (!cam || !isFinite(cam.x) || !isFinite(cam.y) || !isFinite(cam.z))) cam = restCam();
+      return W > 0 && H > 0;
+    }
     function size() { const r = host.getBoundingClientRect(); W = r.width; H = r.height; dpr = Math.min(2.5, window.devicePixelRatio || 1); canvas.width = Math.round(W * dpr); canvas.height = Math.round(H * dpr); }
     function fit(pts, pad) {
       let a = Infinity, b = Infinity, c = -Infinity, d = -Infinity;
@@ -585,7 +591,7 @@ details.card .in { padding: 0 16px 16px; display: flex; flex-direction: column; 
     }
 
     function draw() {
-      if (!W || !cam || !alive) return;
+      if (!alive || !ensure()) return;
       const k = 2 ** cam.z, z = cam.z, hw = W / 2, hh = H / 2, cx = cam.x, cy = cam.y;
       const x0 = cx - hw / k, y0 = cy - hh / k, x1 = cx + hw / k, y1 = cy + hh / k;
       const sx = X => (X - cx) * k + hw, sy = Y => (Y - cy) * k + hh;
@@ -617,13 +623,9 @@ details.card .in { padding: 0 16px 16px; display: flex; flex-direction: column; 
         ctx.strokeStyle = pass ? C.road : C.cas; ctx.lineWidth = BASE[c] * f + (pass ? 0 : 1.8);
         regions.forEach(n => regionData(n).roads.forEach(g => { if (g.c === c && vis(g.bb)) { trace(g.xy); ctx.stroke(); } }));
       }
-      // 멀리서 볼 때 주요 도시
-      if (z < 10.2) CITIES.forEach(([nm, ll]) => {
-        const q = P1(ll), X = sx(q[0]), Y = sy(q[1]); if (X < -20 || X > W + 20 || Y < -20 || Y > H + 20) return;
-        ctx.fillStyle = C.label; ctx.globalAlpha = .55; ctx.beginPath(); ctx.arc(X, Y, 3.5, 0, 7); ctx.fill(); ctx.globalAlpha = 1;
-        ctx.font = `600 13px ${FONT}`; ctx.textAlign = "left"; ctx.textBaseline = "middle"; ctx.lineWidth = 4; ctx.strokeStyle = C.halo;
-        ctx.strokeText(nm, X + 7, Y); ctx.fillStyle = C.label; ctx.globalAlpha = .8; ctx.fillText(nm, X + 7, Y); ctx.globalAlpha = 1;
-      });
+      // 멀리서 볼 때 주요 도시 (점은 여기서, 이름은 겹치지 않을 때만 뒤에서)
+      const cityXY = z < 10.2 ? CITIES.map(([nm, ll]) => { const q = P1(ll); return [nm, sx(q[0]), sy(q[1])]; }).filter(([, X, Y]) => X > -20 && X < W + 20 && Y > -20 && Y < H + 20) : [];
+      cityXY.forEach(([, X, Y]) => { ctx.fillStyle = C.label; ctx.globalAlpha = .5; ctx.beginPath(); ctx.arc(X, Y, 3.5, 0, 7); ctx.fill(); ctx.globalAlpha = 1; });
       // 동선
       const STY = { car: [[], 5], foot: [[1, 8], 5], train: [[14, 9], 5], flight: [[9, 9], 4] };
       const col = L => (L.mode === "train" || L.mode === "flight") ? C.rail : L.back ? C.back : C.route;
@@ -651,7 +653,8 @@ details.card .in { padding: 0 16px 16px; display: flex; flex-direction: column; 
         if (force) { const [lx, ly, al, rect] = opts[0]; placed.push(rect); text(t, lx, ly, al, sz, wt, color); }
         return false;
       };
-      const S2 = stops.filter(s => !s.off || (s.off && z < 7)).map(s => ({ s, X: sx(s.p[0]), Y: sy(s.p[1]) })).filter(o => o.X > -40 && o.X < W + 40 && o.Y > -40 && o.Y < H + 40);
+      const focusStops = playing && z < 10.5 && prog.leg >= 0 && legs[prog.leg] ? [legs[prog.leg].a, legs[prog.leg].b] : null;   // 멀리서 볼 땐 지금 구간의 출발·도착만
+      const S2 = stops.filter(s => !s.off && (!focusStops || focusStops.includes(s))).map(s => ({ s, X: sx(s.p[0]), Y: sy(s.p[1]) })).filter(o => o.X > -40 && o.X < W + 40 && o.Y > -40 && o.Y < H + 40);
       S2.forEach(o => placed.push([o.X - 14, o.Y - 14, o.X + 14, o.Y + 14]));
       // 주변 장소 · 추천 식당
       if (z >= 13.3) pois.forEach(p => {
@@ -680,8 +683,8 @@ details.card .in { padding: 0 16px 16px; display: flex; flex-direction: column; 
         ctx.beginPath(); ctx.arc(X, Y, r, 0, 7); ctx.fill(); ctx.stroke();
         ctx.fillStyle = "#fff"; ctx.font = `700 ${on ? 15 : 13}px ${FONT}`; ctx.textAlign = "center"; ctx.textBaseline = "middle"; ctx.fillText(String(s.n), X, Y + .5);
       });
-      const focus = playing && z < 10.5 && prog.leg >= 0 && legs[prog.leg] ? [legs[prog.leg].a, legs[prog.leg].b] : null;   // 멀리 이동 중엔 출발·도착 이름만
-      S2.forEach(({ s, X, Y }) => { if (!focus || focus.includes(s)) tryLabel(s.name, X, Y, 13, stops.indexOf(s) === active ? 16 : 14, 700, C.label, true); });
+      S2.forEach(({ s, X, Y }) => tryLabel(s.name, X, Y, 13, stops.indexOf(s) === active ? 16 : 14, 700, C.label, true));
+      cityXY.forEach(([nm, X, Y]) => tryLabel(nm, X, Y, 4, 13, 600, C.label, false));
       if (z >= 14) pois.forEach(p => { if (p._xy) tryLabel(p.name, p._xy[0], p._xy[1], 6, 12, 600, C.label, false); p._xy = null; });
       else pois.forEach(p => p._xy = null);
     }
@@ -691,13 +694,14 @@ details.card .in { padding: 0 16px 16px; display: flex; flex-direction: column; 
     function cancel() { cancelAnimationFrame(raf); clearTimeout(timer); }
     function wait(ms, fn) { timer = setTimeout(fn, ms); }
     function animateTo(t, ms, done) {
-      cancel(); const from = { ...cam }, t0 = performance.now();
+      cancel(); if (!ensure()) return; const from = { ...cam }, t0 = performance.now();
       const step = now => { const u = Math.min(1, (now - t0) / ms), e = easeIO(u); cam = { x: from.x + (t.x - from.x) * e, y: from.y + (t.y - from.y) * e, z: from.z + (t.z - from.z) * e }; draw(); if (u < 1) raf = requestAnimationFrame(step); else if (done) done(); };
       raf = requestAnimationFrame(step);
     }
     function runLeg(i) {
       if (!alive) return;
-      if (i >= legs.length) return finish(true);
+      if (i >= legs.length || legs[i].b.off) return finish(true);
+      if (legs[i].a.off) return runLeg(i + 1);
       const L = legs[i], b = L.b;
       prog = { leg: i, f: 0 };
       setChip(`${circ(L.a.n)} → ${circ(b.n)} ${b.name}${L.back ? " (돌아가는 길)" : ""} · ${legText(L)}`);
@@ -747,8 +751,10 @@ details.card .in { padding: 0 16px 16px; display: flex; flex-direction: column; 
       });
     }
     function play() {
+      if (!ensure()) return;
       cancel(); playing = played = true; playBtn.textContent = "■ 멈추기";
-      const k0 = startK; startK = 0;
+      let k0 = startK; startK = 0;
+      while (stops[S.seq[k0]] && stops[S.seq[k0]].off && k0 < legs.length) k0++;
       prog = { leg: k0, f: 0 }; active = S.seq[k0]; marker = null;
       const a = stops[S.seq[k0]];
       setChip(`${circ(a.n)} ${a.name}${a.sub ? " · " + apPlain(a.sub) : ""}`);
@@ -776,7 +782,7 @@ details.card .in { padding: 0 16px 16px; display: flex; flex-direction: column; 
     canvas.addEventListener("wheel", e => { if (playing) return; e.preventDefault(); cam = { ...cam, z: Math.min(17, Math.max(4, cam.z - e.deltaY / 400)) }; draw(); }, { passive: false });
     const ro = new ResizeObserver(() => { const had = !!W; size(); if (!had) { cam = restCam(); restChip(); } draw(); });
     ro.observe(host);
-    const io = new IntersectionObserver(es => es.forEach(en => { if (en.isIntersecting && en.intersectionRatio > .55 && !played && !REDUCE) play(); }), { threshold: [0, .6] });
+    const io = new IntersectionObserver(es => es.forEach(en => { if (en.isIntersecting && en.intersectionRatio > .55 && !played && !REDUCE && ensure()) play(); }), { threshold: [0, .6] });
     io.observe(host);
     const mq = matchMedia("(prefers-color-scheme: dark)"), onTheme = () => { C = mapColors(); draw(); };
     mq.addEventListener("change", onTheme);
@@ -792,12 +798,14 @@ details.card .in { padding: 0 16px 16px; display: flex; flex-direction: column; 
     if (withList) {
       const legs = S.legs;
       list = `<div class="stops">${S.seq.map((si, i) => {
-        const s = S.stops[si], L = legs[i];
+        const s = S.stops[si], L = legs[i] && !S.stops[S.seq[i + 1]].off ? legs[i] : null;
+        if (s.off) return "";
         const lg = L ? { ...L, a: S.stops[si], b: S.stops[S.seq[i + 1]], km: L.m ? L.m / 1000 : hav(S.stops[si].ll, S.stops[S.seq[i + 1]].ll) } : null;
         const back = L && S.seq.slice(0, i + 1).includes(S.seq[i + 1]);
         const lc = L ? (L.mode === "train" || L.mode === "flight" ? "rail" : back ? "back" : "go") : "";
         const again = S.seq.indexOf(si) < i;
-        return `<div class="stopitem"><button class="no" data-fly="${d}:${si}:${i}" aria-label="${si + 1}번 지도에서 보기">${si + 1}</button><div><div class="nm">${esc(s.name)}${again ? ' <span class="muted" style="font-weight:500">(다시)</span>' : ""}</div>
+        const no = S.stops.slice(0, si + 1).filter(x => !x.off).length;
+        return `<div class="stopitem"><button class="no" data-fly="${d}:${si}:${i}" aria-label="${no}번 지도에서 보기">${no}</button><div><div class="nm">${esc(s.name)}${again ? ' <span class="muted" style="font-weight:500">(다시)</span>' : ""}</div>
           ${s.sub && !again ? `<div class="sub">${ap(s.sub)}</div>` : ""}
           ${s.off ? "" : `<div class="btns"><a class="btn sm" href="${mapLL(s.ll)}" target="_blank" rel="noopener">지도</a><button class="btn sm" data-ride="stop:${d}:${si}">택시 · 우버</button></div>`}</div></div>
           ${lg ? `<div class="legline"><i class="lc ${lc}"></i><b>${esc(legText(lg))}</b>${back ? " · 돌아가는 길" : ""}</div>` : ""}`;
