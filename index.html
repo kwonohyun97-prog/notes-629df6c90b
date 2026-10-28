@@ -1,39 +1,53 @@
 <!doctype html>
-<html lang="ko"><head>
+<html lang="ko" data-look="sea"><head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="robots" content="noindex, nofollow">
-<meta name="theme-color" content="#1F4E8C">
+<meta name="theme-color" content="#0B3A8F">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-title" content="스페인 수첩">
-<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="🇪🇸 스페인 가족여행 일정">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" href="icon-192.png">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
-<title>스페인 가족 수첩</title>
+<title>🇪🇸 스페인 가족여행 일정</title>
+<script>
+try { const l = JSON.parse(localStorage.getItem("es26:look")); if (["sea", "sunset", "spain"].includes(l)) document.documentElement.dataset.look = l; } catch (e) {}
+</script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Black+Han+Sans&family=Gothic+A1:wght@800&family=IBM+Plex+Mono:wght@500;600&family=IBM+Plex+Sans+KR:wght@400;500;700&family=Jua&display=swap">
 <style>
+html[data-look="sea"] { --g1: #0B3A8F; --g2: #1769D0; --g3: #22B5C0; --lf: "Gothic A1"; --lw: 800; }
+html[data-look="sea"] #lock .li-sea { display: block; }
+html[data-look="sunset"] { --g1: #D9344F; --g2: #EE5D45; --g3: #FFB15C; --lf: "Jua"; --lw: 400; }
+html[data-look="sunset"] #lock .li-sunset { display: block; }
+html[data-look="spain"] { --g1: #9E0F1A; --g2: #CF2B2B; --g3: #F2B32A; --lf: "Black Han Sans"; --lw: 400; }
+html[data-look="spain"] #lock .li-spain { display: block; }
 html, body { margin: 0; }
 img { max-width: 100%; }
 [hidden] { display: none !important; }
-#lock { position: fixed; inset: 0; z-index: 50; display: grid; place-items: center; padding: 24px 16px; background: #F3F5F8; color: #16202C;
-  font-family: "Apple SD Gothic Neo", "Malgun Gothic", system-ui, sans-serif; }
-@media (prefers-color-scheme: dark) { #lock { background: #0D1218; color: #ECF0F5; } #lock input { background: #151C25; color: #ECF0F5; border-color: #283442; } }
+#lock { position: fixed; inset: 0; z-index: 50; display: grid; place-items: center; padding: 24px 16px; color: #fff; overflow-y: auto;
+  background: radial-gradient(120% 80% at 100% 0%, rgba(255,255,255,.22), transparent 55%), linear-gradient(160deg, var(--g1), var(--g2) 55%, var(--g3));
+  font-family: "IBM Plex Sans KR", "Apple SD Gothic Neo", "Malgun Gothic", system-ui, sans-serif; }
 #lock .box { width: 100%; max-width: 380px; display: flex; flex-direction: column; gap: 14px; text-align: center; }
-#lock img { width: 84px; height: 84px; border-radius: 20px; margin: 0 auto; }
-#lock h1 { font-size: 26px; margin: 0; }
-#lock p { margin: 0; font-size: 17px; opacity: .75; }
-#lock input { font-size: 26px; text-align: center; letter-spacing: .15em; padding: 14px; border-radius: 14px; border: 2px solid #DCE2EA; width: 100%; box-sizing: border-box; }
-#lock button { font-size: 19px; font-weight: 700; min-height: 56px; border-radius: 14px; border: 0; background: #1F4E8C; color: #fff; cursor: pointer; }
+#lock .li { display: none; width: 92px; height: 92px; border-radius: 22px; margin: 0 auto; box-shadow: 0 10px 28px -10px rgba(0,0,0,.45), 0 0 0 3px rgba(255,255,255,.35); }
+#lock h1 { font-family: var(--lf), sans-serif; font-weight: var(--lw); font-size: 30px; line-height: 1.2; margin: 0; text-shadow: 0 1px 3px rgba(0,0,0,.15); }
+#lock p { margin: 0; font-size: 17px; opacity: .9; }
+#lock input { font-size: 26px; text-align: center; letter-spacing: .15em; padding: 14px; border-radius: 14px; border: 0; width: 100%; box-sizing: border-box; background: #fff; color: #16202C; box-shadow: 0 6px 18px -8px rgba(0,0,0,.35); }
+#lock button { font-size: 19px; font-weight: 700; min-height: 56px; border-radius: 14px; border: 0; background: rgba(0,0,0,.28); color: #fff; cursor: pointer; }
+#lock #lockhelp { background: none; color: #fff; min-height: 0; }
 #lock label { font-size: 16px; display: flex; gap: 8px; justify-content: center; align-items: center; }
 #lock label input { width: 22px; height: 22px; }
-#lock .err { color: #C23E48; font-weight: 700; min-height: 1.4em; }
+#lock .err { color: #fff; font-weight: 700; min-height: 1.4em; }
+#lock .err:not(:empty) { background: rgba(0,0,0,.3); border-radius: 10px; padding: 6px 10px; }
 </style>
 </head><body>
 <div id="lock" hidden>
   <form class="box" id="lockform" autocomplete="off">
-    <img src="icon-192.png" alt="">
-    <h1>스페인 가족 수첩</h1>
+    <img class="li li-sea" src="look-sea.png" alt=""><img class="li li-sunset" src="look-sunset.png" alt=""><img class="li li-spain" src="look-spain.png" alt="">
+    <h1>🇪🇸 스페인 가족여행 일정</h1>
     <p>가족 비밀번호를 입력하세요</p>
     <input id="pw" type="password" inputmode="numeric" pattern="[0-9]*" aria-label="비밀번호" required>
     <label for="remember"><input id="remember" type="checkbox" checked> 이 휴대폰에서 기억하기</label>
@@ -140,10 +154,10 @@ img { max-width: 100%; }
 })();
 </script>
 
-<template id="appshell"><title>스페인 가족 수첩</title>
+<template id="appshell"><title>🇪🇸 스페인 가족여행 일정</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Gowun+Batang:wght@700&family=IBM+Plex+Mono:wght@500;600&family=IBM+Plex+Sans+KR:wght@400;500;700&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Black+Han+Sans&family=Gothic+A1:wght@800&family=IBM+Plex+Mono:wght@500;600&family=IBM+Plex+Sans+KR:wght@400;500;700&family=Jua&display=swap">
 <style>
 :root {
   --bg: #F3F5F8;
@@ -172,7 +186,9 @@ img { max-width: 100%; }
   --uber: #000000;
   --uber-ink: #FFFFFF;
   --shadow: 0 1px 2px rgba(22, 32, 44, .06), 0 4px 14px rgba(22, 32, 44, .06);
-  --display: "Gowun Batang", "AppleMyungjo", "Nanum Myeongjo", serif;
+  --display: var(--sans);
+  --display-w: 800;
+  --g1: #0B3A8F; --g2: #1769D0; --g3: #22B5C0;
   --sans: "IBM Plex Sans KR", "Apple SD Gothic Neo", "Malgun Gothic", system-ui, sans-serif;
   --mono: "IBM Plex Mono", ui-monospace, "SF Mono", Menlo, monospace;
 }
@@ -196,6 +212,14 @@ img { max-width: 100%; }
   --uber: #FFFFFF; --uber-ink: #000000;
   --shadow: 0 1px 2px rgba(0, 0, 0, .3);
 }
+:root, :root[data-look="sea"], .look[data-look="sea"] { --g1: #0B3A8F; --g2: #1769D0; --g3: #22B5C0; --accent: #1769D0; --accent-soft: #E1ECFA; --bg: #F2F6FA; --display: "Gothic A1", var(--sans); --display-w: 800; }
+:root[data-look="sunset"], .look[data-look="sunset"] { --g1: #D9344F; --g2: #EE5D45; --g3: #FFB15C; --accent: #D9344F; --accent-soft: #FCE6E3; --bg: #FBF6F3; --display: "Jua", var(--sans); --display-w: 400; }
+:root[data-look="spain"], .look[data-look="spain"] { --g1: #9E0F1A; --g2: #CF2B2B; --g3: #F2B32A; --accent: #B81D24; --accent-soft: #FBE4E1; --bg: #FAF6F1; --display: "Black Han Sans", var(--sans); --display-w: 400; }
+@media (prefers-color-scheme: dark) {
+  :root:not([data-look]):not([data-theme="light"]), :root[data-look="sea"]:not([data-theme="light"]) { --accent: #86B8F2; --accent-soft: #17283F; }
+  :root[data-look="sunset"]:not([data-theme="light"]) { --accent: #FF8E7A; --accent-soft: #3A1E1C; }
+  :root[data-look="spain"]:not([data-theme="light"]) { --accent: #FF7F72; --accent-soft: #3A1A1A; }
+}
 * { box-sizing: border-box; }
 [hidden] { display: none !important; }
 body { background: var(--bg); color: var(--ink); font-family: var(--sans); font-size: 17px; line-height: 1.5; -webkit-text-size-adjust: 100%; }
@@ -206,10 +230,14 @@ button { font: inherit; color: inherit; }
 small.ap { font-size: .72em; font-weight: 700; margin-right: 2px; letter-spacing: 0; font-family: var(--sans); }
 
 /* 상단 */
-.top { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 5; background: var(--bg); padding-block: 14px 10px; display: flex; align-items: baseline; justify-content: space-between; gap: 12px; border-bottom: 1px solid var(--line); margin-inline: -16px; padding-inline: 16px; }
-.top h1 { font-family: var(--display); font-size: 25px; margin: 0; letter-spacing: -.01em; }
-.clock { text-align: right; font-size: 13px; color: var(--muted); line-height: 1.35; font-variant-numeric: tabular-nums; }
-.clock b { font-family: var(--mono); font-size: 16px; color: var(--ink); font-weight: 600; }
+.top { position: sticky; top: 0; z-index: 5; margin-inline: -16px; padding: calc(12px + env(safe-area-inset-top, 0px)) 18px 15px; display: flex; align-items: flex-end; justify-content: space-between; gap: 12px; color: #fff;
+  background: var(--g1);
+  background: radial-gradient(120% 170% at 100% 0%, rgba(255,255,255,.24), transparent 55%), linear-gradient(120deg, var(--g1), var(--g2) 58%, var(--g3));
+  border-radius: 0 0 24px 24px; box-shadow: 0 10px 24px -14px var(--g1); }
+.top .brand { font-size: 13px; font-weight: 700; letter-spacing: .02em; opacity: .92; white-space: nowrap; }
+.top h1 { font-family: var(--display); font-weight: var(--display-w, 800); font-size: 31px; line-height: 1.12; margin: 3px 0 0; letter-spacing: -.01em; text-shadow: 0 1px 2px rgba(0,0,0,.12); }
+.clock { text-align: right; font-size: 12px; color: rgba(255,255,255,.92); line-height: 1.35; font-variant-numeric: tabular-nums; background: rgba(0,0,0,.16); border-radius: 12px; padding: 6px 10px; flex: none; }
+.clock b { font-family: var(--mono); font-size: 16px; color: #fff; font-weight: 600; }
 
 /* 공통 */
 .stack { display: flex; flex-direction: column; gap: 14px; padding-top: 16px; }
@@ -224,20 +252,39 @@ small.ap { font-size: .72em; font-weight: 700; margin-right: 2px; letter-spacing
 .pill.warn { background: var(--warn-soft); color: var(--warn); }
 .pill.todo { background: var(--todo-soft); color: var(--todo); }
 .btn { display: inline-flex; align-items: center; justify-content: center; gap: 6px; min-height: 46px; padding: 10px 14px; border-radius: 12px; border: 1px solid var(--line); background: var(--surface); font-weight: 700; font-size: 16px; text-decoration: none; color: var(--ink); cursor: pointer; text-align: center; line-height: 1.25; }
-.btn.primary { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); }
+.btn.primary { background: var(--accent); background: linear-gradient(135deg, var(--g1), var(--g2)); color: #fff; border-color: transparent; }
 .btn.uber { background: var(--uber); color: var(--uber-ink); border-color: var(--uber); }
 .btn.sm { min-height: 40px; padding: 6px 12px; font-size: 15px; }
 .btns { display: flex; gap: 8px; flex-wrap: wrap; }
 .btns .btn { flex: 1 1 140px; }
 .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
-.sec-title { font-size: 15px; font-weight: 700; color: var(--muted); margin: 10px 2px -4px; letter-spacing: .03em; }
+.sec-title { font-size: 16px; font-weight: 700; color: var(--ink); margin: 12px 2px -2px; display: flex; align-items: center; gap: 8px; }
+.sec-title::before { content: ""; flex: none; width: 4px; height: 17px; border-radius: 4px; background: linear-gradient(var(--g1), var(--g3)); }
+/* 쇼핑: 도시별 머리띠 */
+.cityhead { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-top: 6px; padding: 12px 14px; border-radius: 14px; color: #fff;
+  background: var(--city); background: linear-gradient(120deg, color-mix(in oklab, var(--city) 85%, black), var(--city) 45%, color-mix(in oklab, var(--city) 75%, white)); }
+.cityhead b { font-family: var(--display); font-weight: var(--display-w, 800); font-size: 22px; line-height: 1.2; }
+.cityhead span { font-size: 14px; font-weight: 700; background: rgba(255,255,255,.24); border-radius: 999px; padding: 3px 10px; white-space: nowrap; }
+.shoplist { display: flex; flex-direction: column; gap: 12px; border-left: 4px solid var(--city); padding-left: 12px; margin-left: 2px; }
+/* 디자인 시안 고르기 */
+.lookgrid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+.look { position: relative; display: flex; flex-direction: column; align-items: center; gap: 6px; padding: 12px 6px 10px; border-radius: 16px; border: 2px solid var(--line); background: var(--surface); cursor: pointer; text-align: center; min-width: 0; }
+.look[aria-pressed="true"] { border-color: var(--g2); box-shadow: 0 0 0 3px color-mix(in srgb, var(--g2) 25%, transparent); }
+.look img { width: 60px; height: 60px; border-radius: 14px; box-shadow: 0 4px 10px -4px rgba(0,0,0,.4); }
+.look .lk-sample { font-family: var(--display); font-weight: var(--display-w); font-size: 25px; line-height: 1.15; color: var(--g1); background: linear-gradient(120deg, var(--g1), var(--g3)); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; }
+.look .lk-name { font-size: 14px; font-weight: 700; white-space: nowrap; }
+.look[aria-pressed="true"]::after { content: "✓"; position: absolute; top: -8px; right: -6px; width: 26px; height: 26px; border-radius: 50%; display: grid; place-items: center; font-size: 15px; font-weight: 800; color: #fff; background: var(--g2); box-shadow: 0 0 0 3px var(--surface); }
+.look .lk-bar { width: 100%; height: 8px; border-radius: 8px; background: linear-gradient(90deg, var(--g1), var(--g2), var(--g3)); }
+.look .lk-font { font-size: 12px; color: var(--muted); line-height: 1.3; }
 .note { font-size: 14px; color: var(--muted); }
 
 /* 오늘 */
-.hero { border-radius: 20px; padding: 18px; color: #fff; background: var(--city, #2F5FB3); position: relative; overflow: hidden; }
-.hero::after { content: ""; position: absolute; inset: 0; background: repeating-linear-gradient(135deg, rgba(255,255,255,.07) 0 2px, transparent 2px 14px); pointer-events: none; }
+.hero { border-radius: 22px; padding: 20px 18px; color: #fff; position: relative; overflow: hidden; isolation: isolate; background: var(--city, #2F5FB3);
+  background: radial-gradient(90% 120% at 100% 0%, rgba(255,255,255,.26), transparent 60%), linear-gradient(135deg, color-mix(in oklab, var(--city, #2F5FB3) 80%, white), var(--city, #2F5FB3) 50%, color-mix(in oklab, var(--city, #2F5FB3) 72%, black));
+  box-shadow: 0 12px 26px -16px var(--city, #2F5FB3); }
+.hero::after { content: ""; position: absolute; right: -46px; bottom: -70px; width: 200px; height: 200px; border-radius: 50%; border: 24px solid rgba(255,255,255,.10); pointer-events: none; z-index: -1; }
 .hero .dday { font-family: var(--mono); font-size: 15px; font-weight: 600; opacity: .9; }
-.hero .date { font-family: var(--display); font-size: 34px; line-height: 1.15; margin: 4px 0 2px; }
+.hero .date { font-family: var(--display); font-weight: var(--display-w, 800); font-size: 34px; line-height: 1.15; margin: 4px 0 2px; }
 .hero .flow { font-size: 18px; white-space: pre-line; opacity: .95; }
 .next { display: grid; grid-template-columns: auto 1fr; gap: 4px 14px; align-items: start; }
 .next .t { font-family: var(--mono); font-size: 24px; font-weight: 600; line-height: 1.15; font-variant-numeric: tabular-nums; }
@@ -303,7 +350,7 @@ small.ap { font-size: .72em; font-weight: 700; margin-right: 2px; letter-spacing
 .daychip i { display: block; height: 4px; border-radius: 4px; margin-top: 6px; background: var(--city); }
 .daychip[aria-pressed="true"] { border-color: var(--accent); background: var(--accent-soft); }
 .dayhead { display: flex; justify-content: space-between; align-items: flex-end; gap: 12px; }
-.dayhead .date { font-family: var(--display); font-size: 28px; line-height: 1.15; }
+.dayhead .date { font-family: var(--display); font-weight: var(--display-w, 800); font-size: 28px; line-height: 1.15; }
 .tl { display: flex; flex-direction: column; }
 .ev { display: grid; grid-template-columns: 84px 1fr; gap: 12px; padding: 14px 0; border-top: 1px solid var(--line); }
 .ev:first-child { border-top: 0; }
@@ -368,11 +415,11 @@ details.card .in { padding: 0 16px 16px; display: flex; flex-direction: column; 
 .check input { width: 22px; height: 22px; accent-color: var(--accent); }
 
 /* 탭바 */
-.tabs { position: fixed; left: 0; right: 0; bottom: 0; z-index: 10; background: var(--surface); border-top: 1px solid var(--line); padding: 6px 6px calc(6px + env(safe-area-inset-bottom, 0px)); }
+.tabs { position: fixed; left: 0; right: 0; bottom: 0; z-index: 10; background: var(--surface); background: color-mix(in srgb, var(--surface) 90%, transparent); -webkit-backdrop-filter: blur(14px); backdrop-filter: blur(14px); border-top: 1px solid var(--line); padding: 6px 6px calc(6px + env(safe-area-inset-bottom, 0px)); }
 .tabs .in { max-width: 600px; margin: 0 auto; display: grid; grid-template-columns: repeat(5, 1fr); gap: 2px; }
 .tabs button { background: none; border: 0; display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 6px 2px; min-height: 58px; border-radius: 12px; color: var(--muted); font-size: 13px; font-weight: 700; cursor: pointer; }
 .tabs svg { width: 26px; height: 26px; stroke: currentColor; fill: none; stroke-width: 1.9; stroke-linecap: round; stroke-linejoin: round; }
-.tabs button[aria-current="page"] { color: var(--accent); background: var(--accent-soft); }
+.tabs button[aria-current="page"] { color: #fff; background: var(--accent); background: linear-gradient(135deg, var(--g1), var(--g2)); box-shadow: 0 6px 14px -8px var(--g1); }
 
 /* 겹쳐 뜨는 화면 */
 .overlay { position: fixed; inset: 0; z-index: 20; background: var(--bg); display: flex; flex-direction: column; gap: 12px; padding: calc(14px + env(safe-area-inset-top, 0px)) 16px calc(16px + env(safe-area-inset-bottom, 0px)); overflow-y: auto; }
@@ -395,7 +442,7 @@ details.card .in { padding: 0 16px 16px; display: flex; flex-direction: column; 
 
 <div class="app">
   <header class="top">
-    <h1 id="title">오늘</h1>
+    <div><div class="brand">🇪🇸 스페인 가족여행 일정</div><h1 id="title">오늘</h1></div>
     <div class="clock" aria-live="polite"><div>스페인 <b id="es-time">--:--</b></div><div id="kr-time">한국 --:--</div></div>
   </header>
   <main>
@@ -964,9 +1011,13 @@ details.card .in { padding: 0 16px 16px; display: flex; flex-direction: column; 
   /* ---------- 더보기 ---------- */
   function renderMore() {
     const checks = store.get("checks", {});
-    const shop = (title, rows) => `<p class="sec-title">${title}</p>` + rows.map(r =>
-      `<div class="stay"><div class="nm">${esc(String(r[2]).split("\n")[0])}</div><div class="muted">${ap(String(r[7]).split("\n")[0])} · ${esc(String(r[1]).split("\n").slice(1).join(" "))}</div><div class="pre">${esc(String(r[3]).split("\n")[0])}</div><div class="muted">${ap(String(r[4]).split("\n")[0])}</div></div>`).join("");
-    $("#v-more").innerHTML = `<div class="stack">
+    const shop = (city, day, rows) => `<div class="cityhead" style="--city:${D.cityColor[city]}"><b>${esc(city)}</b><span>${esc(D.dates[day - 1])} · ${rows.length}곳</span></div><div class="shoplist" style="--city:${D.cityColor[city]}">` + rows.map(r =>
+      `<div class="stay"><div class="nm">${esc(String(r[2]).split("\n")[0])}</div><div class="muted">${ap(String(r[7]).split("\n")[0])} · ${esc(String(r[1]).split("\n").slice(1).join(" "))}</div><div class="pre">${esc(String(r[3]).split("\n")[0])}</div><div class="muted">${ap(String(r[4]).split("\n")[0])}</div></div>`).join("") + `</div>`;
+    const curLook = document.documentElement.dataset.look || D.lookDefault;
+    const looks = (D.looks || []).length ? `<div class="card"><p class="eyebrow">앱 디자인 시안 · 눌러서 바꿔보기</p><div class="lookgrid">${D.looks.map(l => `<button class="look" data-look="${esc(l.id)}" aria-pressed="${l.id === curLook}">
+        <img src="look-${esc(l.id)}.png" alt=""><span class="lk-name">${esc(l.name)}</span><span class="lk-sample">스페인</span><span class="lk-bar"></span><span class="lk-font">${esc(l.flabel)}</span></button>`).join("")}</div>
+        <p class="note" style="margin:10px 0 0">누르면 바로 바뀌어요 (이 휴대폰에서만).</p></div>` : "";
+    $("#v-more").innerHTML = `<div class="stack">${looks}
       <details class="card"><summary>택시 미리 부탁하기 (호텔)</summary><div class="in">
         <p class="muted" style="margin:0">이른 아침에 떠나는 날은 전날 밤 숙소 프런트에 택시를 예약해 달라고 부탁하세요. 화면을 보여주거나, 문장을 복사해서 Booking.com 앱 메시지로 보내면 돼요.</p>
         ${D.taxiplan.map((t, i) => `<div class="stay"><div class="nm">${esc(D.dates[t.day - 1])} ${ap(t.time)} · ${esc(t.dest)}</div><div class="muted">${esc(t.hotel)} · 부탁할 때: ${esc(t.when)}</div>
@@ -977,7 +1028,7 @@ details.card .in { padding: 0 16px 16px; display: flex; flex-direction: column; 
       <details class="card"><summary>스페인어 카드</summary><div class="in">${D.phrases.map(([ko, es]) => `<div class="phrase"><div class="muted">${esc(ko)}</div><div class="es">${esc(es)}</div></div>`).join("")}</div></details>
       <details class="card"><summary>비상 연락처</summary><div class="in">${D.emergency.map(e => `<div class="stay"><div class="nm">${esc(e.name)}</div>
         <div class="row" style="justify-content:space-between"><span class="num">${esc(e.num)}</span><button class="btn" data-copy="${esc(e.num)}">복사</button></div><div class="muted">${esc(e.memo)}</div></div>`).join("")}</div></details>
-      <details class="card"><summary>쇼핑</summary><div class="in">${shop("마드리드 · 11/4", D.shop.madrid)}${shop("바르셀로나 · 11/9", D.shop.barcelona)}
+      <details class="card"><summary>쇼핑</summary><div class="in">${shop("마드리드", 4, D.shop.madrid)}${shop("바르셀로나", 9, D.shop.barcelona)}
         <p class="sec-title">꼭 알아둘 것</p>${D.shop.memo.map(([k, v]) => `<div><b>${esc(k)}</b> · <span class="muted">${esc(v)}</span></div>`).join("")}</div></details>
       <details class="card"><summary>준비물 체크리스트</summary><div class="in">${D.checklist.map(([g, items]) => `<p class="sec-title">${esc(g)}</p>${items.map((t, j) => {
         const id = "ck-" + g + "-" + j; return `<label class="check" for="${esc(id)}"><input type="checkbox" id="${esc(id)}" data-check="${esc(id)}" ${checks[id] ? "checked" : ""}>${esc(t)}</label>`; }).join("")}`).join("")}
@@ -1045,6 +1096,15 @@ details.card .in { padding: 0 16px 16px; display: flex; flex-direction: column; 
     $("#ride").hidden = true; $("#taxi").hidden = false; $("#taxi .close").focus();
   }
 
+  /* ---------- 디자인 시안 ---------- */
+  function setLook(id) {
+    const L = (D.looks || []).find(l => l.id === id); if (!L) return;
+    document.documentElement.dataset.look = id;
+    store.set("look", id);
+    const m = document.querySelector('meta[name="theme-color"]'); if (m) m.setAttribute("content", L.g[0]);
+    renderMore();
+  }
+
   /* ---------- 탭 ---------- */
   const VIEWS = ["today", "plan", "wallet", "food", "more"];
   const RENDER = { today: renderToday, plan: renderPlan, wallet: renderWallet, food: renderFood, more: renderMore };
@@ -1071,6 +1131,7 @@ details.card .in { padding: 0 16px 16px; display: flex; flex-direction: column; 
     else if (ds.taxiplan !== undefined) openTaxiPlan(+ds.taxiplan);
     else if (ds.meal) { mealKey = ds.meal; store.set("meal", mealKey); if ($("#v-food").hidden) show("food"); else { renderFood(); window.scrollTo(0, 0); } }
     else if (ds.install) { if (window.__showInstall) window.__showInstall(); }
+    else if (ds.look) setLook(ds.look);
     else if (ds.ride) openRide(ds.ride);
     else if (ds.taxicard) { if (rideCur) openTaxi(rideCur); }
     else if (ds.close) $("#" + ds.close).hidden = true;

@@ -1,5 +1,5 @@
-const V = "es26-d9d52402b0";
-const CORE = ["./", "index.html", "data.enc", "manifest.webmanifest", "icon-192.png", "icon-512.png", "apple-touch-icon.png"];
+const V = "es26-7342fd1fcc";
+const CORE = ["./", "index.html", "data.enc", "manifest.webmanifest", "icon-192.png", "icon-512.png", "apple-touch-icon.png", "look-sea.png", "look-sunset.png", "look-spain.png"];
 self.addEventListener("install", e => { e.waitUntil(caches.open(V).then(c => c.addAll(CORE)).then(() => self.skipWaiting())); });
 self.addEventListener("activate", e => { e.waitUntil(caches.keys().then(ks => Promise.all(ks.filter(k => !k.startsWith(V)).map(k => caches.delete(k)))).then(() => self.clients.claim())); });
 const timeout = (p, ms) => Promise.race([p, new Promise((_, rej) => setTimeout(() => rej(new Error("timeout")), ms))]);
