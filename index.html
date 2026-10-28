@@ -269,6 +269,8 @@ small.ap { font-size: .72em; font-weight: 700; margin-right: 2px; letter-spacing
 .tfopt .muted { font-size: 13px; padding: 0 12px 10px; line-height: 1.35; }
 .tfopt[aria-pressed="true"] { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft); }
 .tfopt[aria-pressed="true"]::after { content: "✓"; position: absolute; top: 8px; right: 8px; width: 24px; height: 24px; border-radius: 50%; display: grid; place-items: center; font-size: 14px; font-weight: 800; color: var(--g1); background: #fff; }
+.ttl { position: relative; }
+.top h1.ghost { position: absolute; left: 0; top: 0; pointer-events: none; white-space: nowrap; }
 .clock { text-align: right; font-size: 12px; color: rgba(255,255,255,.92); line-height: 1.35; font-variant-numeric: tabular-nums; background: rgba(0,0,0,.16); border-radius: 12px; padding: 6px 10px; flex: none; }
 .clock b { font-size: 16px; color: #fff; font-weight: 800; font-variant-numeric: tabular-nums; }
 
@@ -581,7 +583,7 @@ details.card .in { padding: 0 16px 16px; display: flex; flex-direction: column; 
 
 <div class="app">
   <header class="top">
-    <div><div class="brand">🇪🇸 스페인 가족여행 일정<span class="offl" id="offl" hidden>오프라인 · 저장된 정보</span></div><h1 id="title">오늘</h1></div>
+    <div><div class="brand">🇪🇸 스페인 가족여행 일정<span class="offl" id="offl" hidden>오프라인 · 저장된 정보</span></div><div class="ttl"><h1 id="title">오늘</h1></div></div>
     <div class="clock" aria-live="polite"><div>스페인 <b id="es-time">--:--</b></div><div id="kr-time">한국 --:--</div></div>
   </header>
   <main>
@@ -1648,6 +1650,19 @@ details.card .in { padding: 0 16px 16px; display: flex; flex-direction: column; 
   const VIEWS = ["today", "plan", "wallet", "food", "more"];
   const RENDER = { today: renderToday, plan: renderPlan, wallet: renderWallet, food: renderFood, more: renderMore };
   const scrollMem = {}; let curView = null;
+  // 맨 위 제목: 탭 방향으로 밀려 바뀜 (오른쪽 탭 → 지금 제목은 왼쪽으로 빠지고 새 제목은 오른쪽에서). 두 제목이 겹쳐 움직여서 비는 순간 없음
+  function swapTitle(text, dir) {
+    const h = $("#title"); if (!h) return;
+    if (REDUCE || !dir || !h.animate || h.textContent === text) { h.textContent = text; return; }
+    h.parentNode.querySelectorAll(".ghost").forEach(g => g.remove());
+    const old = h.cloneNode(true); old.removeAttribute("id"); old.classList.add("ghost"); old.setAttribute("aria-hidden", "true");
+    h.parentNode.appendChild(old);
+    h.textContent = text;
+    const ease = "cubic-bezier(.2, .8, .2, 1)";
+    old.animate([{ transform: "none", opacity: 1 }, { transform: `translateX(${-dir * 24}px)`, opacity: 0 }], { duration: 180, easing: ease, fill: "forwards" });
+    h.animate([{ transform: `translateX(${dir * 24}px)`, opacity: 0 }, { transform: "none", opacity: 1 }], { duration: 240, easing: ease });
+    setTimeout(() => old.remove(), 260);
+  }
   function moveInd(v, instant) {
     const ind = $(".tabs .ind"), b = $(`.tabs button[data-tab="${v}"]`); if (!ind || !b) return;
     if (instant) ind.classList.add("noanim");
@@ -1695,7 +1710,7 @@ details.card .in { padding: 0 16px 16px; display: flex; flex-direction: column; 
     VIEWS.forEach(x => { $("#v-" + x).hidden = x !== v; });
     document.querySelectorAll(".tabs button").forEach(b => b.setAttribute("aria-current", b.dataset.tab === v ? "page" : "false"));
     moveInd(v, !curView);
-    $("#title").textContent = TITLES[v];
+    swapTitle(TITLES[v], curView ? Math.sign(VIEWS.indexOf(v) - VIEWS.indexOf(curView)) : 0);
     destroyMaps();
     delete lastKey["v-" + v];
     const auto = autoPick(v);
@@ -1755,7 +1770,7 @@ details.card .in { padding: 0 16px 16px; display: flex; flex-direction: column; 
 </template>
 <script>
 (() => {
-  const KEY = "es26:key", BUILD = "07760065dc";
+  const KEY = "es26:key", BUILD = "46c75dfa3f";
   const ub64 = s => Uint8Array.from(atob(s), c => c.charCodeAt(0));
   const tob64 = u => btoa(String.fromCharCode(...u));
   const get = k => { try { return localStorage.getItem(k); } catch (e) { return null; } };
