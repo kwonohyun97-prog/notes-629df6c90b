@@ -15,7 +15,7 @@
 <title>🇪🇸 스페인 가족여행 일정</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Black+Han+Sans&family=Do+Hyeon&family=Gothic+A1:wght@800&family=IBM+Plex+Mono:wght@500;600&family=IBM+Plex+Sans+KR:wght@400;500;700&family=Jua&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Gothic+A1:wght@800&family=IBM+Plex+Mono:wght@500;600&family=IBM+Plex+Sans+KR:wght@400;500;700&family=Jua&display=swap">
 <style>
 :root { --g1: #0B3A8F; --g2: #1769D0; --g3: #22B5C0; --glow: rgba(255,255,255,.22); }
 @media (prefers-color-scheme: dark) { :root { --g1: #0A2463; --g2: #1849A6; --g3: #0F7C8C; --glow: rgba(255,255,255,.1); } }
@@ -27,7 +27,7 @@ img { max-width: 100%; }
   font-family: "IBM Plex Sans KR", "Apple SD Gothic Neo", "Malgun Gothic", system-ui, sans-serif; }
 #lock .box { width: 100%; max-width: 380px; display: flex; flex-direction: column; gap: 14px; text-align: center; }
 #lock .li { display: block; width: 92px; height: 92px; border-radius: 22px; margin: 0 auto; box-shadow: 0 10px 28px -10px rgba(0,0,0,.45), 0 0 0 3px rgba(255,255,255,.35); }
-#lock h1 { font-family: "Gothic A1", sans-serif; font-weight: 800; font-size: 30px; line-height: 1.2; margin: 0; text-shadow: 0 1px 3px rgba(0,0,0,.15); }
+#lock h1 { font-family: "Jua", sans-serif; font-weight: 400; font-size: 31px; line-height: 1.2; margin: 0; text-shadow: 0 1px 3px rgba(0,0,0,.15); }
 #lock p { margin: 0; font-size: 17px; opacity: .9; }
 #lock input { font-size: 26px; text-align: center; letter-spacing: .15em; padding: 14px; border-radius: 14px; border: 0; width: 100%; box-sizing: border-box; background: #fff; color: #16202C; box-shadow: 0 6px 18px -8px rgba(0,0,0,.35); }
 #lock button { font-size: 19px; font-weight: 700; min-height: 56px; border-radius: 14px; border: 0; background: rgba(0,0,0,.28); color: #fff; cursor: pointer; }
@@ -151,7 +151,7 @@ img { max-width: 100%; }
 <template id="appshell"><title>🇪🇸 스페인 가족여행 일정</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Black+Han+Sans&family=Do+Hyeon&family=Gothic+A1:wght@800&family=IBM+Plex+Mono:wght@500;600&family=IBM+Plex+Sans+KR:wght@400;500;700&family=Jua&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Gothic+A1:wght@800&family=IBM+Plex+Mono:wght@500;600&family=IBM+Plex+Sans+KR:wght@400;500;700&family=Jua&display=swap">
 <style>
 :root {
   color-scheme: light;
@@ -215,9 +215,9 @@ img { max-width: 100%; }
   --shadow: 0 6px 18px rgba(0, 0, 0, .35);
   --hero-shade: 62%;
 }
-:root, :root[data-tf="a1"], .tfopt[data-tf="a1"] { --title-font: "Gothic A1", var(--sans); --title-w: 800; --title-size: 31px; --title-ls: -.01em; }
+:root[data-tf="a1"], .tfopt[data-tf="a1"] { --title-font: "Gothic A1", var(--sans); --title-w: 800; --title-size: 31px; --title-ls: -.01em; }
 :root[data-tf="bhs"], .tfopt[data-tf="bhs"] { --title-font: "Black Han Sans", var(--sans); --title-w: 400; --title-size: 34px; --title-ls: 0; }
-:root[data-tf="jua"], .tfopt[data-tf="jua"] { --title-font: "Jua", var(--sans); --title-w: 400; --title-size: 33px; --title-ls: 0; }
+:root, :root[data-tf="jua"], .tfopt[data-tf="jua"] { --title-font: "Jua", var(--sans); --title-w: 400; --title-size: 33px; --title-ls: 0; }
 :root[data-tf="dohyeon"], .tfopt[data-tf="dohyeon"] { --title-font: "Do Hyeon", var(--sans); --title-w: 400; --title-size: 38px; --title-ls: 0; }
 html { background: var(--bg); }
 * { box-sizing: border-box; }
@@ -293,7 +293,7 @@ small.ap { font-size: .72em; font-weight: 700; margin-right: 2px; letter-spacing
   box-shadow: 0 12px 26px -16px var(--city, #2F5FB3); }
 .hero::after { content: ""; position: absolute; right: -46px; bottom: -70px; width: 200px; height: 200px; border-radius: 50%; border: 24px solid rgba(255,255,255,.10); pointer-events: none; z-index: -1; }
 .hero .dday { font-family: var(--mono); font-size: 15px; font-weight: 600; opacity: .9; }
-.hero .date { font-family: var(--display); font-weight: var(--display-w, 800); font-size: 34px; line-height: 1.15; margin: 4px 0 2px; }
+.hero .date { font-family: var(--title-font, var(--display)); font-weight: var(--title-w, 800); font-size: 34px; line-height: 1.15; margin: 4px 0 2px; }
 .hero .flow { font-size: 18px; white-space: pre-line; opacity: .95; }
 .next { display: grid; grid-template-columns: auto 1fr; gap: 4px 14px; align-items: start; }
 .next .t { font-family: var(--mono); font-size: 24px; font-weight: 600; line-height: 1.15; font-variant-numeric: tabular-nums; }
@@ -359,7 +359,7 @@ small.ap { font-size: .72em; font-weight: 700; margin-right: 2px; letter-spacing
 .daychip i { display: block; height: 4px; border-radius: 4px; margin-top: 6px; background: var(--city); }
 .daychip[aria-pressed="true"] { border-color: var(--accent); background: var(--accent-soft); }
 .dayhead { display: flex; justify-content: space-between; align-items: flex-end; gap: 12px; }
-.dayhead .date { font-family: var(--display); font-weight: var(--display-w, 800); font-size: 28px; line-height: 1.15; }
+.dayhead .date { font-family: var(--title-font, var(--display)); font-weight: var(--title-w, 800); font-size: 28px; line-height: 1.15; }
 .tl { display: flex; flex-direction: column; }
 .ev { display: grid; grid-template-columns: 84px 1fr; gap: 12px; padding: 14px 0; border-top: 1px solid var(--line); }
 .ev:first-child { border-top: 0; }
@@ -1156,7 +1156,7 @@ details.card .in { padding: 0 16px 16px; display: flex; flex-direction: column; 
 </template>
 <script>
 (() => {
-  const KEY = "es26:key", BUILD = "0c3220593c";
+  const KEY = "es26:key", BUILD = "55053ad258";
   const ub64 = s => Uint8Array.from(atob(s), c => c.charCodeAt(0));
   const tob64 = u => btoa(String.fromCharCode(...u));
   const get = k => { try { return localStorage.getItem(k); } catch (e) { return null; } };
