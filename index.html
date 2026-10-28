@@ -235,7 +235,10 @@ html, body { overscroll-behavior: none; }
 [hidden] { display: none !important; }
 body::after { content: ""; display: block; height: 1px; }   /* 문서를 1px 길게 → 아이폰 시계(상태바) 톡 감지용 */
 .top { cursor: pointer; }
-body { background: var(--bg); color: var(--ink); font-family: var(--sans); font-size: 17px; line-height: 1.5; -webkit-text-size-adjust: 100%; }
+body { background: var(--bg); color: var(--ink); font-family: var(--sans); font-size: 17px; line-height: 1.5; -webkit-text-size-adjust: 100%; word-break: keep-all; overflow-wrap: break-word; }
+/* 제목은 두 줄일 때 위아래 길이를 비슷하게, 설명은 끝에 한 단어만 남지 않게 */
+.h2, .ev .ti, .place .nm, .wcard .ti, .stay .nm, .next .ti, .dest { text-wrap: balance; }
+.no, .muted, .note, .one, .kv dd, .pl, p { text-wrap: pretty; }
 a { color: var(--accent); }
 button { font: inherit; color: inherit; }
 /* 아이폰: 버튼을 빨리 두 번 눌러도 화면이 확대되지 않게 (두 손가락 확대는 그대로) */
@@ -326,10 +329,13 @@ small.ap { font-size: .72em; font-weight: 700; margin-right: 2px; letter-spacing
 .fxquick { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; }
 .fxquick .btn { padding-inline: 6px; }
 .hero .flow { font-size: 18px; white-space: pre-line; opacity: .95; }
-.next { display: grid; grid-template-columns: auto 1fr; gap: 4px 14px; align-items: start; }
+.next { display: flex; flex-direction: column; gap: 2px; }
+.next .tline { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; }
 .next .t { font-size: 24px; font-weight: 800; line-height: 1.15; font-variant-numeric: tabular-nums; letter-spacing: -.01em; }
-.next .ti { font-size: 21px; font-weight: 700; line-height: 1.3; }
-.next .in { grid-column: 2; font-weight: 700; color: var(--accent); }
+.next .ti { font-size: 21px; font-weight: 700; line-height: 1.3; margin-top: 2px; }
+.next .no { color: var(--muted); font-size: 16px; line-height: 1.45; margin-top: 4px; }
+.next .no div + div { margin-top: 2px; }
+.next .in { flex: none; font-size: 15px; font-weight: 800; color: var(--accent); }
 .mini { display: flex; flex-direction: column; }
 .mini button { display: grid; grid-template-columns: 92px 1fr; gap: 10px; text-align: left; background: none; border: 0; border-top: 1px solid var(--line); padding: 11px 0; cursor: pointer; align-items: baseline; }
 .mini button:first-child { border-top: 0; }
@@ -415,11 +421,17 @@ small.ap { font-size: .72em; font-weight: 700; margin-right: 2px; letter-spacing
 .dayhead { display: flex; justify-content: space-between; align-items: flex-end; gap: 12px; }
 .dayhead .date { font-family: var(--title-font, var(--display)); font-weight: var(--title-w, 800); font-size: 28px; line-height: 1.15; }
 .tl { display: flex; flex-direction: column; }
-.ev { display: grid; grid-template-columns: 84px 1fr; gap: 12px; padding: 14px 0; border-top: 1px solid var(--line); }
-.ev:first-child { border-top: 0; }
-.ev .t { font-size: 16px; font-weight: 700; white-space: pre-line; line-height: 1.35; color: var(--cat); font-variant-numeric: tabular-nums; }
-.ev .ti { font-size: 19px; font-weight: 700; line-height: 1.3; display: flex; gap: 8px; align-items: center; }
-.ev .no { white-space: pre-line; color: var(--muted); font-size: 16px; margin-top: 3px; }
+.ev { position: relative; display: grid; grid-template-columns: 30px 1fr; gap: 12px; padding: 12px 0 14px; }
+.ev .rail { position: relative; display: flex; justify-content: center; padding-top: 2px; }
+.ev .rail .evi { position: relative; z-index: 1; width: 30px; height: 30px; }
+.ev .rail .evi .ico { width: 16px; height: 16px; }
+.ev:not(:last-child) .rail::after { content: ""; position: absolute; top: 36px; bottom: -16px; left: 50%; width: 2px; margin-left: -1px; background: var(--line); border-radius: 2px; }
+.ev .body { min-width: 0; }
+.ev .tline { display: flex; align-items: center; gap: 8px; min-height: 22px; }
+.ev .t { font-size: 15px; font-weight: 800; line-height: 1.3; color: var(--cat); font-variant-numeric: tabular-nums; }
+.ev .ti { font-size: 19px; font-weight: 700; line-height: 1.3; margin-top: 2px; }
+.ev .no { color: var(--muted); font-size: 16px; margin-top: 4px; line-height: 1.45; }
+.ev .no div + div { margin-top: 2px; }
 .ev .pl { font-size: 15px; color: var(--muted); margin-top: 3px; }
 .ev .tk { margin-top: 6px; }
 .ev .go { margin-top: 10px; min-height: 42px; font-size: 15px; }
@@ -433,7 +445,7 @@ small.ap { font-size: .72em; font-weight: 700; margin-right: 2px; letter-spacing
 .ev[data-route] { cursor: pointer; margin-inline: -8px; padding-inline: 8px; border-radius: 12px; -webkit-tap-highlight-color: transparent; transition: background-color .2s; }
 .ev[data-route]:active { background: var(--surface-2); }
 .ev.on { background: var(--accent-soft); }
-.ev .evmap { margin-left: auto; flex: none; align-self: flex-start; margin-top: 3px; font-size: 12px; font-weight: 700; color: var(--accent); background: var(--accent-soft); border-radius: 999px; padding: 2px 8px; }
+.ev .evmap { margin-left: auto; flex: none; font-size: 12px; font-weight: 700; color: var(--accent); background: var(--accent-soft); border-radius: 999px; padding: 2px 8px; }
 .ev.on .evmap { background: var(--surface); }
 
 /* 티켓 */
@@ -1270,16 +1282,15 @@ details.card .in { padding: 0 16px 16px; display: flex; flex-direction: column; 
       </div>
       ${cur ? `<div class="card nowcard"><div class="nowline"><span class="nowpill">지금</span><span class="evi sm" style="--cat:${CAT[cur.cat]}">${ico(evIco(cur))}</span><b>${esc(cur.title)}</b><span class="muted">${ap(String(cur.time).split("\n")[0])}</span></div></div>` : ""}
       ${next ? `<div class="card"><p class="eyebrow">${live ? "다음 일정" : "첫 일정"}</p>
-        <div class="next"><div class="t" style="color:${CAT[next.cat]}">${ap(String(next.time).split("\n")[0])}</div>
-        <div><div class="ti">${esc(next.title)}</div>${next.note ? `<div class="muted pre">${ap(next.note)}</div>` : ""}</div>
-        ${leftTxt ? `<div class="in">${leftTxt}</div>` : ""}</div></div>` : (live ? `<div class="card"><p class="eyebrow">다음 일정</p><div class="h2">오늘 남은 일정이 없어요</div></div>` : "")}
+        <div class="next"><div class="tline"><span class="t" style="color:${CAT[next.cat]}">${ap(String(next.time).split("\n")[0])}</span>${leftTxt ? `<span class="in">${leftTxt}</span>` : ""}</div>
+        <div class="ti">${esc(next.title)}</div>${next.note ? `<div class="no">${String(next.note).split("\n").filter(x => x.trim()).map(x => `<div>${ap(x)}</div>`).join("")}</div>` : ""}</div></div>` : (live ? `<div class="card"><p class="eyebrow">다음 일정</p><div class="h2">오늘 남은 일정이 없어요</div></div>` : "")}
       ${stay ? `<div class="card"><p class="eyebrow">오늘 숙소</p><div class="h2">${esc(stay.name)}</div>
         <div class="muted">${esc(stay.area)}</div><div class="addr" style="margin-top:6px">${esc(stay.addr)}</div>
         <div class="grid2" style="margin-top:12px"><a class="btn" href="${mapQ(stay.name + ", " + stay.addr)}" target="_blank" rel="noopener">지도</a>
         <button class="btn primary" data-ride="stay:${d}">택시 · 우버</button></div></div>` : ""}
       ${taxiCards(D.taxiplan.filter(t => t.remind === d), "오늘 할 일 · 택시 미리 부탁하기")}
       ${tickets.length ? `<div class="card"><p class="eyebrow">오늘 챙길 티켓 · 예약</p><div class="mini">${tickets.map(w =>
-        `<button data-wday="${d}"><span class="t tk">${ico(kindIco(w.kind))}${esc(w.kind)}</span><span class="ti">${esc(w.title)}${w.who ? ` · <b>${esc(w.who)}</b>` : ""}</span></button>`).join("")}</div></div>` : ""}
+        `<button data-wday="${d}"><span class="t tk">${ico(kindIco(w.kind))}${esc(w.kind)}</span><span class="ti"><span>${esc(w.title)}${w.who ? ` · <b>${esc(w.who)}</b>` : ""}</span></span></button>`).join("")}</div></div>` : ""}
       <div class="card"><p class="eyebrow">${live ? "오늘" : esc(D.dates[d - 1])} 전체 일정</p><div class="mini">${evs.map(e =>
         `<button data-plan="${d}" class="${e === cur ? "nowrow" : live && mins(e) < now && e !== next ? "past" : ""}"><span class="t">${ap(String(e.time).split("\n")[0])}</span><span class="ti"><span class="evi sm" style="--cat:${CAT[e.cat]}">${ico(evIco(e))}</span>${esc(e.title)}</span></button>`).join("")}</div>
         <div class="btns" style="margin-top:8px"><button class="btn" data-plan="${d}">자세히 보기</button></div></div>
@@ -1304,9 +1315,11 @@ details.card .in { padding: 0 16px 16px; display: flex; flex-direction: column; 
       const cnt = m ? m.places.length : 0;
       const rt = e.route ? ` data-route="${d}:${e.route[0]}:${e.route[1]}" role="button" tabindex="0" aria-label="${esc(e.title)} 경로를 지도에서 보기"` : "";
       const isNow = e === nowEv;
-      return `<div class="ev${isNow ? " now" : ""}" style="--cat:${CAT[e.cat]}"${rt}><div class="t">${ap(e.time)}</div><div>
-        <div class="ti"><span class="evi">${ico(evIco(e))}</span><span>${esc(e.title)}</span>${isNow ? `<span class="nowpill">지금</span>` : ""}${e.route ? `<span class="evmap">${e.route[0] === e.route[1] ? "위치" : "경로"} ↓</span>` : ""}</div>
-        ${e.note ? `<div class="no">${ap(e.note)}</div>` : ""}
+      const tm = String(e.time).split("\n").map(x => x.trim()).filter(Boolean).join(" ").replace(/\s*~\s*/g, " ~ ").trim();
+      return `<div class="ev${isNow ? " now" : ""}" style="--cat:${CAT[e.cat]}"${rt}><div class="rail"><span class="evi">${ico(evIco(e))}</span></div><div class="body">
+        <div class="tline"><span class="t">${ap(tm)}</span>${isNow ? `<span class="nowpill">지금</span>` : ""}${e.route ? `<span class="evmap">${e.route[0] === e.route[1] ? "위치" : "경로"} ↓</span>` : ""}</div>
+        <div class="ti">${esc(e.title)}</div>
+        ${e.note ? `<div class="no">${String(e.note).split("\n").filter(x => x.trim()).map(x => `<div>${ap(x)}</div>`).join("")}</div>` : ""}
         ${e.place ? `<div class="pl">${esc(e.place)}</div>` : ""}
         ${e.ticket ? `<div class="tk"><span class="pill">${esc(e.ticket)}</span></div>` : ""}
         ${m ? `<button class="btn go" data-meal="${m.key}">${cnt ? `식당 후보 ${cnt}곳 보기` : "식당 찾아보기"}</button>` : ""}
@@ -1742,7 +1755,7 @@ details.card .in { padding: 0 16px 16px; display: flex; flex-direction: column; 
 </template>
 <script>
 (() => {
-  const KEY = "es26:key", BUILD = "81e66a3953";
+  const KEY = "es26:key", BUILD = "07760065dc";
   const ub64 = s => Uint8Array.from(atob(s), c => c.charCodeAt(0));
   const tob64 = u => btoa(String.fromCharCode(...u));
   const get = k => { try { return localStorage.getItem(k); } catch (e) { return null; } };
