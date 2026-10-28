@@ -151,7 +151,7 @@ img { max-width: 100%; }
 <template id="appshell"><title>🇪🇸 스페인 가족여행 일정</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Gothic+A1:wght@800&family=IBM+Plex+Mono:wght@500;600&family=IBM+Plex+Sans+KR:wght@400;500;700&family=Jua&display=swap">
+
 <style>
 :root {
   color-scheme: light;
@@ -605,8 +605,17 @@ details.card .in { padding: 0 16px 16px; display: flex; flex-direction: column; 
     }
     return LANDS;
   }
+  // 지도 색: 화면 스타일(--m-*)을 읽되, 아이폰에서 앱을 처음 켤 때 아직 비어 있으면 아래 값으로 (app_map.css와 같은 값)
+  const MAPC = {
+    light: { "--m-sea": "#BFD5E5", "--m-land": "#F2F3F1", "--m-park": "#D8EAD6", "--m-river": "#A9C7DD", "--m-road": "#FFFFFF", "--m-case": "#D3D9DF",
+      "--m-route": "#D2334A", "--m-back": "#0E8A7E", "--m-rail": "#1F4E8C", "--m-label": "#16202C", "--m-halo": "rgba(255,255,255,.94)", "--m-coast": "#B9D3E4" },
+    dark: { "--m-sea": "#0B1620", "--m-land": "#151C24", "--m-park": "#1A2A21", "--m-river": "#23425A", "--m-road": "#2A3541", "--m-case": "#1B232C",
+      "--m-route": "#F06476", "--m-back": "#4CC9B8", "--m-rail": "#8DB6EE", "--m-label": "#E9EEF4", "--m-halo": "rgba(13,18,24,.92)", "--m-coast": "#23425A" } };
   function mapColors() {
-    const cs = getComputedStyle(document.documentElement), g = n => cs.getPropertyValue(n).trim();
+    const root = document.documentElement, th = root.dataset.theme;
+    const dark = th === "dark" || (th !== "light" && matchMedia("(prefers-color-scheme: dark)").matches);
+    const cs = getComputedStyle(root), def = dark ? MAPC.dark : MAPC.light;
+    const g = n => cs.getPropertyValue(n).trim() || def[n];
     return { sea: g("--m-sea"), land: g("--m-land"), park: g("--m-park"), river: g("--m-river"), road: g("--m-road"), cas: g("--m-case"),
       route: g("--m-route"), back: g("--m-back"), rail: g("--m-rail"), label: g("--m-label"), halo: g("--m-halo"), coast: g("--m-coast"),
       kinds: { plaza: "#5B6B7F", market: "#C2780E", sight: "#7A5BC0", food: "#C2780E", station: "#1F4E8C", park: "#2E8556" }, star: "#E59A1A" };
@@ -925,7 +934,7 @@ details.card .in { padding: 0 16px 16px; display: flex; flex-direction: column; 
     const ro = new ResizeObserver(() => { const had = !!W; size(); if (!had) { cam = restCam(); restChip(); } draw(); });
     ro.observe(host);
     // 아이폰은 앱이 뒤로 갔다 오거나 메모리가 부족하면 캔버스 그림을 비워버림 → 다시 보일 때마다 새로 그리기
-    function redraw() { if (!alive) return; const r = host.getBoundingClientRect(); if (!r.width || !r.height) return; size(); if (!cam || !isFinite(cam.x) || !isFinite(cam.y) || !isFinite(cam.z)) cam = restCam(); draw(); }
+    function redraw() { if (!alive) return; const r = host.getBoundingClientRect(); if (!r.width || !r.height) return; C = mapColors(); size(); if (!cam || !isFinite(cam.x) || !isFinite(cam.y) || !isFinite(cam.z)) cam = restCam(); draw(); }
     // 비어 있으면 다시 그리고, 그래도 비면 진단 숫자를 안내 칸에 (화면 캡처로 원인 확인)
     const isBlank = () => { try { if (!canvas.width || !canvas.height) return true; return ctx.getImageData(canvas.width >> 1, canvas.height >> 1, 1, 1).data[3] === 0; } catch (e) { return false; } };
     let blanks = 0;
@@ -1308,7 +1317,7 @@ details.card .in { padding: 0 16px 16px; display: flex; flex-direction: column; 
 </template>
 <script>
 (() => {
-  const KEY = "es26:key", BUILD = "e40fbedded";
+  const KEY = "es26:key", BUILD = "d677f29f16";
   const ub64 = s => Uint8Array.from(atob(s), c => c.charCodeAt(0));
   const tob64 = u => btoa(String.fromCharCode(...u));
   const get = k => { try { return localStorage.getItem(k); } catch (e) { return null; } };
