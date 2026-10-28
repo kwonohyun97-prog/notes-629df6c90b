@@ -314,6 +314,17 @@ small.ap { font-size: .72em; font-weight: 700; margin-right: 2px; letter-spacing
 .hero::after { content: ""; position: absolute; right: -46px; bottom: -70px; width: 200px; height: 200px; border-radius: 50%; border: 24px solid rgba(255,255,255,.10); pointer-events: none; z-index: -1; }
 .hero .dday { font-size: 14px; font-weight: 700; letter-spacing: .02em; opacity: .92; }
 .hero .date { font-family: var(--title-font, var(--display)); font-weight: var(--title-w, 800); font-size: 34px; line-height: 1.15; margin: 4px 0 2px; }
+.hero .wx { margin-top: 10px; display: inline-flex; gap: 6px; align-items: center; font-size: 15px; font-weight: 700; background: rgba(255,255,255,.18); border-radius: 999px; padding: 5px 12px 5px 9px; }
+.wxe { font-size: 17px; line-height: 1; }
+.dayhead .wx { margin-top: 4px; display: flex; gap: 6px; align-items: center; font-size: 14px; font-weight: 600; color: var(--muted); }
+.offl { margin-left: 8px; font-size: 11px; font-weight: 800; background: rgba(0,0,0,.3); padding: 2px 8px; border-radius: 999px; vertical-align: 1px; }
+.fxrow { display: flex; align-items: center; gap: 10px; background: var(--surface-2); border-radius: 14px; padding: 6px 14px; }
+.fxrow .cur { font-size: 22px; font-weight: 800; color: var(--accent); width: 22px; text-align: center; }
+.fxrow input { flex: 1; min-width: 0; border: 0; background: transparent; color: var(--ink); font: inherit; font-size: 26px; font-weight: 800; padding: 6px 0; font-variant-numeric: tabular-nums; outline: none; }
+.fxrow .unit { font-size: 15px; color: var(--muted); font-weight: 700; }
+.fxeq { text-align: center; color: var(--muted); font-weight: 800; margin: -6px 0; }
+.fxquick { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; }
+.fxquick .btn { padding-inline: 6px; }
 .hero .flow { font-size: 18px; white-space: pre-line; opacity: .95; }
 .next { display: grid; grid-template-columns: auto 1fr; gap: 4px 14px; align-items: start; }
 .next .t { font-size: 24px; font-weight: 800; line-height: 1.15; font-variant-numeric: tabular-nums; letter-spacing: -.01em; }
@@ -558,7 +569,7 @@ details.card .in { padding: 0 16px 16px; display: flex; flex-direction: column; 
 
 <div class="app">
   <header class="top">
-    <div><div class="brand">🇪🇸 스페인 가족여행 일정</div><h1 id="title">오늘</h1></div>
+    <div><div class="brand">🇪🇸 스페인 가족여행 일정<span class="offl" id="offl" hidden>오프라인 · 저장된 정보</span></div><h1 id="title">오늘</h1></div>
     <div class="clock" aria-live="polite"><div>스페인 <b id="es-time">--:--</b></div><div id="kr-time">한국 --:--</div></div>
   </header>
   <main>
@@ -663,6 +674,7 @@ details.card .in { padding: 0 16px 16px; display: flex; flex-direction: column; 
     phone: '<path d="M5 4h4l2 5-2.5 1.5a11 11 0 0 0 5 5L15 13l5 2v4a2 2 0 0 1-2 2A16 16 0 0 1 3 6a2 2 0 0 1 2-2"/>',
     check: '<rect x="4" y="4" width="16" height="16" rx="4"/><path d="M8 12.5l2.7 2.7L16.2 9.5"/>',
     sos: '<path d="M12 3.5l9 16H3z"/><path d="M12 10v4M12 16.8v.01"/>',
+    euro: '<path d="M17 7.2A6.2 6.2 0 1 0 17 16.8M5 10.3h8M5 13.7h8"/>',
     pin: '<path d="M12 21s-6.5-5.6-6.5-11a6.5 6.5 0 0 1 13 0c0 5.4-6.5 11-6.5 11z"/><circle cx="12" cy="10" r="2.3"/>'
   };
   const ico = (n, cls) => `<svg class="ico${cls ? " " + cls : ""}" viewBox="0 0 24 24" aria-hidden="true">${IC[n] || IC.star}</svg>`;
@@ -1254,6 +1266,7 @@ details.card .in { padding: 0 16px 16px; display: flex; flex-direction: column; 
         <div class="dday">${esc(label)}</div>
         <div class="date">${esc(D.dates[d - 1])}</div>
         <div class="flow">${esc(D.flow[d - 1])}</div>
+        <div class="wx" data-wx="${d}" hidden></div>
       </div>
       ${cur ? `<div class="card nowcard"><div class="nowline"><span class="nowpill">지금</span><span class="evi sm" style="--cat:${CAT[cur.cat]}">${ico(evIco(cur))}</span><b>${esc(cur.title)}</b><span class="muted">${ap(String(cur.time).split("\n")[0])}</span></div></div>` : ""}
       ${next ? `<div class="card"><p class="eyebrow">${live ? "다음 일정" : "첫 일정"}</p>
@@ -1272,7 +1285,7 @@ details.card .in { padding: 0 16px 16px; display: flex; flex-direction: column; 
         <div class="btns" style="margin-top:8px"><button class="btn" data-plan="${d}">자세히 보기</button></div></div>
       ${dayMaps(d, false)}
     </div>`;
-    mountMaps($("#v-today"));
+    mountMaps($("#v-today")); fillWx($("#v-today"));
   }
 
   /* ---------- 일정 ---------- */
@@ -1301,14 +1314,14 @@ details.card .in { padding: 0 16px 16px; display: flex; flex-direction: column; 
     }).join("");
     paint($("#v-plan"), `<div class="days" role="group" aria-label="날짜">${chips}</div>`, `
       <div class="stack" style="padding-top:8px">
-        <div class="dayhead"><div><div class="date">${esc(D.dates[d - 1])}</div><div class="muted pre">${esc(D.flow[d - 1])}</div></div>
+        <div class="dayhead"><div><div class="date">${esc(D.dates[d - 1])}</div><div class="muted pre">${esc(D.flow[d - 1])}</div><div class="wx sm" data-wx="${d}" hidden></div></div>
         <span class="pill" style="background:${colorOf(d)};color:#fff">Day ${d}</span></div>
         <div class="card"><p class="eyebrow">시간표</p><div class="tl">${evs || `<div class="muted">일정이 없어요</div>`}</div></div>
         ${stay ? `<div class="card"><p class="eyebrow">이날 숙소</p><div class="h2">${esc(stay.name)}</div><div class="addr muted">${esc(stay.addr)}</div>
         <div class="grid2" style="margin-top:10px"><a class="btn" href="${mapQ(stay.name + ", " + stay.addr)}" target="_blank" rel="noopener">지도</a><button class="btn primary" data-ride="stay:${d}">택시 · 우버</button></div></div>` : ""}
         ${dayMaps(d, true)}
       </div>`, d);
-    mountMaps($("#v-plan"));
+    mountMaps($("#v-plan")); fillWx($("#v-plan"));
   }
 
   /* ---------- 티켓 ---------- */
@@ -1466,6 +1479,49 @@ details.card .in { padding: 0 16px 16px; display: flex; flex-direction: column; 
   }
 
   /* ---------- 더보기 ---------- */
+  /* ---------- 날씨 (Open-Meteo · 키 없음 · 도시 하나 1KB · 3시간 저장) ---------- */
+  const CITY_LL = { "마드리드": [40.4168, -3.7038], "그라나다": [37.1773, -3.5986], "마요르카": [39.5696, 2.6502], "바르셀로나": [41.3874, 2.1686] };
+  const WX = c => c === 0 ? ["☀️", "맑음"] : c <= 2 ? ["🌤️", "구름 조금"] : c === 3 ? ["☁️", "흐림"] : c <= 48 ? ["🌫️", "안개"] : c <= 57 ? ["🌦️", "이슬비"] : c <= 67 ? ["🌧️", "비"] : c <= 77 ? ["🌨️", "눈"] : c <= 82 ? ["🌦️", "소나기"] : ["⛈️", "뇌우"];
+  const wxPending = {};
+  function wxCity(city) {
+    const c = store.get("wx:" + city, null);
+    if (c && Date.now() - c.t < 3 * 3600e3) return Promise.resolve(c.d);
+    if (navigator.onLine === false) return Promise.resolve(c ? c.d : null);
+    if (wxPending[city]) return wxPending[city];
+    const [la, lo] = CITY_LL[city];
+    return wxPending[city] = fetch(`https://api.open-meteo.com/v1/forecast?latitude=${la}&longitude=${lo}&daily=weather_code,temperature_2m_max,temperature_2m_min,precipitation_probability_max,sunset&timezone=Europe%2FMadrid&start_date=2026-11-01&end_date=2026-11-10`)
+      .then(r => r.ok ? r.json() : Promise.reject()).then(j => { store.set("wx:" + city, { t: Date.now(), d: j.daily }); return j.daily; })
+      .catch(() => c ? c.d : null).finally(() => { delete wxPending[city]; });
+  }
+  function fillWx(root) {
+    if (!root) return;
+    root.querySelectorAll("[data-wx]").forEach(el => {
+      const d = +el.dataset.wx, city = cityOf(d); if (!CITY_LL[city]) return;
+      wxCity(city).then(w => {
+        if (!w || !el.isConnected) return;
+        const i = w.time.indexOf(`2026-11-${pad(d)}`); if (i < 0 || w.weather_code[i] == null) return;
+        const [em, lab] = WX(w.weather_code[i]), sun = String(w.sunset[i] || "").slice(11, 16), rain = w.precipitation_probability_max[i];
+        el.innerHTML = `<span class="wxe">${em}</span><span>${lab} ${Math.round(w.temperature_2m_min[i])}°/${Math.round(w.temperature_2m_max[i])}°${rain != null ? ` · 비 ${rain}%` : ""}${sun ? ` · 일몰 ${+sun.slice(0, 2) % 12 || 12}:${sun.slice(3, 5)}` : ""}</span>`;
+        el.hidden = false;
+      });
+    });
+  }
+  /* ---------- 환율 (유로 ↔ 원) · 12시간에 한 번만 새로 받음 ---------- */
+  let fxRate = (store.get("fx", null) || {}).rate || (D.eurkrw && D.eurkrw.rate) || 1500;
+  let fxDate = (store.get("fx", null) || {}).date || (D.eurkrw && D.eurkrw.date) || "";
+  function fxShow() { const r = $("#fx-rate"); if (r) r.textContent = `1€ = ${Math.round(fxRate).toLocaleString("ko-KR")}원${fxDate ? ` · ${fxDate.slice(5).replace("-", "/")} 기준 (유럽중앙은행)` : ""}`; }
+  function fxFetch() {
+    const c = store.get("fx", null);
+    if ((c && Date.now() - c.t < 12 * 3600e3) || navigator.onLine === false) return;
+    fetch("https://api.frankfurter.dev/v1/latest?base=EUR&symbols=KRW").then(r => r.ok ? r.json() : Promise.reject())
+      .then(j => { fxRate = j.rates.KRW; fxDate = j.date; store.set("fx", { t: Date.now(), rate: fxRate, date: fxDate }); fxShow(); fxCalc("eur"); }).catch(() => {});
+  }
+  function fxCalc(from) {
+    const e = $("#fx-eur"), k = $("#fx-krw"); if (!e || !k) return;
+    const num = v => parseFloat(String(v).replace(/,/g, "").replace(/[^0-9.]/g, ""));
+    if (from === "eur") { const v = num(e.value); k.value = isFinite(v) ? Math.round(v * fxRate).toLocaleString("ko-KR") : ""; }
+    else { const v = num(k.value); e.value = isFinite(v) ? (Math.round(v / fxRate * 100) / 100).toString() : ""; if (isFinite(v)) k.value = Math.round(v).toLocaleString("ko-KR"); }
+  }
   const sum = (ic, c, t) => `<span class="mrow"><span class="mi" style="--mc:${c}">${ico(ic)}</span><span>${t}</span></span>`;
   function renderMore() {
     const checks = store.get("checks", {});
@@ -1480,6 +1536,12 @@ details.card .in { padding: 0 16px 16px; display: flex; flex-direction: column; 
         <div><b>${esc(o.name)}</b><div class="muted">${esc(o.desc)}</div></div></div>`).join("")}</div>
         <p class="note" style="margin:10px 0 0">휴대폰 바탕화면에 깔렸을 때 보이는 모양이에요.</p></div>` : "";
     $("#v-more").innerHTML = `<div class="stack">${titles}${icons}
+      <details class="card"><summary>${sum("euro", "#0F9D8A", "환율 계산기 (유로 ↔ 원)")}</summary><div class="in">
+        <label class="fxrow"><span class="cur">€</span><input id="fx-eur" type="text" inputmode="decimal" placeholder="0" autocomplete="off" aria-label="유로"><span class="unit">유로</span></label>
+        <div class="fxeq">↕</div>
+        <label class="fxrow"><span class="cur">₩</span><input id="fx-krw" type="text" inputmode="numeric" placeholder="0" autocomplete="off" aria-label="원"><span class="unit">원</span></label>
+        <div class="fxquick">${[5, 10, 20, 50, 100, 200].map(v => `<button class="btn sm" data-fx="${v}">${v}€</button>`).join("")}</div>
+        <p class="note" id="fx-rate" style="margin:0"></p></div></details>
       <details class="card"><summary>${sum("car", "#F0A020", "택시 미리 부탁하기 (호텔)")}</summary><div class="in">
         <p class="muted" style="margin:0">이른 아침에 떠나는 날은 전날 밤 숙소 프런트에 택시를 예약해 달라고 부탁하세요. 화면을 보여주거나, 문장을 복사해서 Booking.com 앱 메시지로 보내면 돼요.</p>
         ${D.taxiplan.map((t, i) => `<div class="stay"><div class="nm">${esc(D.dates[t.day - 1])} ${ap(t.time)} · ${esc(t.dest)}</div><div class="muted">${esc(t.hotel)} · 부탁할 때: ${esc(t.when)}</div>
@@ -1503,6 +1565,7 @@ details.card .in { padding: 0 16px 16px; display: flex; flex-direction: column; 
       ${window.__showInstall ? `<button class="btn primary" data-install="1">휴대폰에 앱으로 설치하는 방법</button>` : ""}
       <a class="btn" href="${esc(D.sheet)}" target="_blank" rel="noopener">원본 구글 시트 열기</a>
     </div>`;
+    fxShow(); fxFetch();
   }
 
   /* ---------- 택시 · 우버 ---------- */
@@ -1647,8 +1710,15 @@ details.card .in { padding: 0 16px 16px; display: flex; flex-direction: column; 
     else if (ds.taxicard) { if (rideCur) openTaxi(rideCur); }
     else if (ds.close) $("#" + ds.close).hidden = true;
     else if (ds.lang) { const es = b.closest(".say2").querySelector(".es2"); es.hidden = !es.hidden; b.setAttribute("aria-pressed", String(!es.hidden)); b.textContent = es.hidden ? "🇪🇸 스페인어" : "스페인어 숨기기"; }
+    else if (ds.fx) { const e = $("#fx-eur"); if (e) { e.value = ds.fx; fxCalc("eur"); } }
     else if (ds.copy !== undefined) copy(ds.copy, b);
   });
+  document.addEventListener("input", e => { if (e.target.id === "fx-eur") fxCalc("eur"); else if (e.target.id === "fx-krw") fxCalc("krw"); });
+  // 인터넷 끊기면 맨 위에 '오프라인' 배지 · 다시 연결되면 날씨 새로 받기
+  const netUpd = () => { const o = $("#offl"); if (o) o.hidden = navigator.onLine !== false; };
+  addEventListener("offline", netUpd);
+  addEventListener("online", () => { netUpd(); if (curView === "today" || curView === "plan") fillWx($("#v-" + curView)); });
+  netUpd();
   document.addEventListener("change", e => {
     const c = e.target.closest("[data-check]"); if (!c) return;
     const all = store.get("checks", {}); all[c.dataset.check] = c.checked; store.set("checks", all);
@@ -1672,7 +1742,7 @@ details.card .in { padding: 0 16px 16px; display: flex; flex-direction: column; 
 </template>
 <script>
 (() => {
-  const KEY = "es26:key", BUILD = "33883915c1";
+  const KEY = "es26:key", BUILD = "81e66a3953";
   const ub64 = s => Uint8Array.from(atob(s), c => c.charCodeAt(0));
   const tob64 = u => btoa(String.fromCharCode(...u));
   const get = k => { try { return localStorage.getItem(k); } catch (e) { return null; } };
