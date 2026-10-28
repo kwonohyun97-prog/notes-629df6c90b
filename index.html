@@ -20,7 +20,7 @@
 :root { --g1: #0B3A8F; --g2: #1769D0; --g3: #22B5C0; --glow: rgba(255,255,255,.22); }
 @media (prefers-color-scheme: dark) { :root { --g1: #0A2463; --g2: #1849A6; --g3: #0F7C8C; --glow: rgba(255,255,255,.1); } }
 html, body { margin: 0; }
-html.ios-gap { background: var(--g3); }   /* 잠금 화면일 때 맨 아래 띠를 그라데이션 끝 색으로 */
+body { min-height: 100vh; min-height: 100dvh; }   /* 잠금 화면도 화면 전체 높이 (짧으면 아이폰 홈 화면 앱에서 아래가 비어 보임) */
 img { max-width: 100%; }
 [hidden] { display: none !important; }
 #lock { position: fixed; inset: 0; z-index: 50; display: grid; place-items: center; padding: 24px 16px; color: #fff; overflow-y: auto;
@@ -227,9 +227,6 @@ img { max-width: 100%; }
 :root, :root[data-tf="jua"], .tfopt[data-tf="jua"] { --title-font: "Jua", var(--sans); --title-w: 400; --title-size: 33px; --title-ls: 0; }
 :root[data-tf="dohyeon"], .tfopt[data-tf="dohyeon"] { --title-font: "Do Hyeon", var(--sans); --title-w: 400; --title-size: 38px; --title-ls: 0; }
 html { background: var(--bg); }
-/* 아이폰 홈 화면 앱이 화면 높이를 상태바만큼 짧게 줄 때: 맨 아래 띠(앱 밖, 아이폰이 html 바탕색으로 칠함)를 하단 바 색으로 → 바가 바닥까지 이어져 보임 */
-html.ios-gap { background: var(--surface); }
-html.ios-gap .tabs { background: var(--surface); -webkit-backdrop-filter: none; backdrop-filter: none; padding-bottom: 6px; }
 html, body { overscroll-behavior: none; }   /* 화면 전체를 overflow:hidden으로 막으면 아이폰에서 하단 바가 떠 보여서 막지 않음 (앱 높이를 화면에 딱 맞춰 스크롤할 게 없게) */
 * { box-sizing: border-box; }
 [hidden] { display: none !important; }
@@ -240,7 +237,8 @@ button { font: inherit; color: inherit; }
 button, a, .btn, .tabs, .days, .seg, [data-route] { touch-action: manipulation; }
 .tabs { -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; }
 :focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; border-radius: 8px; }
-.app { max-width: 600px; margin: 0 auto; padding-inline: 16px; height: 100vh; height: 100dvh; height: var(--appH, 100dvh); display: flex; flex-direction: column; }
+.app { max-width: 600px; margin: 0 auto; padding-inline: 16px; height: 100vh; height: 100dvh; display: flex; flex-direction: column; }   /* 꼭 화면 전체 높이(100dvh) — innerHeight로 맞추면 아이폰 홈 화면 앱에서 하단 바가 뜸 */
+.top { touch-action: none; }   /* 머리띠를 끌어서 화면 전체가 밀리지 않게 */
 /* 탭마다 따로 스크롤 (인스타처럼): 페이지 전환 때 스크롤을 옮기지 않아서 아이폰에서 깜빡이지 않음 · 보던 위치도 탭마다 기억 */
 main { flex: 1; min-height: 0; position: relative; margin: -24px -16px 0; }
 .view { position: absolute; inset: 0; overflow-y: auto; overscroll-behavior-y: contain; -webkit-overflow-scrolling: touch; padding: 24px 16px 104px; }
@@ -1393,26 +1391,9 @@ details.card .in { padding: 0 16px 16px; display: flex; flex-direction: column; 
     if (instant) { void ind.offsetWidth; ind.classList.remove("noanim"); }
   }
   // 앱 높이를 실제 보이는 화면 높이에 맞추고, 하단 바가 화면 바닥보다 떠 있으면 바닥에 붙이기 (아이폰 기종 · 상황별 차이 보정)
-  // 아이폰 홈 화면 앱(상태바 투명)은 화면 높이를 상태바만큼 짧게 알려주는 경우가 있음 (15 Pro: 852 → 793)
-  // → 실제 화면 높이와의 차이(--iosgap)만큼 하단 바 · 덮는 화면을 아래로 내림. 다른 폰 · 브라우저에서는 0
-  function fitScreen() {
-    const root = document.documentElement;
-    root.style.setProperty("--appH", Math.round(innerHeight) + "px");
-    let gap = 0;
-    if (navigator.standalone === true && screen.height) {
-      const full = innerWidth > innerHeight ? Math.min(screen.width, screen.height) : Math.max(screen.width, screen.height);
-      gap = Math.round(full - innerHeight);
-      if (gap < 0 || gap > 120) gap = 0;
-    }
-    root.style.setProperty("--iosgap", gap + "px");
-    root.classList.toggle("ios-gap", gap > 0);
-  }
-  fitScreen();
-  addEventListener("resize", () => { fitScreen(); if (curView) moveInd(curView, true); });
-  addEventListener("orientationchange", () => setTimeout(fitScreen, 300));
-  addEventListener("pageshow", fitScreen);
-  if (window.visualViewport) visualViewport.addEventListener("resize", fitScreen);
-  setTimeout(fitScreen, 400); setTimeout(fitScreen, 1500);   // 앱을 막 켰을 때 화면 크기가 늦게 자리 잡는 경우
+  addEventListener("resize", () => { if (curView) moveInd(curView, true); });
+  // 화면 전체는 항상 맨 위에 고정 (스크롤은 탭 화면 안에서만)
+  addEventListener("scroll", () => { if (window.scrollY) window.scrollTo(0, 0); }, { passive: true });
   function show(v, fromTab) {
     if (!VIEWS.includes(v)) v = "today";
     if (fromTab && v === curView) { $("#v-" + v).scrollTo({ top: 0, behavior: REDUCE ? "auto" : "smooth" }); return; }   // 같은 탭 한 번 더 → 맨 위로
@@ -1471,19 +1452,12 @@ details.card .in { padding: 0 16px 16px; display: flex; flex-direction: column; 
 </template>
 <script>
 (() => {
-  const KEY = "es26:key", BUILD = "9ae6092f89";
+  const KEY = "es26:key", BUILD = "2ae18fd7d7";
   const ub64 = s => Uint8Array.from(atob(s), c => c.charCodeAt(0));
   const tob64 = u => btoa(String.fromCharCode(...u));
   const get = k => { try { return localStorage.getItem(k); } catch (e) { return null; } };
   const put = (k, v) => { try { v === null ? localStorage.removeItem(k) : localStorage.setItem(k, v); } catch (e) {} };
   if ("serviceWorker" in navigator) navigator.serviceWorker.register("sw.js").catch(() => {});
-  const iosGap = () => {   // 아이폰 홈 화면 앱이 화면 높이를 상태바만큼 짧게 알려줄 때 보정 (앱 화면의 fitScreen과 같은 계산)
-    let g = 0;
-    if (navigator.standalone === true && screen.height) { const full = innerWidth > innerHeight ? Math.min(screen.width, screen.height) : Math.max(screen.width, screen.height); g = Math.round(full - innerHeight); if (g < 0 || g > 120) g = 0; }
-    document.documentElement.style.setProperty("--iosgap", g + "px");
-    document.documentElement.classList.toggle("ios-gap", g > 0);
-  };
-  iosGap(); addEventListener("resize", iosGap);
   let ENC = null;
   async function loadEnc() {
     if (!ENC) ENC = await (await fetch("data.enc", { cache: "no-cache" })).json();
