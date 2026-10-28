@@ -39,8 +39,107 @@ img { max-width: 100%; }
     <label for="remember"><input id="remember" type="checkbox" checked> 이 휴대폰에서 기억하기</label>
     <button type="submit" id="go">열기</button>
     <div class="err" id="err" aria-live="polite"></div>
+    <button type="button" id="lockhelp" onclick="window.__showInstall && window.__showInstall()">홈 화면에 설치하는 방법</button>
   </form>
 </div>
+<!-- 설치 도우미: 홈 화면에 앱으로 설치하는 방법 (아이폰 / 안드로이드 / 카카오톡) -->
+<style>
+#install { position: fixed; inset: 0; z-index: 60; background: rgba(10, 16, 24, .55); display: flex; align-items: flex-end; justify-content: center;
+  font-family: "Apple SD Gothic Neo", "Malgun Gothic", system-ui, sans-serif; }
+#install .sheet { width: 100%; max-width: 560px; background: #FFFFFF; color: #16202C; border-radius: 22px 22px 0 0; padding: 20px 18px calc(18px + env(safe-area-inset-bottom, 0px)); display: flex; flex-direction: column; gap: 14px; max-height: 92vh; overflow-y: auto; }
+@media (prefers-color-scheme: dark) { #install .sheet { background: #151C25; color: #ECF0F5; } #install .step { background: #1D2631; } #install .ghost { background: #1D2631 !important; color: #ECF0F5 !important; } }
+#install h2 { margin: 0; font-size: 22px; }
+#install p { margin: 0; font-size: 17px; line-height: 1.5; }
+#install .steps { display: flex; flex-direction: column; gap: 10px; }
+#install .step { display: grid; grid-template-columns: 34px 1fr 52px; gap: 12px; align-items: center; background: #EEF2F6; border-radius: 14px; padding: 12px; }
+#install .num { width: 30px; height: 30px; border-radius: 50%; background: #1F4E8C; color: #fff; font-weight: 700; display: grid; place-items: center; font-size: 16px; }
+#install .txt { font-size: 18px; line-height: 1.4; }
+#install .txt b { color: #D2334A; }
+#install .ico { width: 48px; height: 48px; border-radius: 12px; background: #fff; display: grid; place-items: center; border: 1px solid #DCE2EA; }
+#install .ico svg { width: 28px; height: 28px; stroke: #1F7AE0; fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+#install .ico .dots { font-size: 26px; font-weight: 800; color: #1F7AE0; letter-spacing: 1px; line-height: 1; }
+#install .big { min-height: 58px; border-radius: 14px; border: 0; background: #1F4E8C; color: #fff; font-size: 19px; font-weight: 700; cursor: pointer; width: 100%; }
+#install .row { display: flex; gap: 8px; }
+#install.ios .sheet { padding-bottom: calc(66px + env(safe-area-inset-bottom, 0px)); }
+#install .ghost { flex: 1; min-height: 48px; border-radius: 12px; border: 0; background: #EEF2F6; color: #16202C; font-size: 16px; font-weight: 700; cursor: pointer; }
+#install .note { font-size: 15px; opacity: .75; }
+#pointer { position: fixed; z-index: 61; right: 14px; bottom: calc(6px + env(safe-area-inset-bottom, 0px)); font-size: 44px; line-height: 1; pointer-events: none; filter: drop-shadow(0 2px 4px rgba(0,0,0,.35)); }
+@media (prefers-reduced-motion: no-preference) { #pointer { animation: bob 1s ease-in-out infinite; } @keyframes bob { 50% { transform: translateY(8px); } } }
+#lockhelp { background: none; border: 0; color: #1F4E8C; font-size: 17px; font-weight: 700; text-decoration: underline; cursor: pointer; padding: 8px; }
+</style>
+<div id="install" hidden role="dialog" aria-modal="true" aria-label="홈 화면에 설치하기"><div class="sheet" id="installbody"></div></div>
+<div id="pointer" hidden aria-hidden="true">👇</div>
+<script>
+(() => {
+  const ua = navigator.userAgent;
+  const isIOS = /iPhone|iPad|iPod/.test(ua) || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
+  const isAndroid = /Android/i.test(ua);
+  const isKakao = /KAKAOTALK/i.test(ua);
+  const inApp = isKakao || /NAVER|Instagram|FBAN|FBAV|Line\/|DaumApps|everytimeApp|; wv\)/i.test(ua);
+  const standalone = matchMedia("(display-mode: standalone)").matches || navigator.standalone === true;
+  const get = k => { try { return localStorage.getItem(k); } catch (e) { return null; } };
+  const put = (k, v) => { try { localStorage.setItem(k, v); } catch (e) {} };
+  let deferred = null;
+  window.addEventListener("beforeinstallprompt", e => { e.preventDefault(); deferred = e; });
+  window.addEventListener("appinstalled", () => { put("es26:installed", "1"); hide(); });
+  const ICON = {
+    share: '<svg viewBox="0 0 24 24"><path d="M12 3v12M7.5 7.5 12 3l4.5 4.5"/><path d="M6 11H5a1 1 0 0 0-1 1v8a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-8a1 1 0 0 0-1-1h-1"/></svg>',
+    add: '<svg viewBox="0 0 24 24"><rect x="4" y="4" width="16" height="16" rx="4"/><path d="M12 8v8M8 12h8"/></svg>',
+    dots: '<span class="dots">···</span>',
+    check: '<svg viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7"/></svg>',
+    menu: '<span class="dots">⋮</span>'
+  };
+  const step = (n, html, icon) => `<div class="step"><span class="num">${n}</span><span class="txt">${html}</span><span class="ico">${icon}</span></div>`;
+  function body() {
+    const url = location.href.split("#")[0];
+    if (inApp) {
+      return `<h2>사파리(Safari)에서 열어야 설치돼요</h2>
+        <p>지금은 ${isKakao ? "카카오톡" : "다른 앱"} 안에서 열려 있어서 홈 화면에 설치할 수 없어요.</p>
+        ${isKakao ? `<button class="big" id="openext">${isIOS ? "사파리로 열기" : "크롬으로 열기"}</button>` : ""}
+        <p class="note">버튼이 안 되면: 화면 오른쪽 아래(또는 위) <b>···</b> 메뉴 → <b>${isIOS ? "Safari로 열기" : "다른 브라우저로 열기"}</b></p>`;
+    }
+    if (isIOS) {
+      return `<h2>홈 화면에 앱으로 설치하기</h2>
+        <div class="steps">
+          ${step(1, "화면 맨 아래 주소창 오른쪽의 <b>···</b> 버튼 누르기", ICON.dots)}
+          ${step(2, "<b>공유</b> 누르기", ICON.share)}
+          ${step(3, "아래로 내려서 <b>홈 화면에 추가</b> 누르기", ICON.add)}
+          ${step(4, "<b>웹 앱으로 열기</b>가 켜진 채로 오른쪽 위 <b>추가</b>", ICON.check)}
+        </div>
+        <p class="note">아래쪽 막대가 안 보이면 화면 맨 아래를 한 번 톡 눌러주세요. 예전 아이폰은 맨 아래 가운데 <b>공유</b> 버튼부터 시작하면 돼요.</p>`;
+    }
+    if (isAndroid) {
+      return `<h2>홈 화면에 앱으로 설치하기</h2>
+        ${deferred ? `<button class="big" id="doinstall">앱으로 설치하기</button><p class="note">누른 뒤 나오는 창에서 <b>설치</b>를 누르면 끝이에요.</p>`
+          : `<div class="steps">${step(1, "오른쪽 위 <b>⋮</b> 메뉴 누르기", ICON.menu)}${step(2, "<b>앱 설치</b> 또는 <b>홈 화면에 추가</b> 누르기", ICON.add)}${step(3, "<b>설치</b> 누르기", ICON.check)}</div>`}`;
+    }
+    return `<h2>휴대폰에서 열어주세요</h2><p>아이폰은 사파리, 안드로이드는 크롬으로 이 주소를 열면 홈 화면에 설치할 수 있어요.</p>`;
+  }
+  function show(auto) {
+    if (standalone) return;
+    const el = document.getElementById("installbody");
+    el.innerHTML = body() + `<div class="row"><button class="ghost" id="later">나중에</button>${auto ? '<button class="ghost" id="never">다시 보지 않기</button>' : ""}</div>`;
+    document.getElementById("install").hidden = false;
+    document.getElementById("install").classList.toggle("ios", isIOS && !inApp);
+    document.getElementById("pointer").hidden = !(isIOS && !inApp);
+    const ext = document.getElementById("openext");
+    if (ext) ext.onclick = () => { location.href = "kakaotalk://web/openExternal?url=" + encodeURIComponent(location.href.split("#")[0]); };
+    const ins = document.getElementById("doinstall");
+    if (ins) ins.onclick = async () => { deferred.prompt(); const r = await deferred.userChoice; deferred = null; if (r.outcome === "accepted") hide(); else show(auto); };
+    document.getElementById("later").onclick = () => { sessionStorage.setItem("es26:later", "1"); hide(); };
+    const nv = document.getElementById("never"); if (nv) nv.onclick = () => { put("es26:noinstall", "1"); hide(); };
+  }
+  function hide() { document.getElementById("install").hidden = true; document.getElementById("pointer").hidden = true; }
+  window.__showInstall = () => show(false);
+  window.__autoInstall = () => {
+    let later = null; try { later = sessionStorage.getItem("es26:later"); } catch (e) {}
+    if (!standalone && !get("es26:noinstall") && !get("es26:installed") && !later) setTimeout(() => show(true), isAndroid ? 1200 : 600);
+  };
+  // 카카오톡 안에서 열렸으면 잠금 화면보다 먼저 안내
+  if (inApp && !standalone) setTimeout(() => show(false), 300);
+})();
+</script>
+
 <template id="appshell"><title>스페인 가족 수첩</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -875,6 +974,7 @@ details.card .in { padding: 0 16px 16px; display: flex; flex-direction: column; 
       <details class="card"><summary>준비물 체크리스트</summary><div class="in">${D.checklist.map(([g, items]) => `<p class="sec-title">${esc(g)}</p>${items.map((t, j) => {
         const id = "ck-" + g + "-" + j; return `<label class="check" for="${esc(id)}"><input type="checkbox" id="${esc(id)}" data-check="${esc(id)}" ${checks[id] ? "checked" : ""}>${esc(t)}</label>`; }).join("")}`).join("")}
         <p class="muted" style="font-size:14px">체크 표시는 이 휴대폰에만 저장돼요.</p></div></details>
+      ${window.__showInstall ? `<button class="btn primary" data-install="1">휴대폰에 앱으로 설치하는 방법</button>` : ""}
       <a class="btn" href="${esc(D.sheet)}" target="_blank" rel="noopener">원본 구글 시트 열기</a>
     </div>`;
   }
@@ -962,6 +1062,7 @@ details.card .in { padding: 0 16px 16px; display: flex; flex-direction: column; 
     else if (ds.fly) { const [fd, fi, fk] = ds.fly.split(":"); const m = MAPS[fd + ":v-plan"] || MAPS[fd + ":v-today"]; if (m) m.fly(+fi, fk === undefined ? -1 : +fk); }
     else if (ds.taxiplan !== undefined) openTaxiPlan(+ds.taxiplan);
     else if (ds.meal) { mealKey = ds.meal; store.set("meal", mealKey); if ($("#v-food").hidden) show("food"); else { renderFood(); window.scrollTo(0, 0); } }
+    else if (ds.install) { if (window.__showInstall) window.__showInstall(); }
     else if (ds.ride) openRide(ds.ride);
     else if (ds.taxicard) { if (rideCur) openTaxi(rideCur); }
     else if (ds.close) $("#" + ds.close).hidden = true;
@@ -1014,6 +1115,7 @@ details.card .in { padding: 0 16px 16px; display: flex; flex-direction: column; 
       else n.textContent = s.textContent;
       document.body.appendChild(n);
     });
+    if (window.__autoInstall) window.__autoInstall();
   }
   async function start() {
     let enc;
