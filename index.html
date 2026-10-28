@@ -412,6 +412,14 @@ small.ap { font-size: .72em; font-weight: 700; margin-right: 2px; letter-spacing
 .place .ko { font-size: 15px; color: var(--muted); }
 .place .meta { display: flex; gap: 12px; flex-wrap: wrap; align-items: center; font-size: 16px; margin-top: 2px; }
 .place .rt { color: var(--star); font-weight: 700; font-variant-numeric: tabular-nums; }
+/* 실시간 영업시간 (구글 장소 API) */
+.live { display: flex; flex-wrap: wrap; gap: 4px 12px; align-items: center; font-size: 15px; margin-top: 6px; line-height: 1.4; }
+.live:empty { display: none; }
+.live .st { font-weight: 700; }
+.live .st.on { color: var(--ok); }
+.live .st.off { color: var(--todo); }
+.live .st.warn { color: var(--warn); }
+.live .tel { font-weight: 700; text-decoration: none; white-space: nowrap; }
 .kv { display: grid; grid-template-columns: 76px 1fr; gap: 8px 10px; font-size: 16px; margin: 0; }
 .kv dt { color: var(--muted); font-size: 14px; font-weight: 700; padding-top: 2px; }
 .kv dd { margin: 0; white-space: pre-line; }
@@ -1183,7 +1191,8 @@ details.card .in { padding: 0 16px 16px; display: flex; flex-direction: column; 
       return `<article class="card place">
         <div class="top2">${rank ? `<div class="rank ${star ? "star" : ""}"><div>${esc(rank)}<small>${star ? "추천" : "순위"}</small></div></div>` : ""}
           <div><a class="nm" style="color:inherit;text-decoration:underline;text-decoration-thickness:1px;text-underline-offset:3px;display:block" href="https://www.google.com/search?q=${encodeURIComponent(nm + " " + city)}" target="_blank" rel="noopener">${esc(nm)}</a>${ko.length ? `<div class="ko">${esc(ko.join(" "))}</div>` : ""}
-          <div class="meta"><span class="rt">${esc(rate)} <span class="muted" style="font-weight:500">${esc(cnt || "")}</span></span>${walk ? `<span>${esc(walk)}</span>` : ""}</div></div></div>
+          <div class="meta"><span class="rt">${esc(rate)} <span class="muted" style="font-weight:500">${esc(cnt || "")}</span></span>${walk ? `<span>${esc(walk)}</span>` : ""}</div>
+          ${p.pid && D.placesKey ? `<div class="live" data-pid="${esc(p.pid)}"></div>` : ""}</div></div>
         <dl class="kv">
           <dt>위치</dt><dd>${esc(loc)}</dd>
           ${p.feature ? `<dt>특징</dt><dd>${esc(p.feature)}</dd>` : ""}
@@ -1209,6 +1218,56 @@ details.card .in { padding: 0 16px 16px; display: flex; flex-direction: column; 
         ${cards || `<div class="card"><div class="h2">아직 후보가 없어요</div><p class="muted">위 버튼으로 근처 식당을 바로 찾아볼 수 있어요.</p></div>`}
         ${cards ? `<p class="credit">별점 · 후기: Google 지도 (2026년 10월 기준) · 가격: 각 식당 메뉴판</p>` : ""}
       </div>`, dayIdx(md) * 2 + (slot === "dinner" ? 1 : 0));
+    liveHours(m);
+  }
+
+  /* ---------- 실시간 영업시간 (구글 장소 API) ----------
+     식당 탭에서 보고 있는 끼니의 식당만 받고 6시간 저장 (한 곳에 1KB 안팎 → 데이터 부담 거의 없음).
+     "지금 영업 중"은 저장된 주간 시간표로 그때그때 계산 → 인터넷이 끊겨도 맞게 보임. */
+  const PL_TTL = 6 * 3600e3, WD = ["일요일", "월요일", "화요일", "수요일", "목요일", "금요일", "토요일"];
+  const plCache = pid => store.get("pl:" + pid, null);
+  async function plFetch(pid) {
+    const q = new URLSearchParams({ fields: "currentOpeningHours,utcOffsetMinutes,internationalPhoneNumber,businessStatus", languageCode: "ko", key: D.placesKey });
+    const r = await fetch(`https://places.googleapis.com/v1/places/${encodeURIComponent(pid)}?${q}`, { cache: "no-store" });
+    if (!r.ok) throw new Error("places " + r.status);
+    const d = await r.json(); store.set("pl:" + pid, { t: Date.now(), d }); return d;
+  }
+  function openState(oh, off) {
+    const ps = (oh && oh.periods) || []; if (!ps.length) return null;
+    const n = new Date(Date.now() + (off || 0) * 60000), W = 7 * 1440;
+    const now = n.getUTCDay() * 1440 + n.getUTCHours() * 60 + n.getUTCMinutes(), at = x => x.day * 1440 + x.hour * 60 + (x.minute || 0);
+    for (const p of ps) {
+      if (!p.open) continue;
+      if (!p.close) return { open: true };   // 24시간
+      let o = at(p.open), c = at(p.close); if (c <= o) c += W;
+      for (const k of [0, -W]) if (now >= o + k && now < c + k) return { open: true, close: c + k };
+    }
+    let next = Infinity; ps.forEach(p => { if (!p.open) return; let o = at(p.open); if (o <= now) o += W; next = Math.min(next, o); });
+    return { open: false, next: isFinite(next) ? next : null, days: next - now > 1440 };
+  }
+  const clockOf = m => { const x = ((m % 1440) + 1440) % 1440; return apPlain(pad(Math.floor(x / 60)) + ":" + pad(x % 60)); };
+  function plRender(el, d, m) {
+    const parts = [], oh = d.currentOpeningHours, md = mealDate(m), [mo, da] = md.split("/").map(Number), wd = WD[new Date(2026, mo - 1, da).getDay()];
+    if (d.businessStatus && d.businessStatus !== "OPERATIONAL") parts.push(`<span class="st off">⚠️ ${d.businessStatus === "CLOSED_PERMANENTLY" ? "폐업" : "임시 휴업"}</span>`);
+    if (oh) {
+      const line = (oh.weekdayDescriptions || []).find(x => x.startsWith(wd));
+      if (line) { const h = line.slice(line.indexOf(":") + 1).trim().replace(/오전 12:(\d\d)/g, "밤 12:$1").replace(/오전 ([1-5]):(\d\d)/g, "새벽 $1:$2"); parts.push(/휴무/.test(h) ? `<span class="st off">${esc(md)} (${wd[0]}) 휴무</span>` : `<span>${esc(md)} (${wd[0]}) ${esc(h)}</span>`); }
+      if ((oh.specialDays || []).some(x => x.date && x.date.month === mo && x.date.day === da)) parts.push(`<span class="st warn">⚠️ 이날은 특별 영업시간</span>`);
+      const s = openState(oh, d.utcOffsetMinutes);
+      if (s) parts.push(s.open ? `<span class="st on">● 지금 영업 중${s.close != null ? " · " + clockOf(s.close) + " 마감" : ""}</span>`
+        : `<span class="st off">● 지금 닫음${s.next != null ? " · " + (s.days ? WD[Math.floor((s.next % (7 * 1440)) / 1440)][0] + "요일 " : "") + clockOf(s.next) + " 오픈" : ""}</span>`);
+    }
+    if (d.internationalPhoneNumber) parts.push(`<a class="tel" href="tel:${esc(d.internationalPhoneNumber.replace(/\s/g, ""))}">📞 전화</a>`);
+    el.innerHTML = parts.join("");
+  }
+  async function liveHours(m) {
+    if (!D.placesKey) return;
+    const els = [...document.querySelectorAll("#v-food .live[data-pid]")], todo = [];
+    els.forEach(el => { const c = plCache(el.dataset.pid); if (c) plRender(el, c.d, m); if (!c || Date.now() - c.t > PL_TTL) todo.push(el); });
+    if (!todo.length || navigator.onLine === false) return;
+    await Promise.all(todo.map(async el => {
+      try { const d = await plFetch(el.dataset.pid); if (el.isConnected) plRender(el, d, m); } catch (e) { /* 실패하면 저장된 것 그대로 */ }
+    }));
   }
 
   /* ---------- 더보기 ---------- */
@@ -1376,7 +1435,7 @@ details.card .in { padding: 0 16px 16px; display: flex; flex-direction: column; 
 </template>
 <script>
 (() => {
-  const KEY = "es26:key", BUILD = "389ebb0cc0";
+  const KEY = "es26:key", BUILD = "615fc336fd";
   const ub64 = s => Uint8Array.from(atob(s), c => c.charCodeAt(0));
   const tob64 = u => btoa(String.fromCharCode(...u));
   const get = k => { try { return localStorage.getItem(k); } catch (e) { return null; } };
