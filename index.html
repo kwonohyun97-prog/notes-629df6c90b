@@ -330,7 +330,7 @@ small.ap { font-size: .72em; font-weight: 700; margin-right: 2px; letter-spacing
 .mapcard .cap { padding: 12px 16px 10px; display: flex; justify-content: space-between; gap: 10px; align-items: baseline; flex-wrap: wrap; }
 .mapcard .cap b { font-size: 18px; }
 .tmap { position: relative; width: 100%; max-width: 100%; aspect-ratio: 5 / 4; background: var(--m-land); overflow: hidden; touch-action: pan-y; }
-.tmap canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block; cursor: grab; }
+.tmap canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block; cursor: grab; -webkit-transform: translateZ(0); transform: translateZ(0); }   /* 아이폰: 캔버스가 화면에 안 그려지는 문제 피하기 */
 .tmap .chip { position: absolute; left: 10px; top: 10px; right: 64px; pointer-events: none; }
 .tmap .chip span { display: inline-block; background: var(--surface); color: var(--ink); border: 1px solid var(--line); border-radius: 12px; padding: 6px 10px; font-size: 15px; font-weight: 700; box-shadow: var(--shadow); line-height: 1.35; }
 .tmap .zoom { position: absolute; right: 10px; top: 10px; display: flex; flex-direction: column; gap: 6px; }
@@ -671,7 +671,13 @@ details.card .in { padding: 0 16px 16px; display: flex; flex-direction: column; 
       return [xy[xy.length - 2], xy[xy.length - 1]];
     }
 
+    // 그리다 오류가 나면 지도 위 안내 칸에 보여주기 (실제 휴대폰에서 원인 확인용)
+    let lastErr = "";
     function draw() {
+      try { drawRaw(); lastErr = ""; }
+      catch (e) { lastErr = String((e && e.message) || e); try { chip.textContent = "지도 오류 · " + lastErr.slice(0, 90); } catch (_) {} }
+    }
+    function drawRaw() {
       if (!alive || !ensure()) return;
       const k = 2 ** cam.z, z = cam.z, hw = W / 2, hh = H / 2, cx = cam.x, cy = cam.y;
       const x0 = cx - hw / k, y0 = cy - hh / k, x1 = cx + hw / k, y1 = cy + hh / k;
@@ -920,12 +926,23 @@ details.card .in { padding: 0 16px 16px; display: flex; flex-direction: column; 
     ro.observe(host);
     // 아이폰은 앱이 뒤로 갔다 오거나 메모리가 부족하면 캔버스 그림을 비워버림 → 다시 보일 때마다 새로 그리기
     function redraw() { if (!alive) return; const r = host.getBoundingClientRect(); if (!r.width || !r.height) return; size(); if (!cam || !isFinite(cam.x) || !isFinite(cam.y) || !isFinite(cam.z)) cam = restCam(); draw(); }
+    // 비어 있으면 다시 그리고, 그래도 비면 진단 숫자를 안내 칸에 (화면 캡처로 원인 확인)
+    const isBlank = () => { try { if (!canvas.width || !canvas.height) return true; return ctx.getImageData(canvas.width >> 1, canvas.height >> 1, 1, 1).data[3] === 0; } catch (e) { return false; } };
+    let blanks = 0;
+    function heal() {
+      if (!alive || playing) return;
+      const r = host.getBoundingClientRect(); if (!r.width || !r.height) return;
+      redraw();
+      if (isBlank()) { if (++blanks >= 2) chip.textContent = `지도 진단 · ${Math.round(r.width)}×${Math.round(r.height)} · ${canvas.width}×${canvas.height} · z ${cam ? Number(cam.z).toFixed(1) : "-"} · ${document.visibilityState}${lastErr ? " · " + lastErr.slice(0, 60) : ""}`; if (blanks < 6) setTimeout(heal, 700); }
+      else blanks = 0;
+    }
     const io = new IntersectionObserver(es => es.forEach(en => {
       if (!en.isIntersecting) return;
-      if (!playing) redraw();
+      if (!playing) heal();
       if (en.intersectionRatio > .55 && !played && !REDUCE && ensure()) play();
     }), { threshold: [0, .6] });
-    const onShow = () => { if (document.visibilityState === "visible") setTimeout(redraw, 60); };
+    const onShow = () => { if (document.visibilityState === "visible") setTimeout(heal, 60); };
+    [250, 900, 2000].forEach(ms => setTimeout(heal, ms));   // 처음 띄운 직후 화면 크기가 자리 잡을 때까지 몇 번 더
     document.addEventListener("visibilitychange", onShow); window.addEventListener("pageshow", onShow);
     canvas.addEventListener("contextrestored", redraw);
     io.observe(host);
@@ -969,7 +986,12 @@ details.card .in { padding: 0 16px 16px; display: flex; flex-direction: column; 
       <div class="legend"><span><i class="lc go"></i>가는 길</span><span><i class="lc back"></i>돌아가는 길</span><span><i class="lc rail"></i>기차 · 비행기</span><span><i class="lc foot"></i>걷기 (점선)</span></div>
       <div class="mapfoot">지도 데이터 © OpenStreetMap contributors · 이동 시간은 길이 막히지 않을 때 기준${S.note ? " · " + esc(S.note) : ""}</div>${list}</div>`;
   }
-  function mountMaps(root) { root.querySelectorAll(".tmap[data-day]").forEach(h => { MAPS[h.dataset.day + ":" + root.id] = TripMap(h, +h.dataset.day); }); }
+  function mountMaps(root) {
+    root.querySelectorAll(".tmap[data-day]").forEach(h => {
+      try { MAPS[h.dataset.day + ":" + root.id] = TripMap(h, +h.dataset.day); }
+      catch (e) { const c = h.querySelector(".chip span"); if (c) c.textContent = "지도 오류 · " + String((e && e.message) || e).slice(0, 90); }
+    });
+  }
 
   /* ---------- 오늘 ---------- */
   function renderToday() {
@@ -1286,7 +1308,7 @@ details.card .in { padding: 0 16px 16px; display: flex; flex-direction: column; 
 </template>
 <script>
 (() => {
-  const KEY = "es26:key", BUILD = "4b46fcd253";
+  const KEY = "es26:key", BUILD = "e40fbedded";
   const ub64 = s => Uint8Array.from(atob(s), c => c.charCodeAt(0));
   const tob64 = u => btoa(String.fromCharCode(...u));
   const get = k => { try { return localStorage.getItem(k); } catch (e) { return null; } };
