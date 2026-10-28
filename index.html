@@ -1321,10 +1321,10 @@ details.card .in { padding: 0 16px 16px; display: flex; flex-direction: column; 
           ${p.memo ? `<dt>메모</dt><dd>${ap(p.memo)}</dd>` : ""}
         </dl>
         <div class="grid2">
-          <a class="btn primary" href="${gImg(nm + " " + city + " comida")}" target="_blank" rel="noopener">음식 사진</a>
-          <a class="btn primary" href="${gImg(nm + " " + city + " carta menú")}" target="_blank" rel="noopener">메뉴판 사진</a>
-          <a class="btn" href="https://maps.google.com/?cid=${esc(p.cid)}" target="_blank" rel="noopener">리뷰 · 지도</a>
-          ${p.ll ? `<button class="btn" data-ride="food:${i}">택시 · 우버</button>` : `<a class="btn" href="https://www.google.com/search?q=${encodeURIComponent(nm + " " + city)}" target="_blank" rel="noopener">구글 검색</a>`}
+          <a class="btn primary" href="https://maps.google.com/?cid=${esc(p.cid)}" target="_blank" rel="noopener">리뷰 · 지도</a>
+          ${p.ll ? `<button class="btn primary" data-ride="food:${i}">택시 · 우버</button>` : `<a class="btn primary" href="https://www.google.com/search?q=${encodeURIComponent(nm + " " + city)}" target="_blank" rel="noopener">구글 검색</a>`}
+          <a class="btn" href="${gImg(nm + " " + city + " comida")}" target="_blank" rel="noopener">음식 사진</a>
+          <a class="btn" href="${gImg(nm + " " + city + " carta menú")}" target="_blank" rel="noopener">메뉴판 사진</a>
         </div></article>`;
     }).join("");
     paint($("#v-food"), `<div class="days" role="group" aria-label="날짜">${chips}</div>`, `
@@ -1598,7 +1598,7 @@ details.card .in { padding: 0 16px 16px; display: flex; flex-direction: column; 
 </template>
 <script>
 (() => {
-  const KEY = "es26:key", BUILD = "ded50dde71";
+  const KEY = "es26:key", BUILD = "e4b6997567";
   const ub64 = s => Uint8Array.from(atob(s), c => c.charCodeAt(0));
   const tob64 = u => btoa(String.fromCharCode(...u));
   const get = k => { try { return localStorage.getItem(k); } catch (e) { return null; } };
