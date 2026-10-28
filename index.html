@@ -426,6 +426,17 @@ small.ap { font-size: .72em; font-weight: 700; margin-right: 2px; letter-spacing
 .rank.star { background: #A85F00; color: #fff; }
 .rank small { display: block; font-size: 10px; font-family: var(--sans); line-height: 1; }
 .place .nm { font-size: 21px; font-weight: 700; line-height: 1.25; }
+/* 누르면 구글로 넘어가는 것들: 파란 글씨 + ↗ 로 눌리는 걸 알 수 있게 */
+.golink { display: inline; color: var(--accent); text-decoration: underline; text-decoration-color: color-mix(in srgb, var(--accent) 40%, transparent); text-decoration-thickness: 2px; text-underline-offset: 4px; }
+.golink .ext, .findbtn .ext { display: inline-block; margin-left: 6px; font-size: .8em; font-weight: 800; color: var(--accent); }
+.golink:active { opacity: .6; }
+.findbtn { justify-content: flex-start; gap: 12px; text-align: left; padding: 12px 14px; border: 2px solid var(--accent); background: var(--accent-soft); color: var(--ink); }
+.findbtn .fi { font-size: 22px; flex: none; }
+.findbtn .ft { flex: 1; display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.findbtn .ft b { font-size: 17px; color: var(--accent); }
+.findbtn .ft small { font-size: 13px; font-weight: 600; color: var(--muted); line-height: 1.35; }
+.findbtn .ext { font-size: 18px; flex: none; }
+.findbtn:active { opacity: .7; }
 .place .ko { font-size: 15px; color: var(--muted); }
 .place .meta { display: flex; gap: 12px; flex-wrap: wrap; align-items: center; font-size: 16px; margin-top: 2px; }
 .place .rt { color: var(--star); font-weight: 700; font-variant-numeric: tabular-nums; }
@@ -1284,7 +1295,7 @@ details.card .in { padding: 0 16px 16px; display: flex; flex-direction: column; 
       const loc = String(p.where).split("\n").filter(l => !/도보/.test(l)).join("\n");
       return `<article class="card place">
         <div class="top2">${rank ? `<div class="rank ${star ? "star" : ""}"><div>${esc(rank)}<small>${star ? "추천" : "순위"}</small></div></div>` : ""}
-          <div><a class="nm" style="color:inherit;text-decoration:underline;text-decoration-thickness:1px;text-underline-offset:3px;display:block" href="https://www.google.com/search?q=${encodeURIComponent(nm + " " + city)}" target="_blank" rel="noopener">${esc(nm)}</a>${ko.length ? `<div class="ko">${esc(ko.join(" "))}</div>` : ""}
+          <div><a class="nm golink" href="https://www.google.com/search?q=${encodeURIComponent(nm + " " + city)}" target="_blank" rel="noopener">${esc(nm)}<span class="ext" aria-hidden="true">↗</span></a>${ko.length ? `<div class="ko">${esc(ko.join(" "))}</div>` : ""}
           <div class="meta"><span class="rt">${esc(rate)} <span class="muted" style="font-weight:500">${esc(cnt || "")}</span></span>${walk ? `<span>${esc(walk)}</span>` : ""}</div>
           ${p.pid && D.placesKey ? `<div class="live" data-pid="${esc(p.pid)}"></div>` : ""}</div></div>
         <dl class="kv">
@@ -1307,7 +1318,8 @@ details.card .in { padding: 0 16px 16px; display: flex; flex-direction: column; 
         <div class="seg" role="group" aria-label="점심 · 저녁">${seg}</div>
         <div><div class="h2">${esc(m.meal)}</div><div class="muted">${esc(m.region)} · ${esc(m.where)}</div>
         ${m.note ? `<div style="margin-top:6px"><span class="pill warn">${esc(m.note)}</span></div>` : ""}</div>
-        ${m.search && m.search[1] ? `<a class="btn" href="https://www.google.com/maps/search/${encodeURIComponent(m.search[1])}" target="_blank" rel="noopener">🔍 근처 식당 직접 찾기 · ${esc(m.search[0])}</a>` : ""}
+        ${m.search && m.search[1] ? `<a class="btn findbtn" href="https://www.google.com/maps/search/${encodeURIComponent(m.search[1])}" target="_blank" rel="noopener">
+          <span class="fi" aria-hidden="true">🔍</span><span class="ft"><b>근처 식당 직접 찾기</b><small>누르면 구글 지도에서 "${esc(m.search[0])}" 검색</small></span><span class="ext" aria-hidden="true">↗</span></a>` : ""}
         ${cards ? `<p class="note">음식 사진 · 메뉴판 사진 버튼을 누르면 구글에서 사람들이 찍은 사진을 바로 볼 수 있어요.</p>` : ""}
         ${cards || `<div class="card"><div class="h2">아직 후보가 없어요</div><p class="muted">위 버튼으로 근처 식당을 바로 찾아볼 수 있어요.</p></div>`}
         ${cards ? `<p class="credit">별점 · 후기: Google 지도 (2026년 10월 기준) · 가격: 각 식당 메뉴판</p>` : ""}
@@ -1538,7 +1550,7 @@ details.card .in { padding: 0 16px 16px; display: flex; flex-direction: column; 
 </template>
 <script>
 (() => {
-  const KEY = "es26:key", BUILD = "7669b2e766";
+  const KEY = "es26:key", BUILD = "d211895e9d";
   const ub64 = s => Uint8Array.from(atob(s), c => c.charCodeAt(0));
   const tob64 = u => btoa(String.fromCharCode(...u));
   const get = k => { try { return localStorage.getItem(k); } catch (e) { return null; } };
