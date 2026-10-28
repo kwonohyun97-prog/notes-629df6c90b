@@ -227,7 +227,7 @@ img { max-width: 100%; }
 :root, :root[data-tf="jua"], .tfopt[data-tf="jua"] { --title-font: "Jua", var(--sans); --title-w: 400; --title-size: 33px; --title-ls: 0; }
 :root[data-tf="dohyeon"], .tfopt[data-tf="dohyeon"] { --title-font: "Do Hyeon", var(--sans); --title-w: 400; --title-size: 38px; --title-ls: 0; }
 html { background: var(--bg); }
-html, body { overscroll-behavior: none; }   /* 화면 전체를 overflow:hidden으로 막으면 아이폰에서 하단 바가 떠 보여서 막지 않음 (앱 높이를 화면에 딱 맞춰 스크롤할 게 없게) */
+html, body { overscroll-behavior-y: none; }   /* 아이폰: 화면 끝에서 고무줄처럼 늘어나며 탭바가 들리는 것 막기 */
 * { box-sizing: border-box; }
 [hidden] { display: none !important; }
 body { background: var(--bg); color: var(--ink); font-family: var(--sans); font-size: 17px; line-height: 1.5; -webkit-text-size-adjust: 100%; }
@@ -237,15 +237,12 @@ button { font: inherit; color: inherit; }
 button, a, .btn, .tabs, .days, .seg, [data-route] { touch-action: manipulation; }
 .tabs { -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; }
 :focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; border-radius: 8px; }
-.app { max-width: 600px; margin: 0 auto; padding-inline: 16px; height: 100vh; height: 100dvh; display: flex; flex-direction: column; }   /* 꼭 화면 전체 높이(100dvh) — innerHeight로 맞추면 아이폰 홈 화면 앱에서 하단 바가 뜸 */
-.top { touch-action: none; }   /* 머리띠를 끌어서 화면 전체가 밀리지 않게 */
-/* 탭마다 따로 스크롤 (인스타처럼): 페이지 전환 때 스크롤을 옮기지 않아서 아이폰에서 깜빡이지 않음 · 보던 위치도 탭마다 기억 */
-main { flex: 1; min-height: 0; position: relative; margin: -24px -16px 0; }
-.view { position: absolute; inset: 0; overflow-y: auto; overscroll-behavior-y: contain; -webkit-overflow-scrolling: touch; padding: 24px 16px 104px; }
+/* 화면 전체가 스크롤되는 구조를 유지할 것: 탭마다 따로 스크롤(문서가 화면보다 안 길어짐)로 바꾸면 아이폰 홈 화면 앱에서 하단 바가 상태바 높이만큼 떠 보임 */
+.app { max-width: 600px; margin: 0 auto; padding-inline: 16px; padding-block: 0 104px; min-height: 100vh; min-height: 100dvh; }
 small.ap { font-size: .72em; font-weight: 700; margin-right: 2px; letter-spacing: 0; font-family: var(--sans); }
 
 /* 상단 */
-.top { position: relative; flex: none; z-index: 5; margin-inline: -16px; padding: calc(12px + env(safe-area-inset-top, 0px)) 18px 15px; display: flex; align-items: flex-end; justify-content: space-between; gap: 12px; color: #fff;
+.top { position: sticky; top: 0; z-index: 5; margin-inline: -16px; padding: calc(12px + env(safe-area-inset-top, 0px)) 18px 15px; display: flex; align-items: flex-end; justify-content: space-between; gap: 12px; color: #fff;
   background: var(--g1);
   background: radial-gradient(120% 170% at 100% 0%, var(--glow), transparent 55%), linear-gradient(120deg, var(--g1), var(--g2) 58%, var(--g3));
   border-radius: 0 0 24px 24px; box-shadow: 0 10px 24px -14px var(--g1); }
@@ -556,11 +553,10 @@ details.card .in { padding: 0 16px 16px; display: flex; flex-direction: column; 
   }
   // 세로로 어떤 요소를 위 머리띠와 아래 탭바 사이 가운데로
   function reveal(el, smooth) {
-    const sc = el.closest(".view"); if (!sc) return;
     const r = el.getBoundingClientRect(), t = ($(".top") || { getBoundingClientRect: () => ({ bottom: 0 }) }).getBoundingClientRect().bottom;
     const tb = $(".tabs"), bt = tb ? tb.getBoundingClientRect().top : innerHeight, gap = bt - t;
-    const y = sc.scrollTop + r.top - (r.height < gap ? t + (gap - r.height) / 2 : t + 8);
-    sc.scrollTo({ top: Math.max(0, y), behavior: smooth ? "smooth" : "auto" });
+    const y = window.scrollY + r.top - (r.height < gap ? t + (gap - r.height) / 2 : t + 8);
+    window.scrollTo({ top: Math.max(0, y), behavior: smooth ? "smooth" : "auto" });
   }
   const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
   const store = {
@@ -1392,12 +1388,21 @@ details.card .in { padding: 0 16px 16px; display: flex; flex-direction: column; 
   }
   // 앱 높이를 실제 보이는 화면 높이에 맞추고, 하단 바가 화면 바닥보다 떠 있으면 바닥에 붙이기 (아이폰 기종 · 상황별 차이 보정)
   addEventListener("resize", () => { if (curView) moveInd(curView, true); });
-  // 화면 전체는 항상 맨 위에 고정 (스크롤은 탭 화면 안에서만)
-  addEventListener("scroll", () => { if (window.scrollY) window.scrollTo(0, 0); }, { passive: true });
+  let glideRaf = 0;
+  function glideTop(done) {   // 0.16초 동안 맨 위로 (이미 맨 위면 바로)
+    cancelAnimationFrame(glideRaf);
+    const y0 = window.scrollY; if (y0 < 2 || REDUCE) { if (y0) window.scrollTo(0, 0); return done(); }
+    const t0 = performance.now(), D = Math.min(220, 120 + y0 / 20);
+    const step = now => { const u = Math.min(1, (now - t0) / D), e = 1 - Math.pow(1 - u, 3); window.scrollTo(0, Math.round(y0 * (1 - e))); if (u < 1) glideRaf = requestAnimationFrame(step); else done(); };
+    glideRaf = requestAnimationFrame(step);
+  }
   function show(v, fromTab) {
     if (!VIEWS.includes(v)) v = "today";
-    if (fromTab && v === curView) { $("#v-" + v).scrollTo({ top: 0, behavior: REDUCE ? "auto" : "smooth" }); return; }   // 같은 탭 한 번 더 → 맨 위로
-    if (curView) scrollMem[curView] = $("#v-" + curView).scrollTop;
+    if (fromTab && v === curView) { window.scrollTo({ top: 0, behavior: REDUCE ? "auto" : "smooth" }); return; }   // 같은 탭 한 번 더 → 맨 위로
+    if (curView) { document.querySelectorAll(".tabs button").forEach(b => b.setAttribute("aria-current", b.dataset.tab === v ? "page" : "false")); moveInd(v, false); glideTop(() => swapTo(v)); }
+    else swapTo(v);
+  }
+  function swapTo(v) {
     VIEWS.forEach(x => { $("#v-" + x).hidden = x !== v; });
     document.querySelectorAll(".tabs button").forEach(b => b.setAttribute("aria-current", b.dataset.tab === v ? "page" : "false"));
     moveInd(v, !curView);
@@ -1405,7 +1410,7 @@ details.card .in { padding: 0 16px 16px; display: flex; flex-direction: column; 
     destroyMaps();
     delete lastKey["v-" + v];
     RENDER[v]();
-    $("#v-" + v).scrollTop = fromTab && v !== "more" ? (scrollMem[v] || 0) : 0;   // 더보기는 항상 접힌 채 맨 위부터
+    if (window.scrollY) window.scrollTo(0, 0);
     curView = v;
   }
 
@@ -1452,7 +1457,7 @@ details.card .in { padding: 0 16px 16px; display: flex; flex-direction: column; 
 </template>
 <script>
 (() => {
-  const KEY = "es26:key", BUILD = "2ae18fd7d7";
+  const KEY = "es26:key", BUILD = "684e8721c2";
   const ub64 = s => Uint8Array.from(atob(s), c => c.charCodeAt(0));
   const tob64 = u => btoa(String.fromCharCode(...u));
   const get = k => { try { return localStorage.getItem(k); } catch (e) { return null; } };
