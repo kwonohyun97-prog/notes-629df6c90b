@@ -892,10 +892,29 @@ details.card .in { padding: 0 16px 16px; display: flex; flex-direction: column; 
     if (allBtn) allBtn.addEventListener("click", () => finish(true));
     playBtn.addEventListener("click", () => playing ? finish(true) : play());
     host.querySelectorAll(".zoom button").forEach(b => b.addEventListener("click", () => { if (playing) finish(false); animateTo({ ...cam, z: cam.z + (+b.dataset.z) }, 280); }));
-    let drag = null;
-    canvas.addEventListener("pointerdown", e => { if (playing) return; drag = { x: e.clientX, y: e.clientY, cx: cam.x, cy: cam.y }; });
-    canvas.addEventListener("pointermove", e => { if (!drag) return; const k = 2 ** cam.z; cam = { ...cam, x: drag.cx - (e.clientX - drag.x) / k, y: drag.cy - (e.clientY - drag.y) / k }; draw(); });
+    let drag = null, pinch = null;
+    canvas.addEventListener("pointerdown", e => { if (playing || pinch) return; drag = { x: e.clientX, y: e.clientY, cx: cam.x, cy: cam.y }; });
+    canvas.addEventListener("pointermove", e => { if (!drag || pinch) return; const k = 2 ** cam.z; cam = { ...cam, x: drag.cx - (e.clientX - drag.x) / k, y: drag.cy - (e.clientY - drag.y) / k }; draw(); });
     ["pointerup", "pointercancel", "pointerleave"].forEach(t => canvas.addEventListener(t, () => drag = null));
+    // 두 손가락: 벌리면 확대 · 오므리면 축소 · 같이 움직이면 이동 (손가락 사이 지점을 기준으로)
+    const tMid = t => [(t[0].clientX + t[1].clientX) / 2, (t[0].clientY + t[1].clientY) / 2];
+    const tDist = t => Math.max(1, Math.hypot(t[0].clientX - t[1].clientX, t[0].clientY - t[1].clientY));
+    canvas.addEventListener("touchstart", e => {
+      if (e.touches.length !== 2 || !ensure()) return;
+      e.preventDefault(); if (playing) finish(false); cancel(); drag = null;
+      const r = canvas.getBoundingClientRect(), [mx, my] = tMid(e.touches), k = 2 ** cam.z;
+      pinch = { d: tDist(e.touches), z: cam.z, wx: cam.x + (mx - r.left - W / 2) / k, wy: cam.y + (my - r.top - H / 2) / k };
+    }, { passive: false });
+    canvas.addEventListener("touchmove", e => {
+      if (!pinch || e.touches.length !== 2) return;
+      e.preventDefault();
+      const r = canvas.getBoundingClientRect(), [mx, my] = tMid(e.touches);
+      const z = Math.min(17, Math.max(4, pinch.z + Math.log2(tDist(e.touches) / pinch.d))), k = 2 ** z;
+      cam = { x: pinch.wx - (mx - r.left - W / 2) / k, y: pinch.wy - (my - r.top - H / 2) / k, z };
+      draw();
+    }, { passive: false });
+    ["touchend", "touchcancel"].forEach(t => canvas.addEventListener(t, e => { if (pinch && e.touches.length < 2) { pinch = null; drag = null; } }));
+    ["gesturestart", "gesturechange", "gestureend"].forEach(t => canvas.addEventListener(t, e => e.preventDefault()));   // 아이폰: 페이지 전체 확대 막기
     canvas.addEventListener("wheel", e => { if (playing) return; e.preventDefault(); cam = { ...cam, z: Math.min(17, Math.max(4, cam.z - e.deltaY / 400)) }; draw(); }, { passive: false });
     const ro = new ResizeObserver(() => { const had = !!W; size(); if (!had) { cam = restCam(); restChip(); } draw(); });
     ro.observe(host);
@@ -1254,7 +1273,7 @@ details.card .in { padding: 0 16px 16px; display: flex; flex-direction: column; 
 </template>
 <script>
 (() => {
-  const KEY = "es26:key", BUILD = "71995c9f4c";
+  const KEY = "es26:key", BUILD = "20aa15238a";
   const ub64 = s => Uint8Array.from(atob(s), c => c.charCodeAt(0));
   const tob64 = u => btoa(String.fromCharCode(...u));
   const get = k => { try { return localStorage.getItem(k); } catch (e) { return null; } };
