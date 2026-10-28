@@ -1,9 +1,10 @@
 <!doctype html>
-<html lang="ko" data-look="sea"><head>
+<html lang="ko"><head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="robots" content="noindex, nofollow">
-<meta name="theme-color" content="#0B3A8F">
+<meta name="theme-color" content="#0B3A8F" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#0A2463" media="(prefers-color-scheme: dark)">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="🇪🇸 스페인 가족여행 일정">
@@ -12,28 +13,21 @@
 <link rel="icon" href="icon-192.png">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
 <title>🇪🇸 스페인 가족여행 일정</title>
-<script>
-try { const l = JSON.parse(localStorage.getItem("es26:look")); if (["sea", "sunset", "spain"].includes(l)) document.documentElement.dataset.look = l; } catch (e) {}
-</script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Black+Han+Sans&family=Gothic+A1:wght@800&family=IBM+Plex+Mono:wght@500;600&family=IBM+Plex+Sans+KR:wght@400;500;700&family=Jua&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Gothic+A1:wght@800&family=IBM+Plex+Mono:wght@500;600&family=IBM+Plex+Sans+KR:wght@400;500;700&display=swap">
 <style>
-html[data-look="sea"] { --g1: #0B3A8F; --g2: #1769D0; --g3: #22B5C0; --lf: "Gothic A1"; --lw: 800; }
-html[data-look="sea"] #lock .li-sea { display: block; }
-html[data-look="sunset"] { --g1: #D9344F; --g2: #EE5D45; --g3: #FFB15C; --lf: "Jua"; --lw: 400; }
-html[data-look="sunset"] #lock .li-sunset { display: block; }
-html[data-look="spain"] { --g1: #9E0F1A; --g2: #CF2B2B; --g3: #F2B32A; --lf: "Black Han Sans"; --lw: 400; }
-html[data-look="spain"] #lock .li-spain { display: block; }
+:root { --g1: #0B3A8F; --g2: #1769D0; --g3: #22B5C0; --glow: rgba(255,255,255,.22); }
+@media (prefers-color-scheme: dark) { :root { --g1: #0A2463; --g2: #1849A6; --g3: #0F7C8C; --glow: rgba(255,255,255,.1); } }
 html, body { margin: 0; }
 img { max-width: 100%; }
 [hidden] { display: none !important; }
 #lock { position: fixed; inset: 0; z-index: 50; display: grid; place-items: center; padding: 24px 16px; color: #fff; overflow-y: auto;
-  background: radial-gradient(120% 80% at 100% 0%, rgba(255,255,255,.22), transparent 55%), linear-gradient(160deg, var(--g1), var(--g2) 55%, var(--g3));
+  background: radial-gradient(120% 80% at 100% 0%, var(--glow), transparent 55%), linear-gradient(160deg, var(--g1), var(--g2) 55%, var(--g3));
   font-family: "IBM Plex Sans KR", "Apple SD Gothic Neo", "Malgun Gothic", system-ui, sans-serif; }
 #lock .box { width: 100%; max-width: 380px; display: flex; flex-direction: column; gap: 14px; text-align: center; }
-#lock .li { display: none; width: 92px; height: 92px; border-radius: 22px; margin: 0 auto; box-shadow: 0 10px 28px -10px rgba(0,0,0,.45), 0 0 0 3px rgba(255,255,255,.35); }
-#lock h1 { font-family: var(--lf), sans-serif; font-weight: var(--lw); font-size: 30px; line-height: 1.2; margin: 0; text-shadow: 0 1px 3px rgba(0,0,0,.15); }
+#lock .li { display: block; width: 92px; height: 92px; border-radius: 22px; margin: 0 auto; box-shadow: 0 10px 28px -10px rgba(0,0,0,.45), 0 0 0 3px rgba(255,255,255,.35); }
+#lock h1 { font-family: "Gothic A1", sans-serif; font-weight: 800; font-size: 30px; line-height: 1.2; margin: 0; text-shadow: 0 1px 3px rgba(0,0,0,.15); }
 #lock p { margin: 0; font-size: 17px; opacity: .9; }
 #lock input { font-size: 26px; text-align: center; letter-spacing: .15em; padding: 14px; border-radius: 14px; border: 0; width: 100%; box-sizing: border-box; background: #fff; color: #16202C; box-shadow: 0 6px 18px -8px rgba(0,0,0,.35); }
 #lock button { font-size: 19px; font-weight: 700; min-height: 56px; border-radius: 14px; border: 0; background: rgba(0,0,0,.28); color: #fff; cursor: pointer; }
@@ -46,7 +40,7 @@ img { max-width: 100%; }
 </head><body>
 <div id="lock" hidden>
   <form class="box" id="lockform" autocomplete="off">
-    <img class="li li-sea" src="look-sea.png" alt=""><img class="li li-sunset" src="look-sunset.png" alt=""><img class="li li-spain" src="look-spain.png" alt="">
+    <img class="li" src="icon-192.png" alt="">
     <h1>🇪🇸 스페인 가족여행 일정</h1>
     <p>가족 비밀번호를 입력하세요</p>
     <input id="pw" type="password" inputmode="numeric" pattern="[0-9]*" aria-label="비밀번호" required>
@@ -157,18 +151,22 @@ img { max-width: 100%; }
 <template id="appshell"><title>🇪🇸 스페인 가족여행 일정</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Black+Han+Sans&family=Gothic+A1:wght@800&family=IBM+Plex+Mono:wght@500;600&family=IBM+Plex+Sans+KR:wght@400;500;700&family=Jua&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Gothic+A1:wght@800&family=IBM+Plex+Mono:wght@500;600&family=IBM+Plex+Sans+KR:wght@400;500;700&display=swap">
 <style>
 :root {
-  --bg: #F3F5F8;
+  color-scheme: light;
+  --bg: #F3F6FA;
   --surface: #FFFFFF;
-  --surface-2: #EAEEF3;
-  --ink: #16202C;
-  --muted: #566170;
-  --line: #DCE2EA;
-  --accent: #1F4E8C;
+  --surface-2: #EDF1F6;
+  --ink: #131B27;
+  --muted: #586374;
+  --line: #DFE5EC;
+  --accent: #1769D0;
   --accent-ink: #FFFFFF;
-  --accent-soft: #E1EAF7;
+  --accent-soft: #E3EDFB;
+  --g1: #0B3A8F; --g2: #1769D0; --g3: #22B5C0;   /* 머리띠 그라데이션 */
+  --glow: rgba(255,255,255,.24);
+  --btn1: #0B3A8F; --btn2: #1769D0;
   --star: #A85F00;
   --ok: #1F7A48;
   --ok-soft: #E2F3E9;
@@ -185,41 +183,39 @@ img { max-width: 100%; }
   --route: #D2334A;
   --uber: #000000;
   --uber-ink: #FFFFFF;
-  --shadow: 0 1px 2px rgba(22, 32, 44, .06), 0 4px 14px rgba(22, 32, 44, .06);
-  --display: var(--sans);
+  --shadow: 0 1px 2px rgba(19, 27, 39, .05), 0 6px 18px rgba(19, 27, 39, .06);
+  --hero-shade: 72%;
+  --display: "Gothic A1", var(--sans);
   --display-w: 800;
-  --g1: #0B3A8F; --g2: #1769D0; --g3: #22B5C0;
   --sans: "IBM Plex Sans KR", "Apple SD Gothic Neo", "Malgun Gothic", system-ui, sans-serif;
   --mono: "IBM Plex Mono", ui-monospace, "SF Mono", Menlo, monospace;
 }
+/* 다크 모드: 밤에 눈부시지 않게 깊은 남색 바탕 + 차분한 머리띠 */
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
-    color-scheme: dark;
-    --bg: #0D1218; --surface: #151C25; --surface-2: #1D2631; --ink: #ECF0F5; --muted: #9AA6B5; --line: #283442;
-    --accent: #8DB6EE; --accent-ink: #0D1218; --accent-soft: #1B2B42;
-    --star: #E9AE52; --ok: #62C690; --ok-soft: #173326; --warn: #EDA05A; --warn-soft: #3A2716; --todo: #E68383; --todo-soft: #3A1E1E;
-    --c-move: #7FB0EA; --c-see: #6DC495; --c-eat: #E8AE55; --c-match: #EE7F87; --c-stay: #AE98EA; --c-free: #9AA6B5;
-    --uber: #FFFFFF; --uber-ink: #000000;
-    --shadow: 0 1px 2px rgba(0, 0, 0, .3);
+  color-scheme: dark;
+  --bg: #0A0F1A; --surface: #121A28; --surface-2: #1A2435; --ink: #E9EEF6; --muted: #9AA7BA; --line: #243045;
+  --accent: #7DB3FF; --accent-ink: #0A0F1A; --accent-soft: #16294A;
+  --g1: #0A2463; --g2: #1849A6; --g3: #0F7C8C; --glow: rgba(255,255,255,.12); --btn1: #1A4FB0; --btn2: #1E74C8;
+  --star: #F0B65A; --ok: #62C690; --ok-soft: #14301F; --warn: #EDA05A; --warn-soft: #36240F; --todo: #F08A8A; --todo-soft: #3A1C1F;
+  --c-move: #7FB0EA; --c-see: #6DC495; --c-eat: #E8AE55; --c-match: #EE7F87; --c-stay: #AE98EA; --c-free: #9AA6B5;
+  --uber: #FFFFFF; --uber-ink: #000000;
+  --shadow: 0 6px 18px rgba(0, 0, 0, .35);
+  --hero-shade: 62%;
   }
 }
 :root[data-theme="dark"] {
   color-scheme: dark;
-  --bg: #0D1218; --surface: #151C25; --surface-2: #1D2631; --ink: #ECF0F5; --muted: #9AA6B5; --line: #283442;
-  --accent: #8DB6EE; --accent-ink: #0D1218; --accent-soft: #1B2B42;
-  --star: #E9AE52; --ok: #62C690; --ok-soft: #173326; --warn: #EDA05A; --warn-soft: #3A2716; --todo: #E68383; --todo-soft: #3A1E1E;
+  --bg: #0A0F1A; --surface: #121A28; --surface-2: #1A2435; --ink: #E9EEF6; --muted: #9AA7BA; --line: #243045;
+  --accent: #7DB3FF; --accent-ink: #0A0F1A; --accent-soft: #16294A;
+  --g1: #0A2463; --g2: #1849A6; --g3: #0F7C8C; --glow: rgba(255,255,255,.12); --btn1: #1A4FB0; --btn2: #1E74C8;
+  --star: #F0B65A; --ok: #62C690; --ok-soft: #14301F; --warn: #EDA05A; --warn-soft: #36240F; --todo: #F08A8A; --todo-soft: #3A1C1F;
   --c-move: #7FB0EA; --c-see: #6DC495; --c-eat: #E8AE55; --c-match: #EE7F87; --c-stay: #AE98EA; --c-free: #9AA6B5;
   --uber: #FFFFFF; --uber-ink: #000000;
-  --shadow: 0 1px 2px rgba(0, 0, 0, .3);
+  --shadow: 0 6px 18px rgba(0, 0, 0, .35);
+  --hero-shade: 62%;
 }
-:root, :root[data-look="sea"], .look[data-look="sea"] { --g1: #0B3A8F; --g2: #1769D0; --g3: #22B5C0; --accent: #1769D0; --accent-soft: #E1ECFA; --bg: #F2F6FA; --display: "Gothic A1", var(--sans); --display-w: 800; }
-:root[data-look="sunset"], .look[data-look="sunset"] { --g1: #D9344F; --g2: #EE5D45; --g3: #FFB15C; --accent: #D9344F; --accent-soft: #FCE6E3; --bg: #FBF6F3; --display: "Jua", var(--sans); --display-w: 400; }
-:root[data-look="spain"], .look[data-look="spain"] { --g1: #9E0F1A; --g2: #CF2B2B; --g3: #F2B32A; --accent: #B81D24; --accent-soft: #FBE4E1; --bg: #FAF6F1; --display: "Black Han Sans", var(--sans); --display-w: 400; }
-@media (prefers-color-scheme: dark) {
-  :root:not([data-look]):not([data-theme="light"]), :root[data-look="sea"]:not([data-theme="light"]) { --accent: #86B8F2; --accent-soft: #17283F; }
-  :root[data-look="sunset"]:not([data-theme="light"]) { --accent: #FF8E7A; --accent-soft: #3A1E1C; }
-  :root[data-look="spain"]:not([data-theme="light"]) { --accent: #FF7F72; --accent-soft: #3A1A1A; }
-}
+html { background: var(--bg); }
 * { box-sizing: border-box; }
 [hidden] { display: none !important; }
 body { background: var(--bg); color: var(--ink); font-family: var(--sans); font-size: 17px; line-height: 1.5; -webkit-text-size-adjust: 100%; }
@@ -232,7 +228,7 @@ small.ap { font-size: .72em; font-weight: 700; margin-right: 2px; letter-spacing
 /* 상단 */
 .top { position: sticky; top: 0; z-index: 5; margin-inline: -16px; padding: calc(12px + env(safe-area-inset-top, 0px)) 18px 15px; display: flex; align-items: flex-end; justify-content: space-between; gap: 12px; color: #fff;
   background: var(--g1);
-  background: radial-gradient(120% 170% at 100% 0%, rgba(255,255,255,.24), transparent 55%), linear-gradient(120deg, var(--g1), var(--g2) 58%, var(--g3));
+  background: radial-gradient(120% 170% at 100% 0%, var(--glow), transparent 55%), linear-gradient(120deg, var(--g1), var(--g2) 58%, var(--g3));
   border-radius: 0 0 24px 24px; box-shadow: 0 10px 24px -14px var(--g1); }
 .top .brand { font-size: 13px; font-weight: 700; letter-spacing: .02em; opacity: .92; white-space: nowrap; }
 .top h1 { font-family: var(--display); font-weight: var(--display-w, 800); font-size: 31px; line-height: 1.12; margin: 3px 0 0; letter-spacing: -.01em; text-shadow: 0 1px 2px rgba(0,0,0,.12); }
@@ -252,7 +248,7 @@ small.ap { font-size: .72em; font-weight: 700; margin-right: 2px; letter-spacing
 .pill.warn { background: var(--warn-soft); color: var(--warn); }
 .pill.todo { background: var(--todo-soft); color: var(--todo); }
 .btn { display: inline-flex; align-items: center; justify-content: center; gap: 6px; min-height: 46px; padding: 10px 14px; border-radius: 12px; border: 1px solid var(--line); background: var(--surface); font-weight: 700; font-size: 16px; text-decoration: none; color: var(--ink); cursor: pointer; text-align: center; line-height: 1.25; }
-.btn.primary { background: var(--accent); background: linear-gradient(135deg, var(--g1), var(--g2)); color: #fff; border-color: transparent; }
+.btn.primary { background: var(--btn2); background: linear-gradient(135deg, var(--btn1), var(--btn2)); color: #fff; border-color: transparent; }
 .btn.uber { background: var(--uber); color: var(--uber-ink); border-color: var(--uber); }
 .btn.sm { min-height: 40px; padding: 6px 12px; font-size: 15px; }
 .btns { display: flex; gap: 8px; flex-wrap: wrap; }
@@ -266,21 +262,20 @@ small.ap { font-size: .72em; font-weight: 700; margin-right: 2px; letter-spacing
 .cityhead b { font-family: var(--display); font-weight: var(--display-w, 800); font-size: 22px; line-height: 1.2; }
 .cityhead span { font-size: 14px; font-weight: 700; background: rgba(255,255,255,.24); border-radius: 999px; padding: 3px 10px; white-space: nowrap; }
 .shoplist { display: flex; flex-direction: column; gap: 12px; border-left: 4px solid var(--city); padding-left: 12px; margin-left: 2px; }
-/* 디자인 시안 고르기 */
-.lookgrid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
-.look { position: relative; display: flex; flex-direction: column; align-items: center; gap: 6px; padding: 12px 6px 10px; border-radius: 16px; border: 2px solid var(--line); background: var(--surface); cursor: pointer; text-align: center; min-width: 0; }
-.look[aria-pressed="true"] { border-color: var(--g2); box-shadow: 0 0 0 3px color-mix(in srgb, var(--g2) 25%, transparent); }
-.look img { width: 60px; height: 60px; border-radius: 14px; box-shadow: 0 4px 10px -4px rgba(0,0,0,.4); }
-.look .lk-sample { font-family: var(--display); font-weight: var(--display-w); font-size: 25px; line-height: 1.15; color: var(--g1); background: linear-gradient(120deg, var(--g1), var(--g3)); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; }
-.look .lk-name { font-size: 14px; font-weight: 700; white-space: nowrap; }
-.look[aria-pressed="true"]::after { content: "✓"; position: absolute; top: -8px; right: -6px; width: 26px; height: 26px; border-radius: 50%; display: grid; place-items: center; font-size: 15px; font-weight: 800; color: #fff; background: var(--g2); box-shadow: 0 0 0 3px var(--surface); }
-.look .lk-bar { width: 100%; height: 8px; border-radius: 8px; background: linear-gradient(90deg, var(--g1), var(--g2), var(--g3)); }
-.look .lk-font { font-size: 12px; color: var(--muted); line-height: 1.3; }
+/* 홈 화면 아이콘 시안 미리보기 */
+.icopts { display: flex; flex-direction: column; gap: 12px; }
+.icopt { display: grid; grid-template-columns: 108px 1fr; gap: 14px; align-items: center; }
+.icopt .wall { border-radius: 16px; padding: 14px 6px 9px; display: flex; flex-direction: column; align-items: center; gap: 5px;
+  background: radial-gradient(120% 90% at 0% 0%, #F5A3C7, transparent 60%), radial-gradient(120% 90% at 100% 100%, #79B4FF, transparent 60%), linear-gradient(160deg, #8B79EE, #33479F); }
+.icopt .wall img { width: 62px; height: 62px; border-radius: 22.5%; box-shadow: 0 4px 12px -4px rgba(0,0,0,.45); }
+.icopt .wall small { max-width: 92px; color: #fff; font-size: 11px; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; text-shadow: 0 1px 2px rgba(0,0,0,.45); }
+.icopt b { font-size: 17px; }
+.icopt .muted { font-size: 14px; line-height: 1.4; margin-top: 2px; }
 .note { font-size: 14px; color: var(--muted); }
 
 /* 오늘 */
 .hero { border-radius: 22px; padding: 20px 18px; color: #fff; position: relative; overflow: hidden; isolation: isolate; background: var(--city, #2F5FB3);
-  background: radial-gradient(90% 120% at 100% 0%, rgba(255,255,255,.26), transparent 60%), linear-gradient(135deg, color-mix(in oklab, var(--city, #2F5FB3) 80%, white), var(--city, #2F5FB3) 50%, color-mix(in oklab, var(--city, #2F5FB3) 72%, black));
+  background: radial-gradient(90% 120% at 100% 0%, rgba(255,255,255,.26), transparent 60%), linear-gradient(135deg, color-mix(in oklab, var(--city, #2F5FB3) 80%, white), var(--city, #2F5FB3) 50%, color-mix(in oklab, var(--city, #2F5FB3) var(--hero-shade), black));
   box-shadow: 0 12px 26px -16px var(--city, #2F5FB3); }
 .hero::after { content: ""; position: absolute; right: -46px; bottom: -70px; width: 200px; height: 200px; border-radius: 50%; border: 24px solid rgba(255,255,255,.10); pointer-events: none; z-index: -1; }
 .hero .dday { font-family: var(--mono); font-size: 15px; font-weight: 600; opacity: .9; }
@@ -419,7 +414,7 @@ details.card .in { padding: 0 16px 16px; display: flex; flex-direction: column; 
 .tabs .in { max-width: 600px; margin: 0 auto; display: grid; grid-template-columns: repeat(5, 1fr); gap: 2px; }
 .tabs button { background: none; border: 0; display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 6px 2px; min-height: 58px; border-radius: 12px; color: var(--muted); font-size: 13px; font-weight: 700; cursor: pointer; }
 .tabs svg { width: 26px; height: 26px; stroke: currentColor; fill: none; stroke-width: 1.9; stroke-linecap: round; stroke-linejoin: round; }
-.tabs button[aria-current="page"] { color: #fff; background: var(--accent); background: linear-gradient(135deg, var(--g1), var(--g2)); box-shadow: 0 6px 14px -8px var(--g1); }
+.tabs button[aria-current="page"] { color: #fff; background: var(--btn2); background: linear-gradient(135deg, var(--btn1), var(--btn2)); box-shadow: 0 6px 14px -8px var(--btn1); }
 
 /* 겹쳐 뜨는 화면 */
 .overlay { position: fixed; inset: 0; z-index: 20; background: var(--bg); display: flex; flex-direction: column; gap: 12px; padding: calc(14px + env(safe-area-inset-top, 0px)) 16px calc(16px + env(safe-area-inset-bottom, 0px)); overflow-y: auto; }
@@ -1013,11 +1008,11 @@ details.card .in { padding: 0 16px 16px; display: flex; flex-direction: column; 
     const checks = store.get("checks", {});
     const shop = (city, day, rows) => `<div class="cityhead" style="--city:${D.cityColor[city]}"><b>${esc(city)}</b><span>${esc(D.dates[day - 1])} · ${rows.length}곳</span></div><div class="shoplist" style="--city:${D.cityColor[city]}">` + rows.map(r =>
       `<div class="stay"><div class="nm">${esc(String(r[2]).split("\n")[0])}</div><div class="muted">${ap(String(r[7]).split("\n")[0])} · ${esc(String(r[1]).split("\n").slice(1).join(" "))}</div><div class="pre">${esc(String(r[3]).split("\n")[0])}</div><div class="muted">${ap(String(r[4]).split("\n")[0])}</div></div>`).join("") + `</div>`;
-    const curLook = document.documentElement.dataset.look || D.lookDefault;
-    const looks = (D.looks || []).length ? `<div class="card"><p class="eyebrow">앱 디자인 시안 · 눌러서 바꿔보기</p><div class="lookgrid">${D.looks.map(l => `<button class="look" data-look="${esc(l.id)}" aria-pressed="${l.id === curLook}">
-        <img src="look-${esc(l.id)}.png" alt=""><span class="lk-name">${esc(l.name)}</span><span class="lk-sample">스페인</span><span class="lk-bar"></span><span class="lk-font">${esc(l.flabel)}</span></button>`).join("")}</div>
-        <p class="note" style="margin:10px 0 0">누르면 바로 바뀌어요 (이 휴대폰에서만).</p></div>` : "";
-    $("#v-more").innerHTML = `<div class="stack">${looks}
+    const icons = (D.iconOpts || []).length ? `<div class="card"><p class="eyebrow">홈 화면 아이콘 시안</p><div class="icopts">${D.iconOpts.map(o => `<div class="icopt">
+        <div class="wall"><img src="icon-opt-${esc(o.id)}.png" alt=""><small>🇪🇸 스페인 가족여행 일정</small></div>
+        <div><b>${esc(o.name)}</b><div class="muted">${esc(o.desc)}</div></div></div>`).join("")}</div>
+        <p class="note" style="margin:10px 0 0">휴대폰 바탕화면에 깔렸을 때 보이는 모양이에요.</p></div>` : "";
+    $("#v-more").innerHTML = `<div class="stack">${icons}
       <details class="card"><summary>택시 미리 부탁하기 (호텔)</summary><div class="in">
         <p class="muted" style="margin:0">이른 아침에 떠나는 날은 전날 밤 숙소 프런트에 택시를 예약해 달라고 부탁하세요. 화면을 보여주거나, 문장을 복사해서 Booking.com 앱 메시지로 보내면 돼요.</p>
         ${D.taxiplan.map((t, i) => `<div class="stay"><div class="nm">${esc(D.dates[t.day - 1])} ${ap(t.time)} · ${esc(t.dest)}</div><div class="muted">${esc(t.hotel)} · 부탁할 때: ${esc(t.when)}</div>
@@ -1096,15 +1091,6 @@ details.card .in { padding: 0 16px 16px; display: flex; flex-direction: column; 
     $("#ride").hidden = true; $("#taxi").hidden = false; $("#taxi .close").focus();
   }
 
-  /* ---------- 디자인 시안 ---------- */
-  function setLook(id) {
-    const L = (D.looks || []).find(l => l.id === id); if (!L) return;
-    document.documentElement.dataset.look = id;
-    store.set("look", id);
-    const m = document.querySelector('meta[name="theme-color"]'); if (m) m.setAttribute("content", L.g[0]);
-    renderMore();
-  }
-
   /* ---------- 탭 ---------- */
   const VIEWS = ["today", "plan", "wallet", "food", "more"];
   const RENDER = { today: renderToday, plan: renderPlan, wallet: renderWallet, food: renderFood, more: renderMore };
@@ -1131,7 +1117,6 @@ details.card .in { padding: 0 16px 16px; display: flex; flex-direction: column; 
     else if (ds.taxiplan !== undefined) openTaxiPlan(+ds.taxiplan);
     else if (ds.meal) { mealKey = ds.meal; store.set("meal", mealKey); if ($("#v-food").hidden) show("food"); else { renderFood(); window.scrollTo(0, 0); } }
     else if (ds.install) { if (window.__showInstall) window.__showInstall(); }
-    else if (ds.look) setLook(ds.look);
     else if (ds.ride) openRide(ds.ride);
     else if (ds.taxicard) { if (rideCur) openTaxi(rideCur); }
     else if (ds.close) $("#" + ds.close).hidden = true;
