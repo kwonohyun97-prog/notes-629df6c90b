@@ -1287,7 +1287,7 @@ details.card .in { padding: 0 16px 16px; display: flex; flex-direction: column; 
     const m = mealByKey[mealKey], city = CITY_EN[m.region] || "";
     const md = mealDate(m), slot = mealSlot(m), dayMeals = dt => D.meals.filter(x => mealDate(x) === dt);
     const chips = MEALDAYS.map(dt => {
-      const ms = dayMeals(dt), di = dayIdx(dt), target = ms.find(x => mealSlot(x) === slot) || ms[0];
+      const ms = dayMeals(dt), di = dayIdx(dt), target = dt === md ? m : (ms.find(x => mealSlot(x) === "lunch") || ms[0]);   // 다른 날짜로 가면 그날 점심부터 (점심 없으면 첫 끼니)
       const [mdd, wd] = D.dates[di - 1].split(" ");
       return `<button class="daychip" style="--city:${colorOf(di)}" aria-pressed="${dt === md}" data-meal="${target.key}"><b>${mdd}</b><span>${wd.replace(/[()]/g, "")} · ${esc(cityOf(di))}</span><i></i></button>`;
     }).join("");
@@ -1598,7 +1598,7 @@ details.card .in { padding: 0 16px 16px; display: flex; flex-direction: column; 
 </template>
 <script>
 (() => {
-  const KEY = "es26:key", BUILD = "8ce2c38e15";
+  const KEY = "es26:key", BUILD = "ded50dde71";
   const ub64 = s => Uint8Array.from(atob(s), c => c.charCodeAt(0));
   const tob64 = u => btoa(String.fromCharCode(...u));
   const get = k => { try { return localStorage.getItem(k); } catch (e) { return null; } };
