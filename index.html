@@ -95,8 +95,11 @@ img { max-width: 100%; }
     add: '<svg viewBox="0 0 24 24"><rect x="4" y="4" width="16" height="16" rx="4"/><path d="M12 8v8M8 12h8"/></svg>',
     dots: '<span class="dots">···</span>',
     check: '<svg viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7"/></svg>',
-    menu: '<span class="dots">⋮</span>'
+    menu: '<span class="dots">⋮</span>',
+    more: '<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M8 12h.01M12 12h.01M16 12h.01" stroke-width="3"/></svg>',
+    burger: '<span class="dots">≡</span>'
   };
+  const isSamsung = /SamsungBrowser/i.test(ua);
   const step = (n, html, icon) => `<div class="step"><span class="num">${n}</span><span class="txt">${html}</span><span class="ico">${icon}</span></div>`;
   function body() {
     const url = location.href.split("#")[0];
@@ -111,15 +114,18 @@ img { max-width: 100%; }
         <div class="steps">
           ${step(1, "화면 맨 아래 주소창 오른쪽의 <b>···</b> 버튼 누르기", ICON.dots)}
           ${step(2, "<b>공유</b> 누르기", ICON.share)}
-          ${step(3, "아래로 내려서 <b>홈 화면에 추가</b> 누르기", ICON.add)}
-          ${step(4, "<b>웹 앱으로 열기</b>가 켜진 채로 오른쪽 위 <b>추가</b>", ICON.check)}
+          ${step(3, "공유 창에서 <b>더 보기</b> 누르기", ICON.more)}
+          ${step(4, "<b>홈 화면에 추가</b> 누르기", ICON.add)}
+          ${step(5, "<b>웹 앱으로 열기</b>가 켜진 채로 오른쪽 위 <b>추가</b>", ICON.check)}
         </div>
-        <p class="note">아래쪽 막대가 안 보이면 화면 맨 아래를 한 번 톡 눌러주세요. 예전 아이폰은 맨 아래 가운데 <b>공유</b> 버튼부터 시작하면 돼요.</p>`;
+        <p class="note">아래쪽 막대가 안 보이면 화면 맨 아래를 한 번 톡 눌러주세요. 공유 창에 <b>홈 화면에 추가</b>가 바로 보이면 3번은 건너뛰면 돼요. 예전 아이폰은 맨 아래 가운데 <b>공유</b> 버튼부터 시작하세요.</p>`;
     }
     if (isAndroid) {
       return `<h2>홈 화면에 앱으로 설치하기</h2>
         ${deferred ? `<button class="big" id="doinstall">앱으로 설치하기</button><p class="note">누른 뒤 나오는 창에서 <b>설치</b>를 누르면 끝이에요.</p>`
-          : `<div class="steps">${step(1, "오른쪽 위 <b>⋮</b> 메뉴 누르기", ICON.menu)}${step(2, "<b>앱 설치</b> 또는 <b>홈 화면에 추가</b> 누르기", ICON.add)}${step(3, "<b>설치</b> 누르기", ICON.check)}</div>`}`;
+          : isSamsung
+            ? `<div class="steps">${step(1, "화면 아래 <b>≡</b> 메뉴 누르기", ICON.burger)}${step(2, "<b>페이지 추가</b> 누르기", ICON.add)}${step(3, "<b>홈 화면</b> 고르기", ICON.check)}</div><p class="note">주소창에 설치(↓) 아이콘이 보이면 그걸 눌러도 돼요.</p>`
+            : `<div class="steps">${step(1, "오른쪽 위 <b>⋮</b> 메뉴 누르기", ICON.menu)}${step(2, "<b>앱 설치</b> 또는 <b>홈 화면에 추가</b> 누르기", ICON.add)}${step(3, "<b>설치</b> 누르기", ICON.check)}</div>`}`;
     }
     return `<h2>휴대폰에서 열어주세요</h2><p>아이폰은 사파리, 안드로이드는 크롬으로 이 주소를 열면 홈 화면에 설치할 수 있어요.</p>`;
   }
@@ -1437,7 +1443,7 @@ details.card .in { padding: 0 16px 16px; display: flex; flex-direction: column; 
 </template>
 <script>
 (() => {
-  const KEY = "es26:key", BUILD = "55d588c486";
+  const KEY = "es26:key", BUILD = "b8930c4038";
   const ub64 = s => Uint8Array.from(atob(s), c => c.charCodeAt(0));
   const tob64 = u => btoa(String.fromCharCode(...u));
   const get = k => { try { return localStorage.getItem(k); } catch (e) { return null; } };
