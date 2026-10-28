@@ -1096,7 +1096,7 @@ details.card .in { padding: 0 16px 16px; display: flex; flex-direction: column; 
   }
 
   /* ---------- 일정 ---------- */
-  let planDay = store.get("planDay", null);
+  let planDay = null;   // 앱을 새로 켜면 그날 날짜부터
   function renderPlan() {
     const { idx } = tripDay();
     if (!planDay) planDay = idx >= 1 && idx <= 10 ? idx : 1;
@@ -1130,7 +1130,7 @@ details.card .in { padding: 0 16px 16px; display: flex; flex-direction: column; 
   }
 
   /* ---------- 티켓 ---------- */
-  let walletDay = store.get("walletDay", null);
+  let walletDay = null;
   function renderWallet() {
     const days = [...new Set(D.wallet.map(w => w.day))].sort((a, b) => a - b);
     if (!days.includes(walletDay)) { const { idx } = tripDay(); walletDay = days.find(d => d >= idx) || days[0]; }
@@ -1158,7 +1158,7 @@ details.card .in { padding: 0 16px 16px; display: flex; flex-direction: column; 
   }
 
   /* ---------- 식당 ---------- */
-  let mealKey = store.get("meal", null);
+  let mealKey = null;
   // 끼니 → 날짜 · 점심/저녁 ("11/2 (월) 저녁 (19:30)" → 11/2, 저녁)
   const mealDate = m => String(m.meal).split(" ")[0];
   const mealSlot = m => /저녁/.test(m.meal) ? "dinner" : "lunch";
@@ -1166,7 +1166,12 @@ details.card .in { padding: 0 16px 16px; display: flex; flex-direction: column; 
   const MEALDAYS = [...new Set(D.meals.map(mealDate))].sort((a, b) => dayIdx(a) - dayIdx(b));
   const gImg = q => "https://www.google.com/search?udm=2&q=" + encodeURIComponent(q);
   function renderFood() {
-    if (!mealKey || !mealByKey[mealKey]) mealKey = (D.meals.find(m => m.places.length) || D.meals[0]).key;
+    if (!mealKey || !mealByKey[mealKey]) {   // 여행 중이면 그날 끼니 (오후 3시 전 점심 · 이후 저녁), 아니면 첫 후보
+      const { idx, now } = tripDay(), td = idx >= 1 && idx <= 10 ? D.dates[idx - 1].split(" ")[0] : null;
+      const ms = td ? D.meals.filter(x => mealDate(x) === td) : [];
+      const pick = ms.find(x => mealSlot(x) === (now >= 15 * 60 ? "dinner" : "lunch")) || ms[0];
+      mealKey = (pick || D.meals.find(m => m.places.length) || D.meals[0]).key;
+    }
     const m = mealByKey[mealKey], city = CITY_EN[m.region] || "";
     const md = mealDate(m), slot = mealSlot(m), dayMeals = dt => D.meals.filter(x => mealDate(x) === dt);
     const chips = MEALDAYS.map(dt => {
@@ -1388,7 +1393,6 @@ details.card .in { padding: 0 16px 16px; display: flex; flex-direction: column; 
     destroyMaps();
     delete lastKey["v-" + v];
     RENDER[v]();
-    store.set("tab", v);
     window.scrollTo(0, fromTab && v !== "more" ? (scrollMem[v] || 0) : 0);   // 더보기는 항상 접힌 채 맨 위부터
     curView = v;
   }
@@ -1399,12 +1403,12 @@ details.card .in { padding: 0 16px 16px; display: flex; flex-direction: column; 
     const ds = b.dataset;
     if (ds.tab) show(ds.tab, true);
     else if (ds.go) show(ds.go);
-    else if (ds.plan) { planDay = +ds.plan; store.set("planDay", planDay); show("plan"); }
-    else if (ds.day) { planDay = +ds.day; store.set("planDay", planDay); destroyMaps(); renderPlan(); }
+    else if (ds.plan) { planDay = +ds.plan; show("plan"); }
+    else if (ds.day) { planDay = +ds.day; destroyMaps(); renderPlan(); }
     else if (ds.fly) { const [fd, fi, fk] = ds.fly.split(":"); const m = MAPS[fd + ":v-plan"] || MAPS[fd + ":v-today"]; if (m) m.fly(+fi, fk === undefined ? -1 : +fk); }
     else if (ds.taxiplan !== undefined) openTaxiPlan(+ds.taxiplan);
-    else if (ds.meal) { mealKey = ds.meal; store.set("meal", mealKey); if ($("#v-food").hidden) show("food"); else renderFood(); }
-    else if (ds.wday) { walletDay = +ds.wday; store.set("walletDay", walletDay); if ($("#v-wallet").hidden) show("wallet"); else renderWallet(); }
+    else if (ds.meal) { mealKey = ds.meal; if ($("#v-food").hidden) show("food"); else renderFood(); }
+    else if (ds.wday) { walletDay = +ds.wday; if ($("#v-wallet").hidden) show("wallet"); else renderWallet(); }
     else if (ds.install) { if (window.__showInstall) window.__showInstall(); }
     else if (ds.tf) { document.documentElement.dataset.tf = ds.tf; store.set("tf", ds.tf); renderMore(); }
     else if (ds.ride) openRide(ds.ride);
@@ -1429,13 +1433,14 @@ details.card .in { padding: 0 16px 16px; display: flex; flex-direction: column; 
   { const tf = store.get("tf", null); if (tf && (D.titleOpts || []).some(t => t.id === tf)) document.documentElement.dataset.tf = tf; }
   tick(); setInterval(() => { tick(); }, 30000);
   const h = location.hash.replace("#", "");
-  show(VIEWS.includes(h) ? h : store.get("tab", "today"));
+  ["tab", "planDay", "meal", "walletDay"].forEach(k => { try { localStorage.removeItem("es26:" + k); } catch (e) {} });   // 예전 버전이 남긴 위치 기록 정리
+  show(VIEWS.includes(h) ? h : "today");
 })();
 </script>
 </template>
 <script>
 (() => {
-  const KEY = "es26:key", BUILD = "615fc336fd";
+  const KEY = "es26:key", BUILD = "a1473a0e4d";
   const ub64 = s => Uint8Array.from(atob(s), c => c.charCodeAt(0));
   const tob64 = u => btoa(String.fromCharCode(...u));
   const get = k => { try { return localStorage.getItem(k); } catch (e) { return null; } };
