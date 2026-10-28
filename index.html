@@ -22,7 +22,7 @@
 html, body { margin: 0; }
 img { max-width: 100%; }
 [hidden] { display: none !important; }
-#lock { position: fixed; inset: 0; z-index: 50; display: grid; place-items: center; padding: 24px 16px; color: #fff; overflow-y: auto;
+#lock { position: fixed; inset: 0; bottom: calc(0px - var(--iosgap, 0px)); z-index: 50; display: grid; place-items: center; padding: 24px 16px; color: #fff; overflow-y: auto;
   background: radial-gradient(120% 80% at 100% 0%, var(--glow), transparent 55%), linear-gradient(160deg, var(--g1), var(--g2) 55%, var(--g3));
   font-family: "IBM Plex Sans KR", "Apple SD Gothic Neo", "Malgun Gothic", system-ui, sans-serif; }
 #lock .box { width: 100%; max-width: 380px; display: flex; flex-direction: column; gap: 14px; text-align: center; }
@@ -463,7 +463,7 @@ details.card .in { padding: 0 16px 16px; display: flex; flex-direction: column; 
 .check input { width: 22px; height: 22px; accent-color: var(--accent); }
 
 /* 탭바 */
-.tabs { position: fixed; left: 0; right: 0; bottom: 0; z-index: 10; background: var(--surface); background: color-mix(in srgb, var(--surface) 90%, transparent); -webkit-backdrop-filter: blur(14px); backdrop-filter: blur(14px); border-top: 1px solid var(--line); padding: 6px 6px calc(6px + env(safe-area-inset-bottom, 0px)); }
+.tabs { position: fixed; left: 0; right: 0; bottom: 0; bottom: calc(0px - var(--iosgap, 0px)); z-index: 10; background: var(--surface); background: color-mix(in srgb, var(--surface) 90%, transparent); -webkit-backdrop-filter: blur(14px); backdrop-filter: blur(14px); border-top: 1px solid var(--line); padding: 6px 6px calc(6px + env(safe-area-inset-bottom, 0px)); }
 .tabs .in { max-width: 600px; margin: 0 auto; display: grid; grid-template-columns: repeat(5, 1fr); gap: 2px; }
 .tabs button { background: none; border: 0; display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 6px 2px; min-height: 58px; border-radius: 12px; color: var(--muted); font-size: 13px; font-weight: 700; cursor: pointer; }
 .tabs svg { width: 26px; height: 26px; stroke: currentColor; fill: none; stroke-width: 1.9; stroke-linecap: round; stroke-linejoin: round; }
@@ -479,7 +479,7 @@ details.card .in { padding: 0 16px 16px; display: flex; flex-direction: column; 
 @media (prefers-reduced-motion: reduce) { .tabs .ind { transition: none; } .tabs button[aria-current="page"] svg { animation: none; } }
 
 /* 겹쳐 뜨는 화면 */
-.overlay { position: fixed; inset: 0; z-index: 20; background: var(--bg); display: flex; flex-direction: column; gap: 12px; padding: calc(14px + env(safe-area-inset-top, 0px)) 16px calc(16px + env(safe-area-inset-bottom, 0px)); overflow-y: auto; }
+.overlay { position: fixed; inset: 0; bottom: calc(0px - var(--iosgap, 0px)); z-index: 20; background: var(--bg); display: flex; flex-direction: column; gap: 12px; padding: calc(14px + env(safe-area-inset-top, 0px)) 16px calc(16px + env(safe-area-inset-bottom, 0px)); overflow-y: auto; }
 .overlay .close { align-self: flex-end; }
 .overlay .wrap { max-width: 600px; width: 100%; margin: 0 auto; display: flex; flex-direction: column; gap: 12px; }
 .taxi .es { font-size: 22px; font-weight: 700; margin-top: 10px; }
@@ -1389,13 +1389,18 @@ details.card .in { padding: 0 16px 16px; display: flex; flex-direction: column; 
     if (instant) { void ind.offsetWidth; ind.classList.remove("noanim"); }
   }
   // 앱 높이를 실제 보이는 화면 높이에 맞추고, 하단 바가 화면 바닥보다 떠 있으면 바닥에 붙이기 (아이폰 기종 · 상황별 차이 보정)
+  // 아이폰 홈 화면 앱(상태바 투명)은 화면 높이를 상태바만큼 짧게 알려주는 경우가 있음 (15 Pro: 852 → 793)
+  // → 실제 화면 높이와의 차이(--iosgap)만큼 하단 바 · 덮는 화면을 아래로 내림. 다른 폰 · 브라우저에서는 0
   function fitScreen() {
-    const h = Math.round((window.visualViewport && visualViewport.height) || innerHeight);
-    document.documentElement.style.setProperty("--appH", h + "px");
-    const t = $(".tabs"); if (!t) return;
-    t.style.bottom = "0px";
-    const gap = Math.round(h - t.getBoundingClientRect().bottom);
-    if (gap > 1 && gap < 200) t.style.bottom = -gap + "px";
+    const root = document.documentElement;
+    root.style.setProperty("--appH", Math.round(innerHeight) + "px");
+    let gap = 0;
+    if (navigator.standalone === true && screen.height) {
+      const full = innerWidth > innerHeight ? Math.min(screen.width, screen.height) : Math.max(screen.width, screen.height);
+      gap = Math.round(full - innerHeight);
+      if (gap < 0 || gap > 120) gap = 0;
+    }
+    root.style.setProperty("--iosgap", gap + "px");
   }
   fitScreen();
   addEventListener("resize", () => { fitScreen(); if (curView) moveInd(curView, true); });
@@ -1461,12 +1466,18 @@ details.card .in { padding: 0 16px 16px; display: flex; flex-direction: column; 
 </template>
 <script>
 (() => {
-  const KEY = "es26:key", BUILD = "883a533eb1";
+  const KEY = "es26:key", BUILD = "83678e4dff";
   const ub64 = s => Uint8Array.from(atob(s), c => c.charCodeAt(0));
   const tob64 = u => btoa(String.fromCharCode(...u));
   const get = k => { try { return localStorage.getItem(k); } catch (e) { return null; } };
   const put = (k, v) => { try { v === null ? localStorage.removeItem(k) : localStorage.setItem(k, v); } catch (e) {} };
   if ("serviceWorker" in navigator) navigator.serviceWorker.register("sw.js").catch(() => {});
+  const iosGap = () => {   // 아이폰 홈 화면 앱이 화면 높이를 상태바만큼 짧게 알려줄 때 보정 (앱 화면의 fitScreen과 같은 계산)
+    let g = 0;
+    if (navigator.standalone === true && screen.height) { const full = innerWidth > innerHeight ? Math.min(screen.width, screen.height) : Math.max(screen.width, screen.height); g = Math.round(full - innerHeight); if (g < 0 || g > 120) g = 0; }
+    document.documentElement.style.setProperty("--iosgap", g + "px");
+  };
+  iosGap(); addEventListener("resize", iosGap);
   let ENC = null;
   async function loadEnc() {
     if (!ENC) ENC = await (await fetch("data.enc", { cache: "no-cache" })).json();
