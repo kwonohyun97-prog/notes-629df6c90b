@@ -267,7 +267,7 @@ small.ap { font-size: .72em; font-weight: 700; margin-right: 2px; letter-spacing
 .tfopt[aria-pressed="true"] { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft); }
 .tfopt[aria-pressed="true"]::after { content: "✓"; position: absolute; top: 8px; right: 8px; width: 24px; height: 24px; border-radius: 50%; display: grid; place-items: center; font-size: 14px; font-weight: 800; color: var(--g1); background: #fff; }
 .clock { text-align: right; font-size: 12px; color: rgba(255,255,255,.92); line-height: 1.35; font-variant-numeric: tabular-nums; background: rgba(0,0,0,.16); border-radius: 12px; padding: 6px 10px; flex: none; }
-.clock b { font-family: var(--mono); font-size: 16px; color: #fff; font-weight: 600; }
+.clock b { font-size: 16px; color: #fff; font-weight: 800; font-variant-numeric: tabular-nums; }
 
 /* 공통 */
 .stack { display: flex; flex-direction: column; gap: 14px; padding-top: 16px; }
@@ -312,19 +312,34 @@ small.ap { font-size: .72em; font-weight: 700; margin-right: 2px; letter-spacing
   background: radial-gradient(90% 120% at 100% 0%, rgba(255,255,255,.26), transparent 60%), linear-gradient(135deg, color-mix(in oklab, var(--city, #2F5FB3) 80%, white), var(--city, #2F5FB3) 50%, color-mix(in oklab, var(--city, #2F5FB3) var(--hero-shade), black));
   box-shadow: 0 12px 26px -16px var(--city, #2F5FB3); }
 .hero::after { content: ""; position: absolute; right: -46px; bottom: -70px; width: 200px; height: 200px; border-radius: 50%; border: 24px solid rgba(255,255,255,.10); pointer-events: none; z-index: -1; }
-.hero .dday { font-family: var(--mono); font-size: 15px; font-weight: 600; opacity: .9; }
+.hero .dday { font-size: 14px; font-weight: 700; letter-spacing: .02em; opacity: .92; }
 .hero .date { font-family: var(--title-font, var(--display)); font-weight: var(--title-w, 800); font-size: 34px; line-height: 1.15; margin: 4px 0 2px; }
 .hero .flow { font-size: 18px; white-space: pre-line; opacity: .95; }
 .next { display: grid; grid-template-columns: auto 1fr; gap: 4px 14px; align-items: start; }
-.next .t { font-family: var(--mono); font-size: 24px; font-weight: 600; line-height: 1.15; font-variant-numeric: tabular-nums; }
+.next .t { font-size: 24px; font-weight: 800; line-height: 1.15; font-variant-numeric: tabular-nums; letter-spacing: -.01em; }
 .next .ti { font-size: 21px; font-weight: 700; line-height: 1.3; }
 .next .in { grid-column: 2; font-weight: 700; color: var(--accent); }
 .mini { display: flex; flex-direction: column; }
 .mini button { display: grid; grid-template-columns: 92px 1fr; gap: 10px; text-align: left; background: none; border: 0; border-top: 1px solid var(--line); padding: 11px 0; cursor: pointer; align-items: baseline; }
 .mini button:first-child { border-top: 0; }
-.mini .t { font-family: var(--mono); font-size: 15px; font-weight: 600; color: var(--muted); font-variant-numeric: tabular-nums; }
+.mini .t { font-size: 15px; font-weight: 700; color: var(--muted); font-variant-numeric: tabular-nums; }
 .mini .ti { font-size: 17px; font-weight: 500; }
 .mini .past { opacity: .45; }
+/* 선 아이콘 (하단 바와 같은 느낌) */
+.ico { width: 18px; height: 18px; stroke: currentColor; fill: none; stroke-width: 1.9; stroke-linecap: round; stroke-linejoin: round; flex: none; }
+.kind { display: inline-flex; align-items: center; gap: 5px; font-size: 13px; font-weight: 700; padding: 4px 10px 4px 8px; border-radius: 999px; background: var(--accent-soft); color: var(--accent); white-space: nowrap; }
+.kind .ico { width: 16px; height: 16px; }
+.evi { flex: none; width: 26px; height: 26px; border-radius: 50%; display: inline-grid; place-items: center; color: #fff; background: var(--cat); }
+.evi .ico { width: 15px; height: 15px; stroke-width: 2.1; }
+.evi.sm { width: 22px; height: 22px; }
+.evi.sm .ico { width: 13px; height: 13px; }
+.mini .ti { display: flex; align-items: center; gap: 8px; }
+.mini .t.tk { display: inline-flex; align-items: center; gap: 6px; color: var(--accent); }
+.mini .t.tk .ico { width: 17px; height: 17px; }
+/* 더보기: 아이폰 설정 화면처럼 색 아이콘 칸 */
+.mrow { display: flex; align-items: center; gap: 12px; min-width: 0; }
+.mi { flex: none; width: 32px; height: 32px; border-radius: 9px; display: grid; place-items: center; color: #fff; background: var(--mc); }
+.mi .ico { width: 18px; height: 18px; stroke-width: 2.1; }
 .dot { width: 9px; height: 9px; border-radius: 50%; display: inline-block; background: var(--cat); flex: none; }
 
 /* 지도 (직접 그리는 동선 지도) */
@@ -387,7 +402,7 @@ small.ap { font-size: .72em; font-weight: 700; margin-right: 2px; letter-spacing
 .tl { display: flex; flex-direction: column; }
 .ev { display: grid; grid-template-columns: 84px 1fr; gap: 12px; padding: 14px 0; border-top: 1px solid var(--line); }
 .ev:first-child { border-top: 0; }
-.ev .t { font-family: var(--mono); font-size: 16px; font-weight: 600; white-space: pre-line; line-height: 1.35; color: var(--cat); font-variant-numeric: tabular-nums; }
+.ev .t { font-size: 16px; font-weight: 700; white-space: pre-line; line-height: 1.35; color: var(--cat); font-variant-numeric: tabular-nums; }
 .ev .ti { font-size: 19px; font-weight: 700; line-height: 1.3; display: flex; gap: 8px; align-items: center; }
 .ev .no { white-space: pre-line; color: var(--muted); font-size: 16px; margin-top: 3px; }
 .ev .pl { font-size: 15px; color: var(--muted); margin-top: 3px; }
@@ -473,7 +488,7 @@ details.card .in { padding: 0 16px 16px; display: flex; flex-direction: column; 
 .stay { border-top: 1px solid var(--line); padding-top: 12px; display: flex; flex-direction: column; gap: 4px; }
 .stay:first-child { border-top: 0; padding-top: 0; }
 .stay .nm { font-size: 18px; font-weight: 700; }
-.addr { font-family: var(--mono); font-size: 15px; }
+.addr { font-size: 15px; color: var(--muted); }
 .phrase { border-top: 1px solid var(--line); padding-top: 10px; }
 .phrase:first-child { border-top: 0; padding-top: 0; }
 .phrase .es { font-size: 21px; font-weight: 700; line-height: 1.3; }
@@ -487,7 +502,7 @@ details.card .in { padding: 0 16px 16px; display: flex; flex-direction: column; 
 .say2 .act .btn { flex: 0 1 auto; }
 .say2.big2 .en { font-size: 28px; line-height: 1.3; }
 .say2.big2 .es2 { font-size: 23px; }
-.num { font-family: var(--mono); font-size: 22px; font-weight: 600; user-select: all; }
+.num { font-size: 22px; font-weight: 800; font-variant-numeric: tabular-nums; user-select: all; }
 .check { display: flex; gap: 10px; align-items: center; min-height: 40px; font-size: 17px; }
 .check input { width: 22px; height: 22px; accent-color: var(--accent); }
 
@@ -611,6 +626,40 @@ details.card .in { padding: 0 16px 16px; display: flex; flex-direction: column; 
       <div class="es2" hidden><span>${esc(es)}</span>${opt.copy ? `<button class="btn sm" data-copy="${esc(es)}">스페인어 복사</button>` : ""}</div>
       ${ko ? `<div class="ko2">${esc(ko)}</div>` : ""}
       <div class="act"><button class="btn sm" data-lang="1" aria-pressed="false">🇪🇸 스페인어</button>${opt.copy ? `<button class="btn sm" data-copy="${esc(en)}">영어 복사</button>` : ""}</div></div>`;
+  }
+
+  /* ---------- 선 아이콘 ---------- */
+  const IC = {
+    plane: '<path d="M21 16v-2l-8-5V3.5a1.5 1.5 0 0 0-3 0V9l-8 5v2l8-2.5V19l-2 1.5V22l3.5-1 3.5 1v-1.5L13 19v-5.5z" fill="currentColor" stroke="none"/>',
+    train: '<rect x="5" y="3" width="14" height="14" rx="3"/><path d="M5 11h14M8.5 21l2-4M15.5 21l-2-4"/><path d="M8.5 14h.01M15.5 14h.01" stroke-width="2.6"/>',
+    bed: '<path d="M3 19V8M3 15h18v4M21 15v-2.5A2.5 2.5 0 0 0 18.5 10H11v5"/><circle cx="7" cy="12.2" r="1.8"/>',
+    ticket: '<path d="M4 7.5h16v3a2 2 0 0 0 0 4v3H4v-3a2 2 0 0 0 0-4z"/><path d="M14 7.5v10" stroke-dasharray="1.6 2"/>',
+    ball: '<circle cx="12" cy="12" r="8.5"/><path d="M12 8l3.2 2.3-1.2 3.7h-4l-1.2-3.7z"/><path d="M12 3.5V8M20.2 9.4l-5 .9M16.9 19l-2.9-5M7.1 19l2.9-5M3.8 9.4l5 .9"/>',
+    car: '<path d="M5 15.5v-4L7 7h10l2 4.5v4"/><path d="M3.5 15.5h17v3h-17zM5 11.5h14"/><path d="M7 18.5v1.5M17 18.5v1.5"/>',
+    fork: '<path d="M7 3v8M5 3v5a2 2 0 0 0 4 0V3M7 11v10M16.5 3c-2 1.5-2.5 4-2.5 7h3v11"/>',
+    landmark: '<path d="M3 21h18M5 21V10.5M19 21V10.5M9.5 21v-6.5M14.5 21v-6.5M3 10.5l9-6.5 9 6.5z"/>',
+    bag: '<path d="M5 8h14l-1.2 12.5H6.2z"/><path d="M9 8V6.5a3 3 0 0 1 6 0V8"/>',
+    star: '<path d="M12 3.5l1.9 5.4 5.6.2-4.4 3.5 1.6 5.4L12 14.8 7.3 18l1.6-5.4L4.5 9.1l5.6-.2z"/>',
+    chat: '<path d="M4 5h16v11H10l-5 4v-4H4z"/><path d="M8 10.5h8"/>',
+    globe: '<circle cx="12" cy="12" r="8.5"/><path d="M3.5 12h17M12 3.5c2.6 2.8 2.6 14.2 0 17M12 3.5c-2.6 2.8-2.6 14.2 0 17"/>',
+    phone: '<path d="M5 4h4l2 5-2.5 1.5a11 11 0 0 0 5 5L15 13l5 2v4a2 2 0 0 1-2 2A16 16 0 0 1 3 6a2 2 0 0 1 2-2"/>',
+    check: '<rect x="4" y="4" width="16" height="16" rx="4"/><path d="M8 12.5l2.7 2.7L16.2 9.5"/>',
+    sos: '<path d="M12 3.5l9 16H3z"/><path d="M12 10v4M12 16.8v.01"/>'
+  };
+  const ico = (n, cls) => `<svg class="ico${cls ? " " + cls : ""}" viewBox="0 0 24 24" aria-hidden="true">${IC[n] || IC.star}</svg>`;
+  const KIND_IC = { "비행기": "plane", "기차": "train", "숙소": "bed", "입장권": "ticket", "투어": "landmark", "경기": "ball", "렌터카": "car" };
+  const kindIco = k => KIND_IC[k] || "ticket";
+  function evIco(e) {   // 일정 종류 → 아이콘
+    const t = String(e.title) + " " + String(e.note || "");
+    if (/비행기/.test(e.title) || /공항/.test(e.title)) return "plane";
+    if (/기차|AVE/.test(e.title)) return "train";
+    if (e.cat === "식사") return "fork";
+    if (e.cat === "숙소") return "bed";
+    if (e.cat === "경기") return "ball";
+    if (e.cat === "관광") return "landmark";
+    if (/쇼핑|아울렛|까르푸|장보기/.test(t) && e.cat !== "이동") return "bag";
+    if (e.cat === "이동" || /렌터카|택시|이동/.test(e.title)) return "car";
+    return "star";
   }
 
   /* 시간: 13:35 → 오후 1:35 */
@@ -1196,9 +1245,9 @@ details.card .in { padding: 0 16px 16px; display: flex; flex-direction: column; 
         <button class="btn primary" data-ride="stay:${d}">택시 · 우버</button></div></div>` : ""}
       ${taxiCards(D.taxiplan.filter(t => t.remind === d), "오늘 할 일 · 택시 미리 부탁하기")}
       ${tickets.length ? `<div class="card"><p class="eyebrow">오늘 챙길 티켓 · 예약</p><div class="mini">${tickets.map(w =>
-        `<button data-wday="${d}"><span class="t">${esc(w.kind)}</span><span class="ti">${esc(w.title)}${w.who ? ` · <b>${esc(w.who)}</b>` : ""}</span></button>`).join("")}</div></div>` : ""}
+        `<button data-wday="${d}"><span class="t tk">${ico(kindIco(w.kind))}${esc(w.kind)}</span><span class="ti">${esc(w.title)}${w.who ? ` · <b>${esc(w.who)}</b>` : ""}</span></button>`).join("")}</div></div>` : ""}
       <div class="card"><p class="eyebrow">${live ? "오늘" : esc(D.dates[d - 1])} 전체 일정</p><div class="mini">${evs.map(e =>
-        `<button data-plan="${d}" class="${live && mins(e) < now && e !== next ? "past" : ""}"><span class="t">${ap(String(e.time).split("\n")[0])}</span><span class="ti"><span class="dot" style="--cat:${CAT[e.cat]}"></span> ${esc(e.title)}</span></button>`).join("")}</div>
+        `<button data-plan="${d}" class="${live && mins(e) < now && e !== next ? "past" : ""}"><span class="t">${ap(String(e.time).split("\n")[0])}</span><span class="ti"><span class="evi sm" style="--cat:${CAT[e.cat]}">${ico(evIco(e))}</span>${esc(e.title)}</span></button>`).join("")}</div>
         <div class="btns" style="margin-top:8px"><button class="btn" data-plan="${d}">자세히 보기</button></div></div>
       ${dayMaps(d, false)}
     </div>`;
@@ -1222,7 +1271,7 @@ details.card .in { padding: 0 16px 16px; display: flex; flex-direction: column; 
       const rt = e.route ? ` data-route="${d}:${e.route[0]}:${e.route[1]}" role="button" tabindex="0" aria-label="${esc(e.title)} 경로를 지도에서 보기"` : "";
       const isNow = e === nowEv;
       return `<div class="ev${isNow ? " now" : ""}" style="--cat:${CAT[e.cat]}"${rt}><div class="t">${ap(e.time)}</div><div>
-        <div class="ti"><span class="dot"></span><span>${esc(e.title)}</span>${isNow ? `<span class="nowpill">지금</span>` : ""}${e.route ? `<span class="evmap">${e.route[0] === e.route[1] ? "위치" : "경로"} ↓</span>` : ""}</div>
+        <div class="ti"><span class="evi">${ico(evIco(e))}</span><span>${esc(e.title)}</span>${isNow ? `<span class="nowpill">지금</span>` : ""}${e.route ? `<span class="evmap">${e.route[0] === e.route[1] ? "위치" : "경로"} ↓</span>` : ""}</div>
         ${e.note ? `<div class="no">${ap(e.note)}</div>` : ""}
         ${e.place ? `<div class="pl">${esc(e.place)}</div>` : ""}
         ${e.ticket ? `<div class="tk"><span class="pill">${esc(e.ticket)}</span></div>` : ""}
@@ -1257,7 +1306,7 @@ details.card .in { padding: 0 16px 16px; display: flex; flex-direction: column; 
         <span class="pill" style="background:${colorOf(d)};color:#fff">Day ${d}</span></div>
       <p class="note">파란 버튼을 누르면 예약 앱이나 티켓 원본이 열려요. 아직 버튼이 없는 티켓은 링크를 알려주면 연결할게요.</p>
       ${list.map(w => `<div class="card wcard">
-        <div class="head"><span class="pill">${esc(w.kind)}</span>${statusPill(w.status)}</div>
+        <div class="head"><span class="kind">${ico(kindIco(w.kind))}${esc(w.kind)}</span>${statusPill(w.status)}</div>
         <div class="ti">${esc(w.title)}</div><div class="muted">${ap(w.time)}</div>
         ${w.who ? `<div class="who">가지고 있는 사람 · <b>${esc(w.who)}</b></div>` : ""}
         ${w.code ? `<div class="code"><div><div class="lab">예약번호</div><div class="val">${esc(w.code)}</div></div><button class="btn" data-copy="${esc(w.code)}">복사</button></div>` : ""}
@@ -1393,6 +1442,7 @@ details.card .in { padding: 0 16px 16px; display: flex; flex-direction: column; 
   }
 
   /* ---------- 더보기 ---------- */
+  const sum = (ic, c, t) => `<span class="mrow"><span class="mi" style="--mc:${c}">${ico(ic)}</span><span>${t}</span></span>`;
   function renderMore() {
     const checks = store.get("checks", {});
     const shop = (city, day, rows) => `<div class="cityhead" style="--city:${D.cityColor[city]}"><b>${esc(city)}</b><span>${esc(D.dates[day - 1])} · ${rows.length}곳</span></div><div class="shoplist" style="--city:${D.cityColor[city]}">` + rows.map(r =>
@@ -1406,24 +1456,24 @@ details.card .in { padding: 0 16px 16px; display: flex; flex-direction: column; 
         <div><b>${esc(o.name)}</b><div class="muted">${esc(o.desc)}</div></div></div>`).join("")}</div>
         <p class="note" style="margin:10px 0 0">휴대폰 바탕화면에 깔렸을 때 보이는 모양이에요.</p></div>` : "";
     $("#v-more").innerHTML = `<div class="stack">${titles}${icons}
-      <details class="card"><summary>택시 미리 부탁하기 (호텔)</summary><div class="in">
+      <details class="card"><summary>${sum("car", "#F0A020", "택시 미리 부탁하기 (호텔)")}</summary><div class="in">
         <p class="muted" style="margin:0">이른 아침에 떠나는 날은 전날 밤 숙소 프런트에 택시를 예약해 달라고 부탁하세요. 화면을 보여주거나, 문장을 복사해서 Booking.com 앱 메시지로 보내면 돼요.</p>
         ${D.taxiplan.map((t, i) => `<div class="stay"><div class="nm">${esc(D.dates[t.day - 1])} ${ap(t.time)} · ${esc(t.dest)}</div><div class="muted">${esc(t.hotel)} · 부탁할 때: ${esc(t.when)}</div>
         <div class="grid2" style="margin-top:6px"><button class="btn primary" data-taxiplan="${i}">프런트에 보여주기</button><button class="btn" data-copy="${esc(t.en)}">영어 문장 복사</button></div></div>`).join("")}</div></details>
-      <details class="card"><summary>숙소 6곳</summary><div class="in">${D.stays.map((s, i) => `<div class="stay">
+      <details class="card"><summary>${sum("bed", "#7B61FF", "숙소 6곳")}</summary><div class="in">${D.stays.map((s, i) => `<div class="stay">
         <div class="muted">${esc(s.dates)} · ${esc(s.area)}</div><div class="nm">${esc(s.name)}</div><div class="addr">${esc(s.addr)}</div><div class="muted">예약 · ${esc(s.who)}</div>
         <div class="grid2" style="margin-top:6px"><a class="btn" href="${mapQ(s.name + ", " + s.addr)}" target="_blank" rel="noopener">지도</a><button class="btn primary" data-ride="stay:${s.days[0]}">택시 · 우버</button></div></div>`).join("")}</div></details>
-      <details class="card"><summary>말하기 카드 (영어)</summary><div class="in">
+      <details class="card"><summary>${sum("chat", "#1769D0", "말하기 카드 (영어)")}</summary><div class="in">
         <p class="muted" style="margin:0">영어로 말하면 영어로 대답해줘요. 🇪🇸 버튼을 누르면 스페인어도 보여요.</p>
         ${D.talk.map(g => `<p class="sec-title">${esc(g.group)}</p>${g.items.map(t => `<div class="phrase"><div class="muted">${esc(t.ko)}</div>${sayBox(t.en, t.es, "")}</div>`).join("")}`).join("")}</div></details>
-      <details class="card"><summary>스페인어 한마디 (인사 · 감사)</summary><div class="in">
+      <details class="card"><summary>${sum("globe", "#E0484E", "스페인어 한마디 (인사 · 감사)")}</summary><div class="in">
         <p class="muted" style="margin:0">인사와 감사는 현지어로 한마디 해주면 다들 좋아해요.</p>
         ${D.hola.map(h => `<div class="phrase"><div class="muted">${esc(h.ko)}</div><div class="es">${esc(h.es)}</div><div class="pron">${esc(h.pron)}</div></div>`).join("")}</div></details>
-      <details class="card"><summary>비상 연락처</summary><div class="in">${D.emergency.map(e => `<div class="stay"><div class="nm">${esc(e.name)}</div>
+      <details class="card"><summary>${sum("sos", "#D93025", "비상 연락처")}</summary><div class="in">${D.emergency.map(e => `<div class="stay"><div class="nm">${esc(e.name)}</div>
         <div class="row" style="justify-content:space-between"><span class="num">${esc(e.num)}</span><button class="btn" data-copy="${esc(e.num)}">복사</button></div><div class="muted">${esc(e.memo)}</div></div>`).join("")}</div></details>
-      <details class="card"><summary>쇼핑</summary><div class="in">${shop("마드리드", 4, D.shop.madrid)}${shop("바르셀로나", 9, D.shop.barcelona)}
+      <details class="card"><summary>${sum("bag", "#E0559A", "쇼핑")}</summary><div class="in">${shop("마드리드", 4, D.shop.madrid)}${shop("바르셀로나", 9, D.shop.barcelona)}
         <p class="sec-title">꼭 알아둘 것</p>${D.shop.memo.map(([k, v]) => `<div><b>${esc(k)}</b> · <span class="muted">${esc(v)}</span></div>`).join("")}</div></details>
-      <details class="card"><summary>준비물 체크리스트</summary><div class="in">${D.checklist.map(([g, items]) => `<p class="sec-title">${esc(g)}</p>${items.map((t, j) => {
+      <details class="card"><summary>${sum("check", "#2E9E5B", "준비물 체크리스트")}</summary><div class="in">${D.checklist.map(([g, items]) => `<p class="sec-title">${esc(g)}</p>${items.map((t, j) => {
         const id = "ck-" + g + "-" + j; return `<label class="check" for="${esc(id)}"><input type="checkbox" id="${esc(id)}" data-check="${esc(id)}" ${checks[id] ? "checked" : ""}>${esc(t)}</label>`; }).join("")}`).join("")}
         <p class="muted" style="font-size:14px">체크 표시는 이 휴대폰에만 저장돼요.</p></div></details>
       ${window.__showInstall ? `<button class="btn primary" data-install="1">휴대폰에 앱으로 설치하는 방법</button>` : ""}
@@ -1598,7 +1648,7 @@ details.card .in { padding: 0 16px 16px; display: flex; flex-direction: column; 
 </template>
 <script>
 (() => {
-  const KEY = "es26:key", BUILD = "e4b6997567";
+  const KEY = "es26:key", BUILD = "22673e31e5";
   const ub64 = s => Uint8Array.from(atob(s), c => c.charCodeAt(0));
   const tob64 = u => btoa(String.fromCharCode(...u));
   const get = k => { try { return localStorage.getItem(k); } catch (e) { return null; } };
