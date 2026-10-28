@@ -10,8 +10,8 @@
 <meta name="apple-mobile-web-app-title" content="🇪🇸 스페인 가족여행 일정">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <link rel="manifest" href="manifest.webmanifest">
-<link rel="icon" href="icon-192.png">
-<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="icon" href="icon-192.d24e61ab.png">
+<link rel="apple-touch-icon" href="apple-touch-icon.d24e61ab.png">
 <title>🇪🇸 스페인 가족여행 일정</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -40,7 +40,7 @@ img { max-width: 100%; }
 </head><body>
 <div id="lock" hidden>
   <form class="box" id="lockform" autocomplete="off">
-    <img class="li" src="icon-192.png" alt="">
+    <img class="li" src="icon-192.d24e61ab.png" alt="">
     <h1>🇪🇸 스페인 가족여행 일정</h1>
     <p>가족 비밀번호를 입력하세요</p>
     <input id="pw" type="password" inputmode="numeric" pattern="[0-9]*" aria-label="비밀번호" required>
@@ -1156,7 +1156,7 @@ details.card .in { padding: 0 16px 16px; display: flex; flex-direction: column; 
 </template>
 <script>
 (() => {
-  const KEY = "es26:key";
+  const KEY = "es26:key", BUILD = "0c3220593c";
   const ub64 = s => Uint8Array.from(atob(s), c => c.charCodeAt(0));
   const tob64 = u => btoa(String.fromCharCode(...u));
   const get = k => { try { return localStorage.getItem(k); } catch (e) { return null; } };
@@ -1194,6 +1194,10 @@ details.card .in { padding: 0 16px 16px; display: flex; flex-direction: column; 
   async function start() {
     let enc;
     try { enc = await loadEnc(); } catch (e) { showLock("인터넷에 연결된 상태에서 처음 한 번 열어주세요"); return; }
+    if (enc.build && enc.build !== BUILD) {   // 화면이 옛 버전이면 한 번만 새로 받기
+      let done = null; try { done = sessionStorage.getItem("es26:reload"); } catch (e) {}
+      if (done !== enc.build) { try { sessionStorage.setItem("es26:reload", enc.build); } catch (e) {} location.replace(location.pathname + "?v=" + enc.build); return; }
+    }
     const saved = get(KEY);
     if (saved) { try { boot(await open(ub64(saved), enc)); return; } catch (e) { put(KEY, null); } }
     showLock("");
