@@ -1278,7 +1278,7 @@ details.card .in { padding: 0 16px 16px; display: flex; flex-direction: column; 
       const { idx, now } = tripDay(), td = idx >= 1 && idx <= 10 ? D.dates[idx - 1].split(" ")[0] : null;
       const ms = td ? D.meals.filter(x => mealDate(x) === td) : [];
       const pick = ms.find(x => mealSlot(x) === (now >= 15 * 60 ? "dinner" : "lunch")) || ms[0];
-      mealKey = (pick || D.meals.find(m => m.places.length) || D.meals[0]).key;
+      mealKey = (pick || D.meals.find(m => mealDate(m) === MEALDAYS[0]) || D.meals[0]).key;   // 여행 전 · 후: 첫날(11/1)부터
     }
     const m = mealByKey[mealKey], city = CITY_EN[m.region] || "";
     const md = mealDate(m), slot = mealSlot(m), dayMeals = dt => D.meals.filter(x => mealDate(x) === dt);
@@ -1575,7 +1575,7 @@ details.card .in { padding: 0 16px 16px; display: flex; flex-direction: column; 
 </template>
 <script>
 (() => {
-  const KEY = "es26:key", BUILD = "c9df1cec56";
+  const KEY = "es26:key", BUILD = "8312b32e34";
   const ub64 = s => Uint8Array.from(atob(s), c => c.charCodeAt(0));
   const tob64 = u => btoa(String.fromCharCode(...u));
   const get = k => { try { return localStorage.getItem(k); } catch (e) { return null; } };
