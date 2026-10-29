@@ -362,6 +362,36 @@ html[data-ck="world"] .ck-kr .ck-lab { background-image: url("data:image/svg+xml
 .hero .wx { margin-top: 10px; display: inline-flex; gap: 6px; align-items: center; font-size: 15px; font-weight: 700; background: rgba(255,255,255,.18); border-radius: 999px; padding: 5px 12px 5px 9px; }
 .wxe { font-size: 17px; line-height: 1; }
 .dayhead .wx { margin-top: 4px; display: flex; gap: 6px; align-items: center; font-size: 14px; font-weight: 600; color: var(--muted); }
+/* 지금 날씨 + 시간별 (오늘 화면) */
+.wxcard .eyebrow { display: flex; justify-content: space-between; gap: 8px; }
+.wxcard .wxat { font-weight: 600; letter-spacing: 0; }
+.wxtop { display: flex; align-items: center; gap: 10px; }
+.wxtop .wxbig { font-size: 40px; line-height: 1; }
+.wxtop .wxdeg { font-size: 40px; font-weight: 800; line-height: 1; letter-spacing: -.03em; font-variant-numeric: tabular-nums; }
+.wxtop .wxtx { display: flex; flex-direction: column; margin-left: 4px; min-width: 0; }
+.wxtop .wxtx b { font-size: 17px; line-height: 1.3; }
+.wxtop .wxtx span { font-size: 14px; color: var(--muted); line-height: 1.35; }
+.wxsum { margin-top: 12px; display: flex; gap: 8px; align-items: center; padding: 9px 12px; border-radius: 12px; background: var(--surface-2); font-size: 15px; font-weight: 700; line-height: 1.35; }
+.wxsum.rain { background: var(--accent-soft); color: var(--accent); }
+.wxsum > span:first-child { font-size: 18px; line-height: 1; flex: none; }
+.hrs { display: flex; overflow-x: auto; margin: 12px -16px -6px; padding: 2px 10px 6px; scrollbar-width: none; overscroll-behavior-x: contain; touch-action: pan-x pan-y; }
+.hrs::-webkit-scrollbar { display: none; }
+.hr { flex: none; width: 48px; display: flex; flex-direction: column; align-items: center; gap: 2px; font-variant-numeric: tabular-nums; }
+.hr .hh { font-size: 13px; font-weight: 700; color: var(--muted); text-align: center; line-height: 1.15; white-space: nowrap; }
+.hr .hh small { display: block; font-size: 10.5px; height: 13px; font-weight: 700; }
+.hr:first-child .hh { color: var(--ink); }
+.hr .he { font-size: 21px; line-height: 1.3; }
+.hr .ht { font-size: 15px; font-weight: 800; }
+.hr .hp { height: 24px; width: 10px; display: flex; align-items: flex-end; margin-top: 2px; border-radius: 4px; background: var(--surface-2); overflow: hidden; }
+.hr .hp i { display: block; width: 100%; border-radius: 4px; background: color-mix(in oklab, var(--accent) 45%, transparent); }
+.hr.wet .hp i { background: var(--accent); }
+.hr .hpl { font-size: 11px; font-weight: 800; color: var(--muted); min-height: 15px; }
+.hr.wet .hpl { color: var(--accent); }
+/* 카드 결제 안내 (환율 계산기 아래) */
+.paytip { margin-top: 4px; border-top: 1px solid var(--line); padding-top: 12px; display: flex; flex-direction: column; gap: 8px; }
+.paytip .pt { display: flex; gap: 8px; align-items: flex-start; font-size: 15px; line-height: 1.45; }
+.paytip .pt > span:first-child { flex: none; width: 22px; text-align: center; }
+.paytip .warn { background: var(--warn-soft); border-radius: 12px; padding: 10px 12px; }
 .offl { margin-left: 8px; font-size: 11px; font-weight: 800; background: rgba(0,0,0,.3); padding: 2px 8px; border-radius: 999px; vertical-align: 1px; }
 .fxrow { display: flex; align-items: center; gap: 10px; background: var(--surface-2); border-radius: 14px; padding: 6px 14px; }
 .fxrow .cur { font-size: 22px; font-weight: 800; color: var(--accent); width: 22px; text-align: center; }
@@ -778,6 +808,7 @@ details.card .in { padding: 0 16px 16px; display: flex; flex-direction: column; 
     $("#es-time").innerHTML = `<small>${apWord(e.h)}</small>${e.h % 12 === 0 ? 12 : e.h % 12}:${pad(e.mi)}`;
     $("#kr-date").textContent = mdw(k);
     $("#kr-time").textContent = apPlain(pad(k.h) + ":" + pad(k.mi));
+    const wn = document.querySelector("#v-today [data-wxnow]"); if (wn && wn.dataset.h && +wn.dataset.h !== e.h) fillNow($("#v-today"));
   }
   // 맨 위 시계 시안 (더보기에서 눌러 비교 · 고르면 CK_DEFAULT로 정하고 SHOW_CK = false)
   const SHOW_CK = false, CK_DEFAULT = "world";   // 2026-10-29 ③ 세계시계로 정함
@@ -1343,6 +1374,7 @@ details.card .in { padding: 0 16px 16px; display: flex; flex-direction: column; 
       ${next ? `<div class="card"><p class="eyebrow">${live ? "다음 일정" : "첫 일정"}</p>
         <div class="next"><div class="tline"><span class="t" style="color:${CAT[next.cat]}">${ap(String(next.time).split("\n")[0])}</span>${leftTxt ? `<span class="in">${leftTxt}</span>` : ""}</div>
         <div class="ti">${esc(next.title)}</div>${next.note ? `<div class="no">${String(next.note).split("\n").filter(x => x.trim()).map(x => `<div>${ap(x)}</div>`).join("")}</div>` : ""}</div></div>` : (live ? `<div class="card"><p class="eyebrow">다음 일정</p><div class="h2">오늘 남은 일정이 없어요</div></div>` : "")}
+      ${!after && CITY_LL[wxCityOf(d)] ? `<div class="card wxcard" data-wxnow="${esc(wxCityOf(d))}" hidden></div>` : ""}
       ${stay ? `<div class="card"><p class="eyebrow">오늘 숙소</p><div class="h2">${esc(stay.name)}</div>
         <div class="muted">${esc(stay.area)}</div><div class="addr" style="margin-top:6px">${esc(stay.addr)}</div>
         <div class="grid2" style="margin-top:12px"><a class="btn" href="${mapQ(stay.name + ", " + stay.addr)}" target="_blank" rel="noopener">지도</a>
@@ -1355,7 +1387,7 @@ details.card .in { padding: 0 16px 16px; display: flex; flex-direction: column; 
         <div class="btns" style="margin-top:8px"><button class="btn" data-plan="${d}">자세히 보기</button></div></div>
       ${dayMaps(d, false)}
     </div>`;
-    mountMaps($("#v-today")); fillWx($("#v-today"));
+    mountMaps($("#v-today")); fillWx($("#v-today")); fillNow($("#v-today"));
   }
 
   /* ---------- 일정 ---------- */
@@ -1609,6 +1641,66 @@ details.card .in { padding: 0 16px 16px; display: flex; flex-direction: column; 
       });
     });
   }
+  /* ---------- 지금 날씨 + 시간별 비 예보 (구글 날씨) ----------
+     지금 상태 0.3KB + 24시간 예보 0.5KB · 30분에 한 번만 받음 · 인터넷 없으면 마지막에 받은 것 (지난 시간은 빼고) */
+  const wxCityOf = d => { const c = cityOf(d); return c === "귀국" && d <= 9 ? "바르셀로나" : c; };
+  const NOW_FIELDS = "currentTime,isDaytime,weatherCondition/type,weatherCondition/description/text,temperature/degrees,feelsLikeTemperature/degrees";
+  const HR_FIELDS = "forecastHours(displayDateTime/year,displayDateTime/month,displayDateTime/day,displayDateTime/hours,isDaytime,weatherCondition/type,temperature/degrees,precipitation/probability/percent)";
+  const hrEmoji = (t, day) => !day && /CLEAR/.test(t) ? "🌙" : !day && t === "PARTLY_CLOUDY" ? "☁️" : gwEmoji(t);
+  const wxNowPending = {};
+  function wxNow(city) {
+    const c = store.get("wxnow:" + city, null);
+    if (c && Date.now() - c.t < 30 * 60e3) return Promise.resolve(c);
+    if (navigator.onLine === false || !D.placesKey) return Promise.resolve(c);
+    if (wxNowPending[city]) return wxNowPending[city];
+    const [la, lo] = CITY_LL[city];
+    const get = (path, f) => fetch(`https://weather.googleapis.com/v1/${path}?` + new URLSearchParams({ key: D.placesKey, "location.latitude": la, "location.longitude": lo, languageCode: "ko", ...f }))
+      .then(r => r.ok ? r.json() : Promise.reject(new Error("weather " + r.status)));
+    return wxNowPending[city] = Promise.all([get("currentConditions:lookup", { fields: NOW_FIELDS }), get("forecast/hours:lookup", { hours: 24, pageSize: 24, fields: HR_FIELDS })])
+      .then(([n, h]) => {
+        const wc = n.weatherCondition || {};
+        const v = { t: Date.now(), at: n.currentTime ? madTime(n.currentTime) : "",
+          now: n.temperature ? { e: hrEmoji(wc.type || "", n.isDaytime !== false), lab: (wc.description || {}).text || "", tmp: n.temperature.degrees, feel: n.feelsLikeTemperature?.degrees } : null,
+          hrs: (h.forecastHours || []).map(x => { const t = x.displayDateTime || {};
+            return { k: Date.UTC(t.year, t.month - 1, t.day, t.hours), h: t.hours, e: hrEmoji(x.weatherCondition?.type || "", x.isDaytime !== false), tmp: x.temperature?.degrees, p: x.precipitation?.probability?.percent || 0 }; }) };
+        store.set("wxnow:" + city, v); return v;
+      })
+      .catch(() => c).finally(() => { delete wxNowPending[city]; });
+  }
+  function fillNow(root) {
+    const el = root && root.querySelector("[data-wxnow]"); if (!el) return;
+    const city = el.dataset.wxnow;
+    wxNow(city).then(v => {
+      if (!v || !el.isConnected) return;
+      const n = zoneNow("Europe/Madrid"), nowK = Date.UTC(n.y, n.m - 1, n.d, n.h);
+      const hrs = (v.hrs || []).filter(x => x.k >= nowK);
+      if (!hrs.length) return;
+      // 받은 지 1시간 반이 넘었으면 '지금'은 예보의 이번 시간 값으로 (오래된 현재 상태를 지금처럼 보이지 않게)
+      const fresh = v.now && Date.now() - v.t < 90 * 60e3;
+      const cur = fresh ? v.now : { e: hrs[0].e, lab: "", tmp: hrs[0].tmp };
+      const at = fresh ? v.at : `${pad(n.h)}:00`;
+      if (fresh && hrs[0].k === nowK) hrs[0] = { ...hrs[0], e: cur.e, tmp: cur.tmp };   // '지금' 칸은 위 큰 숫자와 같게
+      const hl = x => x.k === nowK ? "지금" : `${x.h === 0 ? "밤" : apWord(x.h)} ${x.h % 12 || 12}시`;
+      const nx = hrs.slice(0, 12), top = Math.max(...nx.map(x => x.p));
+      let sumTxt, rain = true;
+      if (nx[0].p >= 50) { const stop = nx.find(x => x.p < 30); sumTxt = stop ? `지금 비 올 가능성 ${nx[0].p}% · ${hl(stop)}쯤 그칠 것 같아요` : `지금부터 계속 비 올 가능성 · 우산 챙기세요`; }
+      else { const a = nx.find(x => x.p >= 50) || nx.find(x => x.p >= 30);
+        if (a && a.p >= 50) sumTxt = `${hl(a)}쯤부터 비 올 수 있어요 (최대 ${top}%) · 우산 챙기세요`;
+        else if (a) sumTxt = `${hl(a)}쯤 비가 조금 올 수도 있어요 (${a.p}%)`;
+        else { sumTxt = "앞으로 12시간 비 소식 없어요"; rain = false; } }
+      let prev = "";
+      const cols = hrs.map((x, i) => {
+        const per = x.h === 0 ? "내일" : apWord(x.h), lab = per !== prev || i === 0 ? per : ""; prev = per;
+        return `<div class="hr${x.p >= 30 ? " wet" : ""}"><span class="hh"><small>${lab}</small>${i === 0 && x.k === nowK ? "지금" : `${x.h % 12 || 12}시`}</span>
+          <span class="he">${x.e}</span><span class="ht">${Math.round(x.tmp)}°</span><span class="hp"><i style="height:${Math.max(x.p ? 3 : 0, Math.round(x.p * .24))}px"></i></span><span class="hpl">${x.p >= 10 ? x.p + "%" : ""}</span></div>`;
+      }).join("");
+      el.innerHTML = `<p class="eyebrow"><span>지금 날씨 · ${esc(city)}</span><span class="wxat">${at ? `${apPlain(at)} 기준` : ""}</span></p>
+        <div class="wxtop"><span class="wxbig">${cur.e}</span><span class="wxdeg">${Math.round(cur.tmp)}°</span><div class="wxtx">${cur.lab ? `<b>${esc(cur.lab)}</b>` : ""}${cur.feel != null ? `<span>체감 ${Math.round(cur.feel)}°</span>` : ""}</div></div>
+        <div class="wxsum${rain ? " rain" : ""}"><span>${rain ? "☔" : "🌂"}</span><span>${sumTxt}</span></div>
+        <div class="hrs" aria-label="시간별 날씨">${cols}</div>`;
+      el.dataset.h = n.h; el.hidden = false;
+    });
+  }
   /* ---------- 환율 (유로 ↔ 원) · 12시간에 한 번만 새로 받음 ---------- */
   let fxRate = (store.get("fx", null) || {}).rate || (D.eurkrw && D.eurkrw.rate) || 1500;
   let fxDate = (store.get("fx", null) || {}).date || (D.eurkrw && D.eurkrw.date) || "";
@@ -1648,7 +1740,14 @@ details.card .in { padding: 0 16px 16px; display: flex; flex-direction: column; 
         <div class="fxeq">↕</div>
         <label class="fxrow"><span class="cur">₩</span><input id="fx-krw" type="text" inputmode="numeric" placeholder="0" autocomplete="off" aria-label="원"><span class="unit">원</span></label>
         <div class="fxquick">${[5, 10, 20, 50, 100, 200].map(v => `<button class="btn sm" data-fx="${v}">${v}€</button>`).join("")}</div>
-        <p class="note" id="fx-rate" style="margin:0"></p></div></details>
+        <p class="note" id="fx-rate" style="margin:0"></p>
+        <div class="paytip"><p class="sec-title" style="margin:0">신한 SOL트래블 카드로 낼 때</p>
+          <div class="pt"><span>💳</span><span>환전 수수료 0원(환율 우대 100%) · 해외 결제 수수료 0원 → <b>위 계산 금액 그대로</b>예요. 충전해 둔 유로에서 빠져나가요.</span></div>
+          <div class="pt"><span>🔋</span><span>유로 잔액이 모자라면 결제가 안 될 수 있어요. SOL뱅크 앱에서 잔액 확인 · 충전.</span></div>
+          <div class="pt"><span>🏧</span><span>ATM 현금 인출도 신한 수수료 0원. 단, ATM 화면에 따로 수수료(fee · comisión)가 뜨면 그 ATM 회사 몫이라 면제가 안 돼요 → 취소하고 다른 은행 ATM으로.</span></div>
+          <div class="pt warn"><span>⚠️</span><span>결제기나 ATM이 <b>KRW(원화)로 결제할지</b> 물으면 꼭 <b>EUR(유로)</b>를 고르세요. 원화를 고르면 몇 % 더 비싸져요.</span></div>
+          ${sayBox("Please charge it in euros, not Korean won.", "Cóbrelo en euros, por favor, no en wones.", "")}
+        </div></div></details>
       <details class="card"><summary>${sum("car", "#F0A020", "택시 미리 부탁하기 (호텔)")}</summary><div class="in">
         <p class="muted" style="margin:0">이른 아침에 떠나는 날은 전날 밤 숙소 프런트에 택시를 예약해 달라고 부탁하세요. 화면을 보여주거나, 문장을 복사해서 Booking.com 앱 메시지로 보내면 돼요.</p>
         ${D.taxiplan.map((t, i) => `<div class="stay"><div class="nm">${esc(D.dates[t.day - 1])} ${ap(t.time)} · ${esc(t.dest)}</div><div class="muted">${esc(t.hotel)} · 부탁할 때: ${esc(t.when)}</div>
@@ -1825,7 +1924,8 @@ details.card .in { padding: 0 16px 16px; display: flex; flex-direction: column; 
   // 인터넷 끊기면 맨 위에 '오프라인' 배지 · 다시 연결되면 날씨 새로 받기
   const netUpd = () => { const o = $("#offl"); if (o) o.hidden = navigator.onLine !== false; };
   addEventListener("offline", netUpd);
-  addEventListener("online", () => { netUpd(); if (curView === "today" || curView === "plan") fillWx($("#v-" + curView)); });
+  addEventListener("online", () => { netUpd(); if (curView === "today" || curView === "plan") fillWx($("#v-" + curView)); if (curView === "today") fillNow($("#v-today")); });
+  document.addEventListener("visibilitychange", () => { if (document.visibilityState === "visible" && curView === "today") { fillWx($("#v-today")); fillNow($("#v-today")); } });
   netUpd();
   document.addEventListener("change", e => {
     const c = e.target.closest("[data-check]"); if (!c) return;
@@ -1851,7 +1951,7 @@ details.card .in { padding: 0 16px 16px; display: flex; flex-direction: column; 
 </template>
 <script>
 (() => {
-  const KEY = "es26:key", BUILD = "b38300f508";
+  const KEY = "es26:key", BUILD = "75ba23aceb";
   const ub64 = s => Uint8Array.from(atob(s), c => c.charCodeAt(0));
   const tob64 = u => btoa(String.fromCharCode(...u));
   const get = k => { try { return localStorage.getItem(k); } catch (e) { return null; } };
