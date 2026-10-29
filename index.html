@@ -364,7 +364,11 @@ html[data-ck="world"] .ck-kr .ck-lab { background-image: url("data:image/svg+xml
 .dayhead .wx { margin-top: 4px; display: flex; gap: 6px; align-items: center; font-size: 14px; font-weight: 600; color: var(--muted); }
 /* 지금 날씨 + 시간별 (오늘 화면) */
 .wxcard .eyebrow { display: flex; justify-content: space-between; gap: 8px; }
-.wxcard .wxat { font-weight: 600; letter-spacing: 0; }
+.wxcard .wxat { flex: none; display: inline-flex; align-items: center; gap: 4px; margin: -4px -6px -4px 0; padding: 4px 10px 4px 8px; border: 0; border-radius: 999px; background: var(--surface-2); color: var(--muted); font: inherit; font-size: 12.5px; font-weight: 700; letter-spacing: 0; cursor: pointer; -webkit-tap-highlight-color: transparent; }
+.wxcard .wxat:active { background: var(--line); }
+.wxcard .wxat .ico { width: 14px; height: 14px; stroke-width: 2.2; }
+.wxcard .wxat.busy .ico { animation: wxspin .8s linear infinite; }
+@keyframes wxspin { to { transform: rotate(360deg); } }
 .wxtop { display: flex; align-items: center; gap: 10px; }
 .wxtop .wxbig { font-size: 40px; line-height: 1; }
 .wxtop .wxdeg { font-size: 40px; font-weight: 800; line-height: 1; letter-spacing: -.03em; font-variant-numeric: tabular-nums; }
@@ -762,7 +766,8 @@ details.card .in { padding: 0 16px 16px; display: flex; flex-direction: column; 
     check: '<rect x="4" y="4" width="16" height="16" rx="4"/><path d="M8 12.5l2.7 2.7L16.2 9.5"/>',
     sos: '<path d="M12 3.5l9 16H3z"/><path d="M12 10v4M12 16.8v.01"/>',
     euro: '<path d="M17 7.2A6.2 6.2 0 1 0 17 16.8M5 10.3h8M5 13.7h8"/>',
-    pin: '<path d="M12 21s-6.5-5.6-6.5-11a6.5 6.5 0 0 1 13 0c0 5.4-6.5 11-6.5 11z"/><circle cx="12" cy="10" r="2.3"/>'
+    pin: '<path d="M12 21s-6.5-5.6-6.5-11a6.5 6.5 0 0 1 13 0c0 5.4-6.5 11-6.5 11z"/><circle cx="12" cy="10" r="2.3"/>',
+    refresh: '<path d="M19.5 12a7.5 7.5 0 1 1-2.2-5.3"/><path d="M19.5 4.5v4h-4"/>'
   };
   const ico = (n, cls) => `<svg class="ico${cls ? " " + cls : ""}" viewBox="0 0 24 24" aria-hidden="true">${IC[n] || IC.star}</svg>`;
   const KIND_IC = { "비행기": "plane", "기차": "train", "숙소": "bed", "입장권": "ticket", "투어": "landmark", "경기": "ball", "렌터카": "car" };
@@ -799,6 +804,7 @@ details.card .in { padding: 0 16px 16px; display: flex; flex-direction: column; 
     return { idx, now: n.h * 60 + n.mi };
   }
   const WD1 = ["일", "월", "화", "수", "목", "금", "토"];
+  let lastNowTry = 0;   // 지금 날씨를 마지막으로 받으려 한 때 (실패해도 15분은 다시 안 함)
   const mdw = z => `${z.m}/${z.d} (${WD1[new Date(Date.UTC(z.y, z.m - 1, z.d)).getUTCDay()]})`;   // 11/2 (월)
   const wdOf = z => WD1[new Date(Date.UTC(z.y, z.m - 1, z.d)).getUTCDay()];
   function tick() {
@@ -808,7 +814,11 @@ details.card .in { padding: 0 16px 16px; display: flex; flex-direction: column; 
     $("#es-time").innerHTML = `<small>${apWord(e.h)}</small>${e.h % 12 === 0 ? 12 : e.h % 12}:${pad(e.mi)}`;
     $("#kr-date").textContent = mdw(k);
     $("#kr-time").textContent = apPlain(pad(k.h) + ":" + pad(k.mi));
-    const wn = document.querySelector("#v-today [data-wxnow]"); if (wn && wn.dataset.h && +wn.dataset.h !== e.h) fillNow($("#v-today"));
+    const wn = document.querySelector("#v-today [data-wxnow]");
+    if (wn && wn.dataset.h) {
+      const stale = Date.now() - (+wn.dataset.t || 0) >= NOW_TTL && Date.now() - lastNowTry >= NOW_TTL && navigator.onLine !== false && document.visibilityState === "visible" && curView === "today";
+      if (+wn.dataset.h !== e.h || stale) { if (stale) lastNowTry = Date.now(); fillNow($("#v-today")); }
+    }
   }
   // 맨 위 시계 시안 (더보기에서 눌러 비교 · 고르면 CK_DEFAULT로 정하고 SHOW_CK = false)
   const SHOW_CK = false, CK_DEFAULT = "world";   // 2026-10-29 ③ 세계시계로 정함
@@ -1616,9 +1626,9 @@ details.card .in { padding: 0 16px 16px; display: flex; flex-direction: column; 
   }
   const wxPending = {};
   ["마드리드", "그라나다", "마요르카", "바르셀로나"].forEach(c => { try { localStorage.removeItem("es26:wx:" + c); } catch (e) {} });   // 예전 형식 정리
-  function wxCity(city) {
+  function wxCity(city, force) {
     const c = store.get("wx2:" + city, null);
-    if (c && Date.now() - c.t < 3 * 3600e3) return Promise.resolve(c.d);
+    if (!force && c && Date.now() - c.t < 3 * 3600e3) return Promise.resolve(c.d);
     if (navigator.onLine === false) return Promise.resolve(c ? c.d : null);
     if (wxPending[city]) return wxPending[city];
     return wxPending[city] = (async () => {
@@ -1648,9 +1658,10 @@ details.card .in { padding: 0 16px 16px; display: flex; flex-direction: column; 
   const HR_FIELDS = "forecastHours(displayDateTime/year,displayDateTime/month,displayDateTime/day,displayDateTime/hours,isDaytime,weatherCondition/type,temperature/degrees,precipitation/probability/percent)";
   const hrEmoji = (t, day) => !day && /CLEAR/.test(t) ? "🌙" : !day && t === "PARTLY_CLOUDY" ? "☁️" : gwEmoji(t);
   const wxNowPending = {};
-  function wxNow(city) {
+  const NOW_TTL = 15 * 60e3;   // 15분
+  function wxNow(city, force) {
     const c = store.get("wxnow:" + city, null);
-    if (c && Date.now() - c.t < 30 * 60e3) return Promise.resolve(c);
+    if (!force && c && Date.now() - c.t < NOW_TTL) return Promise.resolve(c);
     if (navigator.onLine === false || !D.placesKey) return Promise.resolve(c);
     if (wxNowPending[city]) return wxNowPending[city];
     const [la, lo] = CITY_LL[city];
@@ -1667,10 +1678,10 @@ details.card .in { padding: 0 16px 16px; display: flex; flex-direction: column; 
       })
       .catch(() => c).finally(() => { delete wxNowPending[city]; });
   }
-  function fillNow(root) {
-    const el = root && root.querySelector("[data-wxnow]"); if (!el) return;
+  function fillNow(root, force) {
+    const el = root && root.querySelector("[data-wxnow]"); if (!el) return Promise.resolve();
     const city = el.dataset.wxnow;
-    wxNow(city).then(v => {
+    return wxNow(city, force).then(v => {
       if (!v || !el.isConnected) return;
       const n = zoneNow("Europe/Madrid"), nowK = Date.UTC(n.y, n.m - 1, n.d, n.h);
       const hrs = (v.hrs || []).filter(x => x.k >= nowK);
@@ -1694,12 +1705,23 @@ details.card .in { padding: 0 16px 16px; display: flex; flex-direction: column; 
         return `<div class="hr${x.p >= 30 ? " wet" : ""}"><span class="hh"><small>${lab}</small>${i === 0 && x.k === nowK ? "지금" : `${x.h % 12 || 12}시`}</span>
           <span class="he">${x.e}</span><span class="ht">${Math.round(x.tmp)}°</span><span class="hp"><i style="height:${Math.max(x.p ? 3 : 0, Math.round(x.p * .24))}px"></i></span><span class="hpl">${x.p >= 10 ? x.p + "%" : ""}</span></div>`;
       }).join("");
-      el.innerHTML = `<p class="eyebrow"><span>지금 날씨 · ${esc(city)}</span><span class="wxat">${at ? `${apPlain(at)} 기준` : ""}</span></p>
+      const sx = (el.querySelector(".hrs") || {}).scrollLeft || 0;   // 다시 그려도 보던 위치 그대로
+      el.innerHTML = `<p class="eyebrow"><span>지금 날씨 · ${esc(city)}</span><button class="wxat" data-wxrefresh="1" aria-label="날씨 새로 받기">${ico("refresh")}${at ? `${apPlain(at)} 기준` : "새로 받기"}</button></p>
         <div class="wxtop"><span class="wxbig">${cur.e}</span><span class="wxdeg">${Math.round(cur.tmp)}°</span><div class="wxtx">${cur.lab ? `<b>${esc(cur.lab)}</b>` : ""}${cur.feel != null ? `<span>체감 ${Math.round(cur.feel)}°</span>` : ""}</div></div>
         <div class="wxsum${rain ? " rain" : ""}"><span>${rain ? "☔" : "🌂"}</span><span>${sumTxt}</span></div>
         <div class="hrs" aria-label="시간별 날씨">${cols}</div>`;
-      el.dataset.h = n.h; el.hidden = false;
+      if (sx) el.querySelector(".hrs").scrollLeft = sx;
+      el.dataset.h = n.h; el.dataset.t = v.t; el.hidden = false;
     });
+  }
+  function refreshWx(btn) {
+    if (navigator.onLine === false) { toast("인터넷 연결이 없어요 · 저장된 날씨예요"); return; }
+    const root = $("#v-today"), el = root.querySelector("[data-wxnow]"); if (!el || btn.classList.contains("busy")) return;
+    btn.classList.add("busy"); lastNowTry = Date.now();
+    Promise.all([wxCity(el.dataset.wxnow, true), fillNow(root, true)]).then(() => {
+      fillWx(root);
+      const t = +el.dataset.t || 0; toast(Date.now() - t < 60e3 ? "날씨를 새로 받았어요" : "지금은 받을 수 없어요 · 저장된 날씨예요");
+    }).finally(() => { const b = el.querySelector(".wxat"); if (b) b.classList.remove("busy"); });
   }
   /* ---------- 환율 (유로 ↔ 원) · 12시간에 한 번만 새로 받음 ---------- */
   let fxRate = (store.get("fx", null) || {}).rate || (D.eurkrw && D.eurkrw.rate) || 1500;
@@ -1918,6 +1940,7 @@ details.card .in { padding: 0 16px 16px; display: flex; flex-direction: column; 
     else if (ds.close) $("#" + ds.close).hidden = true;
     else if (ds.lang) { const es = b.closest(".say2").querySelector(".es2"); es.hidden = !es.hidden; b.setAttribute("aria-pressed", String(!es.hidden)); b.textContent = es.hidden ? "🇪🇸 스페인어" : "스페인어 숨기기"; }
     else if (ds.fx) { const e = $("#fx-eur"); if (e) { e.value = ds.fx; fxCalc("eur"); } }
+    else if (ds.wxrefresh) refreshWx(b);
     else if (ds.copy !== undefined) copy(ds.copy, b);
   });
   document.addEventListener("input", e => { if (e.target.id === "fx-eur") fxCalc("eur"); else if (e.target.id === "fx-krw") fxCalc("krw"); });
@@ -1951,7 +1974,7 @@ details.card .in { padding: 0 16px 16px; display: flex; flex-direction: column; 
 </template>
 <script>
 (() => {
-  const KEY = "es26:key", BUILD = "75ba23aceb";
+  const KEY = "es26:key", BUILD = "62f431aa4a";
   const ub64 = s => Uint8Array.from(atob(s), c => c.charCodeAt(0));
   const tob64 = u => btoa(String.fromCharCode(...u));
   const get = k => { try { return localStorage.getItem(k); } catch (e) { return null; } };
