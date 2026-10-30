@@ -330,6 +330,8 @@ html[data-ck="world"] .ck-kr .ck-lab { background-image: url("data:image/svg+xml
 .pre { white-space: pre-line; }
 .row { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
 .pill { display: inline-flex; align-items: center; gap: 4px; font-size: 13px; font-weight: 700; padding: 3px 9px; border-radius: 999px; background: var(--surface-2); color: var(--muted); white-space: nowrap; }
+/* 식당 구역 안내 문구: 길어도 화면 안에서 여러 줄로 (한 줄 알약이면 옆으로 삐져나가 화면이 좌우로 밀림) */
+.mnote { margin-top: 8px; font-size: 13px; font-weight: 700; line-height: 1.45; padding: 7px 11px; border-radius: 12px; background: var(--warn-soft); color: var(--warn); text-wrap: pretty; }
 .pill.ok { background: var(--ok-soft); color: var(--ok); }
 .pill.warn { background: var(--warn-soft); color: var(--warn); }
 .pill.todo { background: var(--todo-soft); color: var(--todo); }
@@ -1578,7 +1580,7 @@ details.card .in { padding: 0 16px 16px; display: flex; flex-direction: column; 
       <div class="stack" style="padding-top:8px">
         <div class="seg" role="group" aria-label="점심 · 저녁">${seg}</div>
         <div><div class="h2">${esc(m.meal)}</div><div class="muted">${esc(m.region)} · ${esc(m.where)}</div>
-        ${m.note ? `<div style="margin-top:6px"><span class="pill warn">${esc(m.note)}</span></div>` : ""}</div>
+        ${m.note ? `<div class="mnote">${esc(m.note)}</div>` : ""}</div>
         ${m.search && m.search[1] ? `<a class="rowlink" href="https://www.google.com/maps/search/${encodeURIComponent(m.search[1])}" target="_blank" rel="noopener">
           <span class="ic" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M12 21s-6.5-5.6-6.5-11a6.5 6.5 0 0 1 13 0c0 5.4-6.5 11-6.5 11z"/><circle cx="12" cy="10" r="2.3"/></svg></span>
           <span class="tx"><b>근처 식당 직접 찾기</b><small>구글 지도에서 "${esc(m.search[0])}"</small></span>
@@ -2042,7 +2044,7 @@ details.card .in { padding: 0 16px 16px; display: flex; flex-direction: column; 
 </template>
 <script>
 (() => {
-  const KEY = "es26:key", BUILD = "5647b22659";
+  const KEY = "es26:key", BUILD = "91c05cf929";
   const ub64 = s => Uint8Array.from(atob(s), c => c.charCodeAt(0));
   const tob64 = u => btoa(String.fromCharCode(...u));
   const get = k => { try { return localStorage.getItem(k); } catch (e) { return null; } };
