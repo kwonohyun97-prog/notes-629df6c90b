@@ -649,6 +649,23 @@ details.card .in { padding: 0 16px 16px; display: flex; flex-direction: column; 
 /* 겹쳐 뜨는 화면 */
 .overlay { position: fixed; inset: 0; z-index: 20; background: var(--bg); display: flex; flex-direction: column; gap: 12px; padding: calc(14px + env(safe-area-inset-top, 0px)) 16px calc(16px + env(safe-area-inset-bottom, 0px)); overflow-y: auto; }
 .overlay .close { align-self: flex-end; }
+/* 티켓 보기: QR은 흰 바탕에 크게 (다크 모드에서도), 옆으로 넘기면 다음 사람 */
+.overlay.tix { gap: 10px; overflow: hidden; }
+.tixtop { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.tixtop b { display: block; font-size: 18px; line-height: 1.3; }
+.tixtop span { font-size: 14px; color: var(--muted); }
+.tixseg { display: grid; grid-template-columns: repeat(var(--n), 1fr); gap: 6px; }
+.tixseg button { border: 2px solid var(--line); background: var(--surface); color: var(--ink); border-radius: 12px; padding: 8px 4px; font: inherit; font-size: 14px; font-weight: 700; cursor: pointer; }
+.tixseg button[aria-pressed="true"] { border-color: var(--accent); background: var(--accent-soft); color: var(--accent); }
+.tixrail { flex: 1; min-height: 0; display: flex; overflow-x: auto; overflow-y: hidden; scroll-snap-type: x mandatory; overscroll-behavior: contain; scrollbar-width: none; margin: 0 -16px; touch-action: pan-x; }
+.tixrail::-webkit-scrollbar { display: none; }
+.tixcard { flex: none; width: 100%; scroll-snap-align: center; scroll-snap-stop: always; overflow-y: auto; padding: 0 16px 8px; display: flex; flex-direction: column; align-items: center; gap: 10px; touch-action: pan-x pan-y; }
+.tixqr { background: #fff; border-radius: 20px; padding: 10px 18px 16px; box-shadow: 0 2px 14px rgba(0,0,0,.12); display: flex; flex-direction: column; align-items: center; gap: 8px; width: min(100%, 330px); }
+.tixqr img { width: 100%; max-width: 280px; aspect-ratio: 1; display: block; }
+.tixqr b { color: #111; font-size: 22px; letter-spacing: -.01em; }
+.tixqr span { color: #444; font-size: 15px; font-weight: 600; text-align: center; line-height: 1.4; }
+.tixfull { width: min(100%, 330px); border-radius: 14px; display: block; box-shadow: 0 2px 10px rgba(0,0,0,.12); }
+.tixnote { margin: 0; text-align: center; font-size: 14px; color: var(--muted); }
 .overlay .wrap { max-width: 600px; width: 100%; margin: 0 auto; display: flex; flex-direction: column; gap: 12px; }
 .taxi .es { font-size: 22px; font-weight: 700; margin-top: 10px; }
 .taxi .big { font-size: 32px; font-weight: 700; line-height: 1.25; word-break: keep-all; }
@@ -691,6 +708,7 @@ details.card .in { padding: 0 16px 16px; display: flex; flex-direction: column; 
 
 <div class="overlay taxi" id="taxi" hidden role="dialog" aria-modal="true" aria-label="택시 카드"></div>
 <div class="overlay ride" id="ride" hidden role="dialog" aria-modal="true" aria-label="택시·우버 부르기"></div>
+<div class="overlay tix" id="tix" hidden role="dialog" aria-modal="true" aria-label="티켓"></div>
 <div class="toast" id="toast" hidden></div>
 
 <script id="data" type="application/json"></script>
@@ -1467,8 +1485,9 @@ details.card .in { padding: 0 16px 16px; display: flex; flex-direction: column; 
         ${w.code ? `<div class="code"><div><div class="lab">예약번호</div><div class="val">${esc(w.code)}</div></div><button class="btn" data-copy="${esc(w.code)}">복사</button></div>` : ""}
         ${(w.codes || []).map(([k, v]) => `<div class="code"><div><div class="lab">${esc(k)}</div><div class="val">${esc(v)}</div></div><button class="btn" data-copy="${esc(v)}">복사</button></div>`).join("")}
         ${w.memo ? `<div class="muted pre">${ap(w.memo)}</div>` : ""}
+        ${w.tix && ((D.tickets || {})[w.tix] || []).length ? `<button class="btn primary" data-tix="${esc(w.tix)}">${ico("ticket")} 티켓 보기 · QR ${D.tickets[w.tix].length}장</button>` : ""}
         ${(w.open || []).map(l => `<a class="btn primary" href="${esc(l.url)}" target="_blank" rel="noopener">${esc(l.label)}</a>`).join("")}
-        ${!(w.open || []).length && w.status !== "미예약" ? `<div class="nolink">티켓 원본 링크 없음 · 메일·앱 링크를 알려주면 버튼이 생겨요</div>` : ""}
+        ${!(w.open || []).length && !w.tix && w.status !== "미예약" ? `<div class="nolink">티켓 원본 링크 없음 · 메일·앱 링크를 알려주면 버튼이 생겨요</div>` : ""}
         ${w.links ? `<div class="links">${w.links.map(l => `<a href="${esc(l.url)}" target="_blank" rel="noopener">${esc(l.label)} →</a>`).join("")}</div>` : ""}
       </div>`).join("")}</div>`, d);
   }
@@ -1842,6 +1861,23 @@ details.card .in { padding: 0 16px 16px; display: flex; flex-direction: column; 
     return `<div class="card"><p class="eyebrow">${esc(title)}</p>${list.map(t => `<div class="h2" style="font-size:18px">${esc(D.dates[t.day - 1])} ${ap(t.time)} → ${esc(t.dest)}</div>
       <div class="muted">${esc(t.when)}</div><div class="grid2" style="margin-top:10px"><button class="btn primary" data-taxiplan="${D.taxiplan.indexOf(t)}">프런트에 보여주기</button><button class="btn" data-copy="${esc(t.en)}">영어 문장 복사</button></div>`).join("")}</div>`;
   }
+  // 티켓 보기 (앱 안에 저장된 QR · 인터넷 없어도 바로)
+  function openTix(key, start = 0) {
+    const T = (D.tickets || {})[key] || []; if (!T.length) return;
+    const w = D.wallet.find(x => x.tix === key) || {};
+    const memo = String(w.memo || "").split("\n");
+    const gate = (memo.find(x => /게이트/.test(x)) || "").replace(/ · \d+ 블록.*/, "");
+    $("#tix").innerHTML = `<div class="tixtop"><div><b>${esc(w.title || "티켓")}</b><span>${ap(String(w.time || "").split(" · ")[0])}${gate ? " · " + esc(gate) : ""}</span></div><button class="btn close" data-close="tix">닫기</button></div>
+      <div class="tixseg" style="--n:${T.length}">${T.map((t, i) => `<button data-tixgo="${i}" aria-pressed="${i === start}">${esc(t.label.replace(/^.*열 /, ""))}</button>`).join("")}</div>
+      <div class="tixrail">${T.map((t, i) => `<div class="tixcard"><div class="tixqr"><img src="${t.qr}" alt="${esc(t.label)} 입장 QR"><b>${esc(t.label)}</b><span>${i + 1} / ${T.length}${gate ? " · " + esc(gate) : ""}</span></div>
+        <img class="tixfull" src="${t.img}" alt="${esc(t.label)} 티켓 원본"></div>`).join("")}</div>
+      <p class="tixnote">입구 기계에 QR을 대세요 · 화면 밝기 최대 · 옆으로 넘기면 다음 사람</p>`;
+    $("#ride").hidden = true; $("#tix").hidden = false;
+    const rail = $("#tix .tixrail");
+    rail.scrollLeft = start * rail.clientWidth;
+    rail.onscroll = () => { const k = Math.round(rail.scrollLeft / rail.clientWidth); document.querySelectorAll("#tix [data-tixgo]").forEach((b, j) => b.setAttribute("aria-pressed", String(j === k))); };
+    $("#tix .close").focus();
+  }
   function openTaxiPlan(i) {
     const t = D.taxiplan[i]; if (!t) return;
     $("#ride").hidden = true;
@@ -1945,6 +1981,8 @@ details.card .in { padding: 0 16px 16px; display: flex; flex-direction: column; 
     else if (ds.ride) openRide(ds.ride);
     else if (ds.taxicard) { if (rideCur) openTaxi(rideCur); }
     else if (ds.close) $("#" + ds.close).hidden = true;
+    else if (ds.tix) openTix(ds.tix);
+    else if (ds.tixgo !== undefined) { const r = $("#tix .tixrail"); if (r) r.scrollLeft = +ds.tixgo * r.clientWidth; }
     else if (ds.lang) { const es = b.closest(".say2").querySelector(".es2"); es.hidden = !es.hidden; b.setAttribute("aria-pressed", String(!es.hidden)); b.textContent = es.hidden ? "🇪🇸 스페인어" : "스페인어 숨기기"; }
     else if (ds.fx) { const e = $("#fx-eur"); if (e) { e.value = ds.fx; fxCalc("eur"); } }
     else if (ds.wxrefresh) refreshWx(b);
@@ -1968,7 +2006,7 @@ details.card .in { padding: 0 16px 16px; display: flex; flex-direction: column; 
     m.route(p, k);
   }
   document.addEventListener("keydown", e => { const ev = e.target.closest && e.target.closest("[data-route]"); if (ev && (e.key === "Enter" || e.key === " ") && e.target === ev) { e.preventDefault(); showRoute(ev); } });
-  document.addEventListener("keydown", e => { if (e.key === "Escape") ["taxi", "ride"].forEach(id => $("#" + id).hidden = true); });
+  document.addEventListener("keydown", e => { if (e.key === "Escape") ["taxi", "ride", "tix"].forEach(id => $("#" + id).hidden = true); });
 
   { const tf = store.get("tf", null); if (tf && (D.titleOpts || []).some(t => t.id === tf)) document.documentElement.dataset.tf = tf; }
   { const ck = SHOW_CK && store.get("ck", null); document.documentElement.dataset.ck = ck && CK_OPTS.some(t => t.id === ck) ? ck : CK_DEFAULT; }
@@ -1981,7 +2019,7 @@ details.card .in { padding: 0 16px 16px; display: flex; flex-direction: column; 
 </template>
 <script>
 (() => {
-  const KEY = "es26:key", BUILD = "39d9d2fc2f";
+  const KEY = "es26:key", BUILD = "0774b163b4";
   const ub64 = s => Uint8Array.from(atob(s), c => c.charCodeAt(0));
   const tob64 = u => btoa(String.fromCharCode(...u));
   const get = k => { try { return localStorage.getItem(k); } catch (e) { return null; } };
