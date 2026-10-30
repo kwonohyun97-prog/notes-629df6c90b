@@ -525,6 +525,18 @@ html[data-ck="world"] .ck-kr .ck-lab { background-image: url("data:image/svg+xml
 .mini button.nowrow .ti { font-weight: 800; }
 .ev.now { margin-inline: -8px; padding-inline: 8px; border-radius: 12px; background: var(--accent-soft); box-shadow: inset 4px 0 0 var(--accent); }
 .nowpill { flex: none; font-size: 12px; font-weight: 800; color: #fff; background: var(--accent); border-radius: 999px; padding: 2px 8px; }
+/* (선택) 일정: 현장에서 갈지 고르기 */
+.optpill { flex: none; font-size: 12px; font-weight: 800; border-radius: 999px; padding: 1px 8px; border: 1.5px solid var(--cat); color: var(--cat); }
+.optpill.go { background: var(--cat); color: #fff; }
+.optpill.skip { border-color: var(--muted); color: var(--muted); }
+.ev.skip .ti { text-decoration: line-through; color: var(--muted); }
+.ev.skip .rail .evi { opacity: .45; }
+.optbtn { margin-top: 8px; display: inline-flex; align-items: center; gap: 6px; border: 0; background: var(--surface-2); color: var(--accent); font: inherit; font-size: 14px; font-weight: 700; border-radius: 999px; padding: 7px 14px; cursor: pointer; }
+.optbtn::after { content: "▾"; font-size: 12px; }
+.optbtn[aria-expanded="true"]::after { content: "▴"; }
+.optseg { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 10px; }
+.optseg button { border: 2px solid var(--line); background: var(--surface); color: var(--ink); border-radius: 12px; padding: 10px 6px; font: inherit; font-size: 15px; font-weight: 700; cursor: pointer; }
+.optseg button[aria-pressed="true"] { border-color: var(--accent); background: var(--accent-soft); color: var(--accent); }
 .ev[data-route] { cursor: pointer; margin-inline: -8px; padding-inline: 8px; border-radius: 12px; -webkit-tap-highlight-color: transparent; transition: background-color .2s; }
 .ev[data-route]:active { background: var(--surface-2); }
 .ev.on { background: var(--accent-soft); }
@@ -929,7 +941,7 @@ details.card .in { padding: 0 16px 16px; display: flex; flex-direction: column; 
       kinds: { plaza: "#5B6B7F", market: "#C2780E", sight: "#7A5BC0", food: "#C2780E", station: "#1F4E8C", park: "#2E8556" }, star: "#E59A1A" };
   }
   const MAPS = {};
-  const CITIES = [["마드리드", [40.4168, -3.7038]], ["그라나다", [37.1773, -3.5986]], ["코르도바", [37.8882, -4.7794]], ["세비야", [37.3891, -5.9845]],
+  const CITIES = [["마드리드", [40.4168, -3.7038]], ["톨레도", [39.8628, -4.0273]], ["그라나다", [37.1773, -3.5986]], ["코르도바", [37.8882, -4.7794]], ["세비야", [37.3891, -5.9845]],
     ["말라가", [36.7213, -4.4214]], ["발렌시아", [39.4699, -0.3763]], ["팔마", [39.5696, 2.6502]], ["바르셀로나", [41.3874, 2.1686]]];
   function destroyMaps() { Object.values(MAPS).forEach(m => m.destroy()); for (const k in MAPS) delete MAPS[k]; }
 
@@ -1349,7 +1361,7 @@ details.card .in { padding: 0 16px 16px; display: flex; flex-direction: column; 
   function dayMaps(d, withList) {
     const S = SC.days[String(d)];
     if (!S) return d === 10 ? `<div class="card"><div class="h2">인천 도착</div><p class="muted">수고 많으셨어요. 집까지 조심히 오세요.</p></div>` : "";
-    const city = cityOf(d) === "귀국" ? "바르셀로나" : cityOf(d);
+    const city = S.title || (cityOf(d) === "귀국" ? "바르셀로나" : cityOf(d));
     let list = "";
     if (withList) {
       const legs = S.legs;
@@ -1367,7 +1379,7 @@ details.card .in { padding: 0 16px 16px; display: flex; flex-direction: column; 
           ${lg ? `<div class="legline"><i class="lc ${lc}"></i><b>${esc(legText(lg))}</b>${back ? " · 돌아가는 길" : ""}</div>` : ""}`;
       }).join("")}</div>`;
     }
-    return `<div class="card mapcard"><div class="cap"><b>${esc(city)} 동선</b><span class="muted">${S.pins ? "★ 추천 저녁 식당" : ""}</span></div>
+    return `<div class="card mapcard"><div class="cap"><b>${esc(city)} 동선</b><span class="muted">${S.pins ? esc(S.pinlab || "★ 추천 저녁 식당") : ""}</span></div>
       <div class="tmap" data-day="${d}"><canvas aria-label="${esc(city)} 동선 지도" role="img"></canvas>
         <div class="chip"><span>동선</span></div>
         <div class="zoom"><button data-z="1" aria-label="확대">+</button><button data-z="-1" aria-label="축소">−</button></div>
@@ -1389,7 +1401,7 @@ details.card .in { padding: 0 16px 16px; display: flex; flex-direction: column; 
     const { idx, now } = tripDay();
     const before = idx < 1, after = idx > 10;
     const d = before ? 1 : after ? 10 : idx;
-    const evs = evsOf(d);
+    const evs = evsOf(d).filter(e => !skipped(e));
     const live = !before && !after;
     const next = live ? (evs.find(e => mins(e) >= now) || null) : evs[0];
     const cur = live ? [...evs].reverse().find(e => mins(e) <= now) || null : null;   // 지금 하고 있는 일정
@@ -1426,6 +1438,11 @@ details.card .in { padding: 0 16px 16px; display: flex; flex-direction: column; 
   }
 
   /* ---------- 일정 ---------- */
+  // (선택) 일정: 제목에 '(선택)'이 있으면 내용을 접어두고 현장에서 '갈래요 / 건너뛸래요'를 고름 (이 휴대폰에만 저장)
+  const isOpt = e => /\(선택\)/.test(e.title);
+  const optChoice = e => store.get(`opt:${e.day}:${e.start}`, "");
+  const skipped = e => isOpt(e) && optChoice(e) === "skip";
+  let optOpen = "";
   let planDay = null;   // 앱을 새로 켜면 그날 날짜부터
   function renderPlan() {
     const { idx, now } = tripDay();
@@ -1442,10 +1459,14 @@ details.card .in { padding: 0 16px 16px; display: flex; flex-direction: column; 
       const rt = e.route ? ` data-route="${d}:${e.route[0]}:${e.route[1]}" role="button" tabindex="0" aria-label="${esc(e.title)} 경로를 지도에서 보기"` : "";
       const isNow = e === nowEv;
       const tm = String(e.time).split("\n").map(x => x.trim()).filter(Boolean).join(" ").replace(/\s*~\s*/g, " ~ ").trim();
-      return `<div class="ev${isNow ? " now" : ""}" style="--cat:${CAT[e.cat]}"${rt}><div class="rail"><span class="evi">${ico(evIco(e))}</span></div><div class="body">
-        <div class="tline"><span class="t">${ap(tm)}</span>${isNow ? `<span class="nowpill">지금</span>` : ""}${e.route ? `<span class="evmap">${e.route[0] === e.route[1] ? "위치" : "경로"} ↓</span>` : ""}</div>
-        <div class="ti">${esc(e.title)}</div>
-        ${e.note ? `<div class="no">${String(e.note).split("\n").filter(x => x.trim()).map(x => `<div>${ap(x)}</div>`).join("")}</div>` : ""}
+      const opt = isOpt(e), oc = opt ? optChoice(e) : "", ok = `${e.day}:${e.start}`;
+      const noteHtml = e.note ? `<div class="no">${String(e.note).split("\n").filter(x => x.trim()).map(x => `<div>${ap(x)}</div>`).join("")}</div>` : "";
+      return `<div class="ev${isNow ? " now" : ""}${oc === "skip" ? " skip" : ""}" style="--cat:${CAT[e.cat]}"${rt}><div class="rail"><span class="evi">${ico(evIco(e))}</span></div><div class="body">
+        <div class="tline"><span class="t">${ap(tm)}</span>${opt ? `<span class="optpill ${oc}">${oc === "go" ? "가요" : oc === "skip" ? "건너뜀" : "선택"}</span>` : ""}${isNow ? `<span class="nowpill">지금</span>` : ""}${e.route ? `<span class="evmap">${e.route[0] === e.route[1] ? "위치" : "경로"} ↓</span>` : ""}</div>
+        <div class="ti">${esc(opt ? e.title.replace(/\s*\(선택\)\s*/, " ").trim() : e.title)}</div>
+        ${opt ? `<button class="optbtn" data-opttoggle="${ok}" aria-expanded="${optOpen === ok}">자세히 보기 · 갈지 고르기</button>
+          <div class="optbody"${optOpen === ok ? "" : " hidden"}>${noteHtml}<div class="optseg" role="group" aria-label="갈지 고르기">
+            <button data-optset="${ok}:go" aria-pressed="${oc === "go"}">갈래요</button><button data-optset="${ok}:skip" aria-pressed="${oc === "skip"}">건너뛸래요</button></div></div>` : noteHtml}
         ${e.place ? `<div class="pl">${esc(e.place)}</div>` : ""}
         ${e.ticket ? `<div class="tk"><span class="pill">${esc(e.ticket)}</span></div>` : ""}
         ${m ? `<button class="btn go" data-meal="${m.key}">${cnt ? `식당 후보 ${cnt}곳 보기` : "식당 찾아보기"}</button>` : ""}
@@ -1800,7 +1821,7 @@ details.card .in { padding: 0 16px 16px; display: flex; flex-direction: column; 
         <p class="muted" style="margin:0">이른 아침에 떠나는 날은 전날 밤 숙소 프런트에 택시를 예약해 달라고 부탁하세요. 화면을 보여주거나, 문장을 복사해서 Booking.com 앱 메시지로 보내면 돼요.</p>
         ${D.taxiplan.map((t, i) => `<div class="stay"><div class="nm">${esc(D.dates[t.day - 1])} ${ap(t.time)} · ${esc(t.dest)}</div><div class="muted">${esc(t.hotel)} · 부탁할 때: ${esc(t.when)}</div>
         <div class="grid2" style="margin-top:6px"><button class="btn primary" data-taxiplan="${i}">프런트에 보여주기</button><button class="btn" data-copy="${esc(t.en)}">영어 문장 복사</button></div></div>`).join("")}</div></details>
-      <details class="card"><summary>${sum("bed", "#7B61FF", "숙소 6곳")}</summary><div class="in">${D.stays.map((s, i) => `<div class="stay">
+      <details class="card"><summary>${sum("bed", "#7B61FF", `숙소 ${D.stays.length}곳`)}</summary><div class="in">${D.stays.map((s, i) => `<div class="stay">
         <div class="muted">${esc(s.dates)} · ${esc(s.area)}</div><div class="nm">${esc(s.name)}</div><div class="addr">${esc(s.addr)}</div><div class="muted">예약 · ${esc(s.who)}</div>
         <div class="grid2" style="margin-top:6px"><a class="btn" href="${mapQ(s.name + ", " + s.addr)}" target="_blank" rel="noopener">지도</a><button class="btn primary" data-ride="stay:${s.days[0]}">택시 · 우버</button></div></div>`).join("")}</div></details>
       <details class="card"><summary>${sum("chat", "#1769D0", "말하기 카드 (영어)")}</summary><div class="in">
@@ -1985,6 +2006,8 @@ details.card .in { padding: 0 16px 16px; display: flex; flex-direction: column; 
     else if (ds.tixgo !== undefined) { const r = $("#tix .tixrail"); if (r) r.scrollLeft = +ds.tixgo * r.clientWidth; }
     else if (ds.lang) { const es = b.closest(".say2").querySelector(".es2"); es.hidden = !es.hidden; b.setAttribute("aria-pressed", String(!es.hidden)); b.textContent = es.hidden ? "🇪🇸 스페인어" : "스페인어 숨기기"; }
     else if (ds.fx) { const e = $("#fx-eur"); if (e) { e.value = ds.fx; fxCalc("eur"); } }
+    else if (ds.opttoggle) { const body = b.nextElementSibling, open = body.hidden; body.hidden = !open; b.setAttribute("aria-expanded", String(open)); optOpen = open ? ds.opttoggle : ""; }
+    else if (ds.optset) { const [od, os, ov] = ds.optset.split(":"), k = `opt:${od}:${os}`; store.set(k, store.get(k, "") === ov ? "" : ov); optOpen = `${od}:${os}`; renderPlan(); }
     else if (ds.wxrefresh) refreshWx(b);
     else if (ds.copy !== undefined) copy(ds.copy, b);
   });
@@ -2019,7 +2042,7 @@ details.card .in { padding: 0 16px 16px; display: flex; flex-direction: column; 
 </template>
 <script>
 (() => {
-  const KEY = "es26:key", BUILD = "99211fea10";
+  const KEY = "es26:key", BUILD = "5647b22659";
   const ub64 = s => Uint8Array.from(atob(s), c => c.charCodeAt(0));
   const tob64 = u => btoa(String.fromCharCode(...u));
   const get = k => { try { return localStorage.getItem(k); } catch (e) { return null; } };
