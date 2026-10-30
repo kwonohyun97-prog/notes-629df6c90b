@@ -1868,9 +1868,9 @@ details.card .in { padding: 0 16px 16px; display: flex; flex-direction: column; 
     const memo = String(w.memo || "").split("\n");
     const gate = (memo.find(x => /게이트/.test(x)) || "").replace(/ · \d+ 블록.*/, "");
     $("#tix").innerHTML = `<div class="tixtop"><div><b>${esc(w.title || "티켓")}</b><span>${ap(String(w.time || "").split(" · ")[0])}${gate ? " · " + esc(gate) : ""}</span></div><button class="btn close" data-close="tix">닫기</button></div>
-      <div class="tixseg" style="--n:${T.length}">${T.map((t, i) => `<button data-tixgo="${i}" aria-pressed="${i === start}">${esc(t.label.replace(/^.*열 /, ""))}</button>`).join("")}</div>
+      <div class="tixseg" style="--n:${T.length}">${T.map((t, i) => `<button data-tixgo="${i}" aria-pressed="${i === start}">${esc(t.chip || t.label)}</button>`).join("")}</div>
       <div class="tixrail">${T.map((t, i) => `<div class="tixcard"><div class="tixqr"><img src="${t.qr}" alt="${esc(t.label)} 입장 QR"><b>${esc(t.label)}</b><span>${i + 1} / ${T.length}${gate ? " · " + esc(gate) : ""}</span></div>
-        <img class="tixfull" src="${t.img}" alt="${esc(t.label)} 티켓 원본"></div>`).join("")}</div>
+        ${t.img ? `<img class="tixfull" src="${t.img}" alt="${esc(t.label)} 티켓 원본">` : ""}</div>`).join("")}</div>
       <p class="tixnote">입구 기계에 QR을 대세요 · 화면 밝기 최대 · 옆으로 넘기면 다음 사람</p>`;
     $("#ride").hidden = true; $("#tix").hidden = false;
     const rail = $("#tix .tixrail");
@@ -2019,7 +2019,7 @@ details.card .in { padding: 0 16px 16px; display: flex; flex-direction: column; 
 </template>
 <script>
 (() => {
-  const KEY = "es26:key", BUILD = "0774b163b4";
+  const KEY = "es26:key", BUILD = "99211fea10";
   const ub64 = s => Uint8Array.from(atob(s), c => c.charCodeAt(0));
   const tob64 = u => btoa(String.fromCharCode(...u));
   const get = k => { try { return localStorage.getItem(k); } catch (e) { return null; } };
