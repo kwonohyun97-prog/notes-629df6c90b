@@ -1523,7 +1523,7 @@ details.card .in { padding: 0 16px 16px; display: flex; flex-direction: column; 
           ? `<p class="tixwhohead">각자 자기 이름을 누르세요</p><div class="tixwho">${D.tickets[w.tix].map((t, i) => `<button class="btn${i === 0 ? "" : ""}" data-tix="${esc(w.tix)}" data-tixi="${i}">${ico("ticket")} ${esc(t.label)}</button>`).join("")}</div>`
           : `<button class="btn primary" data-tix="${esc(w.tix)}">${ico("ticket")} 티켓 보기 · ${D.tickets[w.tix][0].dm ? "입장 코드" : "QR"} ${D.tickets[w.tix].length}장</button>`) : ""}
         ${(w.open || []).map(l => `<a class="btn primary" href="${esc(l.url)}" target="_blank" rel="noopener">${esc(l.label)}</a>`).join("")}
-        ${!(w.open || []).length && !w.tix && w.status !== "미예약" ? `<div class="nolink">티켓 원본 링크 없음 · 메일·앱 링크를 알려주면 버튼이 생겨요</div>` : ""}
+        ${!(w.open || []).length && !w.tix && w.status !== "미예약" && w.status !== "현장 발권" ? `<div class="nolink">티켓 원본 링크 없음 · 메일·앱 링크를 알려주면 버튼이 생겨요</div>` : ""}
         ${w.links ? `<div class="links">${w.links.map(l => `<a href="${esc(l.url)}" target="_blank" rel="noopener">${esc(l.label)} →</a>`).join("")}</div>` : ""}
       </div>`).join("")}</div>`, d);
   }
@@ -2091,7 +2091,7 @@ details.card .in { padding: 0 16px 16px; display: flex; flex-direction: column; 
 </template>
 <script>
 (() => {
-  const KEY = "es26:key", BUILD = "91e5fc773b";
+  const KEY = "es26:key", BUILD = "0f3ea17668";
   const ub64 = s => Uint8Array.from(atob(s), c => c.charCodeAt(0));
   const tob64 = u => btoa(String.fromCharCode(...u));
   const get = k => { try { return localStorage.getItem(k); } catch (e) { return null; } };
