@@ -680,6 +680,7 @@ details.card .in { padding: 0 16px 16px; display: flex; flex-direction: column; 
 .tixqr span { color: #444; font-size: 15px; font-weight: 600; text-align: center; line-height: 1.4; }
 .tixfull { width: min(100%, 330px); border-radius: 14px; display: block; box-shadow: 0 2px 10px rgba(0,0,0,.12); }
 .tixnote { margin: 0; text-align: center; font-size: 14px; color: var(--muted); }
+.tixcard .pdfbtn { width: min(100%, 330px); flex: none; }
 /* 항공권: 사람마다 이름 버튼 · 보기 화면은 넓은 바코드 + 좌석 · 번호 */
 .tixwhohead { margin: 4px 0 0; font-size: 14px; font-weight: 700; color: var(--muted); }
 .tixwho { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
@@ -1895,6 +1896,35 @@ details.card .in { padding: 0 16px 16px; display: flex; flex-direction: column; 
     return `<div class="card"><p class="eyebrow">${esc(title)}</p>${list.map(t => `<div class="h2" style="font-size:18px">${esc(D.dates[t.day - 1])} ${ap(t.time)} → ${esc(t.dest)}</div>
       <div class="muted">${esc(t.when)}</div><div class="grid2" style="margin-top:10px"><button class="btn primary" data-taxiplan="${D.taxiplan.indexOf(t)}">프런트에 보여주기</button><button class="btn" data-copy="${esc(t.en)}">영어 문장 복사</button></div>`).join("")}</div>`;
   }
+  // 원본 PDF: f/<id>.bin을 받아 풀고 (한 번 받으면 폰에 보관) 공유 창 · 새 창으로 열기
+  const PDFS = {};
+  async function getPdf(id) {
+    if (PDFS[id]) return PDFS[id];
+    const k = window.__es26k; if (!k) throw new Error("nokey");
+    const r = await fetch(`f/${id}.bin`); if (!r.ok) throw new Error("http " + r.status);
+    const buf = new Uint8Array(await r.arrayBuffer());
+    const key = await crypto.subtle.importKey("raw", k, "AES-GCM", false, ["decrypt"]);
+    const pt = await crypto.subtle.decrypt({ name: "AES-GCM", iv: buf.slice(0, 12) }, key, buf.slice(12));
+    return PDFS[id] = new Blob([pt], { type: "application/pdf" });
+  }
+  async function openPdf(b) {
+    const id = b.dataset.pdf, name = b.dataset.pdfname || "ticket.pdf", fresh = !PDFS[id];
+    if (fresh) {
+      b.disabled = true; b.textContent = "PDF 받는 중…";
+      try { await getPdf(id); }
+      catch (e) { toast(navigator.onLine === false ? "처음 한 번은 인터넷이 필요해요" : "PDF를 열 수 없어요"); b.disabled = false; b.textContent = "📄 원본 PDF 열기"; return; }
+      b.disabled = false; b.textContent = "📄 원본 PDF 열기";
+    }
+    const file = new File([PDFS[id]], name, { type: "application/pdf" });
+    if (navigator.canShare && navigator.canShare({ files: [file] })) {
+      try { await navigator.share({ files: [file], title: name }); return; }
+      catch (e) { if (e.name === "AbortError") return; if (fresh) { toast("준비됐어요 · 한 번 더 누르면 열려요"); return; } }
+    }
+    const url = URL.createObjectURL(PDFS[id]), a = document.createElement("a");
+    a.href = url; a.target = "_blank"; a.rel = "noopener"; a.download = name;
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 60000);
+  }
   // 티켓 보기 (앱 안에 저장된 QR · 인터넷 없어도 바로)
   function openTix(key, start = 0) {
     const T = (D.tickets || {})[key] || []; if (!T.length) return;
@@ -1903,7 +1933,7 @@ details.card .in { padding: 0 16px 16px; display: flex; flex-direction: column; 
     const gate = (memo.find(x => /게이트/.test(x)) || "").replace(/ · \d+ 블록.*/, "");
     $("#tix").innerHTML = `<div class="tixtop"><div><b>${esc(w.title || "티켓")}</b><span>${ap(String(w.time || "").split(" · ")[0])}${gate ? " · " + esc(gate) : ""}</span></div><button class="btn close" data-close="tix">닫기</button></div>
       <div class="tixseg" style="--n:${T.length}">${T.map((t, i) => `<button data-tixgo="${i}" aria-pressed="${i === start}">${esc(t.chip || t.label)}</button>`).join("")}</div>
-      <div class="tixrail">${T.map((t, i) => `<div class="tixcard">${!t.qr
+      <div class="tixrail">${T.map((t, i) => `<div class="tixcard">${t.pdf ? `<button class="btn pdfbtn" data-pdf="${esc(t.pdf)}" data-pdfname="${esc(t.pdfname || "ticket.pdf")}">📄 원본 PDF 열기</button>` : ""}${!t.qr
         ? `<div class="tixqr bar"><b>${esc(t.label)}</b><span>${esc(t.sub || "")}</span>${t.bar ? `<img class="barimg" src="${t.bar}" alt="${esc(t.label)} 탑승권 바코드">` : ""}
             <div class="tixinfo">${(t.info || []).map(([k, v]) => `<div><small>${esc(k)}</small><b>${esc(v)}</b></div>`).join("")}</div></div>`
         : `<div class="tixqr"><img src="${t.qr}" alt="${esc(t.label)} 입장 QR"><b>${esc(t.label)}</b><span>${i + 1} / ${T.length}${gate ? " · " + esc(gate) : ""}</span></div>`}
@@ -2020,6 +2050,7 @@ details.card .in { padding: 0 16px 16px; display: flex; flex-direction: column; 
     else if (ds.taxicard) { if (rideCur) openTaxi(rideCur); }
     else if (ds.close) $("#" + ds.close).hidden = true;
     else if (ds.tix) openTix(ds.tix, +(ds.tixi || 0));
+    else if (ds.pdf) openPdf(b);
     else if (ds.tixgo !== undefined) { const r = $("#tix .tixrail"); if (r) r.scrollLeft = +ds.tixgo * r.clientWidth; }
     else if (ds.lang) { const es = b.closest(".say2").querySelector(".es2"); es.hidden = !es.hidden; b.setAttribute("aria-pressed", String(!es.hidden)); b.textContent = es.hidden ? "🇪🇸 스페인어" : "스페인어 숨기기"; }
     else if (ds.fx) { const e = $("#fx-eur"); if (e) { e.value = ds.fx; fxCalc("eur"); } }
@@ -2059,7 +2090,7 @@ details.card .in { padding: 0 16px 16px; display: flex; flex-direction: column; 
 </template>
 <script>
 (() => {
-  const KEY = "es26:key", BUILD = "0c35e959fc";
+  const KEY = "es26:key", BUILD = "571d0cecb7";
   const ub64 = s => Uint8Array.from(atob(s), c => c.charCodeAt(0));
   const tob64 = u => btoa(String.fromCharCode(...u));
   const get = k => { try { return localStorage.getItem(k); } catch (e) { return null; } };
@@ -2081,7 +2112,8 @@ details.card .in { padding: 0 16px 16px; display: flex; flex-direction: column; 
     const stream = new Blob([pt]).stream().pipeThrough(new DecompressionStream("gzip"));
     return await new Response(stream).text();
   }
-  function boot(json) {
+  function boot(json, k) {
+    window.__es26k = k;   // 원본 PDF(f/*.bin) 풀 때 앱이 씀 (메모리에만)
     document.getElementById("lock").hidden = true;
     const frag = document.getElementById("appshell").content.cloneNode(true);
     const scripts = [...frag.querySelectorAll("script")];
@@ -2103,7 +2135,7 @@ details.card .in { padding: 0 16px 16px; display: flex; flex-direction: column; 
       if (done !== enc.build) { try { sessionStorage.setItem("es26:reload", enc.build); } catch (e) {} location.replace(location.pathname + "?v=" + enc.build); return; }
     }
     const saved = get(KEY);
-    if (saved) { try { boot(await open(ub64(saved), enc)); return; } catch (e) { put(KEY, null); } }
+    if (saved) { try { boot(await open(ub64(saved), enc), ub64(saved)); return; } catch (e) { put(KEY, null); } }
     showLock("");
   }
   function showLock(msg) {
@@ -2120,7 +2152,7 @@ details.card .in { padding: 0 16px 16px; display: flex; flex-direction: column; 
       const raw = await derive(document.getElementById("pw").value.trim(), enc);
       const json = await open(raw, enc);
       if (document.getElementById("remember").checked) put(KEY, tob64(raw));
-      boot(json);
+      boot(json, raw);
     } catch (x) {
       err.textContent = "비밀번호가 맞지 않아요";
       btn.disabled = false; btn.textContent = "열기";
