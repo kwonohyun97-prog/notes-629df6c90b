@@ -680,6 +680,15 @@ details.card .in { padding: 0 16px 16px; display: flex; flex-direction: column; 
 .tixqr span { color: #444; font-size: 15px; font-weight: 600; text-align: center; line-height: 1.4; }
 .tixfull { width: min(100%, 330px); border-radius: 14px; display: block; box-shadow: 0 2px 10px rgba(0,0,0,.12); }
 .tixnote { margin: 0; text-align: center; font-size: 14px; color: var(--muted); }
+/* 항공권: 사람마다 이름 버튼 · 보기 화면은 넓은 바코드 + 좌석 · 번호 */
+.tixwhohead { margin: 4px 0 0; font-size: 14px; font-weight: 700; color: var(--muted); }
+.tixwho { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.tixwho .btn { justify-content: center; }
+.tixqr.bar { gap: 6px; padding: 16px 14px; }
+.tixqr.bar .barimg { width: 100%; max-width: 320px; aspect-ratio: auto; image-rendering: pixelated; margin: 6px 0 2px; }
+.tixinfo { width: 100%; display: grid; grid-template-columns: auto 1fr 1.4fr; gap: 6px; text-align: center; border-top: 1px solid #e5e7eb; padding-top: 10px; }
+.tixinfo small { display: block; font-size: 12px; color: #6b7280; }
+.tixinfo b { font-size: 15px !important; color: #111; letter-spacing: 0; font-variant-numeric: tabular-nums; }
 .overlay .wrap { max-width: 600px; width: 100%; margin: 0 auto; display: flex; flex-direction: column; gap: 12px; }
 .taxi .es { font-size: 22px; font-weight: 700; margin-top: 10px; }
 .taxi .big { font-size: 32px; font-weight: 700; line-height: 1.25; word-break: keep-all; }
@@ -1508,7 +1517,9 @@ details.card .in { padding: 0 16px 16px; display: flex; flex-direction: column; 
         ${w.code ? `<div class="code"><div><div class="lab">예약번호</div><div class="val">${esc(w.code)}</div></div><button class="btn" data-copy="${esc(w.code)}">복사</button></div>` : ""}
         ${(w.codes || []).map(([k, v]) => `<div class="code"><div><div class="lab">${esc(k)}</div><div class="val">${esc(v)}</div></div><button class="btn" data-copy="${esc(v)}">복사</button></div>`).join("")}
         ${w.memo ? `<div class="muted pre">${ap(w.memo)}</div>` : ""}
-        ${w.tix && ((D.tickets || {})[w.tix] || []).length ? `<button class="btn primary" data-tix="${esc(w.tix)}">${ico("ticket")} 티켓 보기 · QR ${D.tickets[w.tix].length}장</button>` : ""}
+        ${w.tix && ((D.tickets || {})[w.tix] || []).length ? (D.tickets[w.tix][0].bar
+          ? `<p class="tixwhohead">각자 자기 이름을 누르세요</p><div class="tixwho">${D.tickets[w.tix].map((t, i) => `<button class="btn${i === 0 ? "" : ""}" data-tix="${esc(w.tix)}" data-tixi="${i}">${ico("ticket")} ${esc(t.label)}</button>`).join("")}</div>`
+          : `<button class="btn primary" data-tix="${esc(w.tix)}">${ico("ticket")} 티켓 보기 · QR ${D.tickets[w.tix].length}장</button>`) : ""}
         ${(w.open || []).map(l => `<a class="btn primary" href="${esc(l.url)}" target="_blank" rel="noopener">${esc(l.label)}</a>`).join("")}
         ${!(w.open || []).length && !w.tix && w.status !== "미예약" ? `<div class="nolink">티켓 원본 링크 없음 · 메일·앱 링크를 알려주면 버튼이 생겨요</div>` : ""}
         ${w.links ? `<div class="links">${w.links.map(l => `<a href="${esc(l.url)}" target="_blank" rel="noopener">${esc(l.label)} →</a>`).join("")}</div>` : ""}
@@ -1892,12 +1903,16 @@ details.card .in { padding: 0 16px 16px; display: flex; flex-direction: column; 
     const gate = (memo.find(x => /게이트/.test(x)) || "").replace(/ · \d+ 블록.*/, "");
     $("#tix").innerHTML = `<div class="tixtop"><div><b>${esc(w.title || "티켓")}</b><span>${ap(String(w.time || "").split(" · ")[0])}${gate ? " · " + esc(gate) : ""}</span></div><button class="btn close" data-close="tix">닫기</button></div>
       <div class="tixseg" style="--n:${T.length}">${T.map((t, i) => `<button data-tixgo="${i}" aria-pressed="${i === start}">${esc(t.chip || t.label)}</button>`).join("")}</div>
-      <div class="tixrail">${T.map((t, i) => `<div class="tixcard"><div class="tixqr"><img src="${t.qr}" alt="${esc(t.label)} 입장 QR"><b>${esc(t.label)}</b><span>${i + 1} / ${T.length}${gate ? " · " + esc(gate) : ""}</span></div>
+      <div class="tixrail">${T.map((t, i) => `<div class="tixcard">${t.bar
+        ? `<div class="tixqr bar"><b>${esc(t.label)}</b><span>${esc(t.sub || "")}</span><img class="barimg" src="${t.bar}" alt="${esc(t.label)} 탑승권 바코드">
+            <div class="tixinfo">${(t.info || []).map(([k, v]) => `<div><small>${esc(k)}</small><b>${esc(v)}</b></div>`).join("")}</div></div>`
+        : `<div class="tixqr"><img src="${t.qr}" alt="${esc(t.label)} 입장 QR"><b>${esc(t.label)}</b><span>${i + 1} / ${T.length}${gate ? " · " + esc(gate) : ""}</span></div>`}
         ${t.img ? `<img class="tixfull" src="${t.img}" alt="${esc(t.label)} 티켓 원본">` : ""}</div>`).join("")}</div>
-      <p class="tixnote">입구 기계에 QR을 대세요 · 화면 밝기 최대 · 옆으로 넘기면 다음 사람</p>`;
+      <p class="tixnote">${esc(w.tixnote || "입구 기계에 QR을 대세요 · 화면 밝기 최대 · 옆으로 넘기면 다음 사람")}</p>`;
     $("#ride").hidden = true; $("#tix").hidden = false;
     const rail = $("#tix .tixrail");
     rail.scrollLeft = start * rail.clientWidth;
+    requestAnimationFrame(() => { rail.scrollLeft = start * rail.clientWidth; });   // 처음 그릴 때 폭이 늦게 잡히는 경우
     rail.onscroll = () => { const k = Math.round(rail.scrollLeft / rail.clientWidth); document.querySelectorAll("#tix [data-tixgo]").forEach((b, j) => b.setAttribute("aria-pressed", String(j === k))); };
     $("#tix .close").focus();
   }
@@ -2004,7 +2019,7 @@ details.card .in { padding: 0 16px 16px; display: flex; flex-direction: column; 
     else if (ds.ride) openRide(ds.ride);
     else if (ds.taxicard) { if (rideCur) openTaxi(rideCur); }
     else if (ds.close) $("#" + ds.close).hidden = true;
-    else if (ds.tix) openTix(ds.tix);
+    else if (ds.tix) openTix(ds.tix, +(ds.tixi || 0));
     else if (ds.tixgo !== undefined) { const r = $("#tix .tixrail"); if (r) r.scrollLeft = +ds.tixgo * r.clientWidth; }
     else if (ds.lang) { const es = b.closest(".say2").querySelector(".es2"); es.hidden = !es.hidden; b.setAttribute("aria-pressed", String(!es.hidden)); b.textContent = es.hidden ? "🇪🇸 스페인어" : "스페인어 숨기기"; }
     else if (ds.fx) { const e = $("#fx-eur"); if (e) { e.value = ds.fx; fxCalc("eur"); } }
@@ -2044,7 +2059,7 @@ details.card .in { padding: 0 16px 16px; display: flex; flex-direction: column; 
 </template>
 <script>
 (() => {
-  const KEY = "es26:key", BUILD = "91c05cf929";
+  const KEY = "es26:key", BUILD = "e03535a0d7";
   const ub64 = s => Uint8Array.from(atob(s), c => c.charCodeAt(0));
   const tob64 = u => btoa(String.fromCharCode(...u));
   const get = k => { try { return localStorage.getItem(k); } catch (e) { return null; } };
