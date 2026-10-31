@@ -681,6 +681,11 @@ details.card .in { padding: 0 16px 16px; display: flex; flex-direction: column; 
 .tixqr span { color: #444; font-size: 15px; font-weight: 600; text-align: center; line-height: 1.4; }
 .tixfull { width: min(100%, 330px); border-radius: 14px; display: block; box-shadow: 0 2px 10px rgba(0,0,0,.12); }
 .tixnote { margin: 0; text-align: center; font-size: 14px; color: var(--muted); }
+/* 일정 → 티켓 탭 카드 버튼 · 도착한 카드 잠깐 강조 */
+.ev .gow, .next .gow { margin-top: 8px; }
+.wcard.flash { animation: wflash 1.8s ease-out; }
+@keyframes wflash { 0%, 35% { box-shadow: 0 0 0 3px var(--accent); } 100% { box-shadow: 0 0 0 3px transparent; } }
+@media (prefers-reduced-motion: reduce) { .wcard.flash { animation: none; box-shadow: 0 0 0 3px var(--accent); } }
 .tixcard .pdfbtn { width: min(100%, 330px); flex: none; }
 /* 항공권: 사람마다 이름 버튼 · 보기 화면은 넓은 바코드 + 좌석 · 번호 */
 .tixwhohead { margin: 4px 0 0; font-size: 14px; font-weight: 700; color: var(--muted); }
@@ -1470,7 +1475,7 @@ details.card .in { padding: 0 16px 16px; display: flex; flex-direction: column; 
       ${cur ? `<div class="card nowcard"><div class="nowline"><span class="nowpill">지금</span><span class="evi sm" style="--cat:${CAT[cur.cat]}">${ico(evIco(cur))}</span><b>${esc(cur.title)}</b><span class="muted">${ap(String(cur.time).split("\n")[0])}</span></div></div>` : ""}
       ${next ? `<div class="card"><p class="eyebrow">${live ? "다음 일정" : "첫 일정"}</p>
         <div class="next"><div class="tline"><span class="t" style="color:${CAT[next.cat]}">${ap(String(next.time).split("\n")[0])}</span>${leftTxt ? `<span class="in">${leftTxt}</span>` : ""}</div>
-        <div class="ti">${esc(next.title)}</div>${next.note ? `<div class="no">${String(next.note).split("\n").filter(x => x.trim()).map(x => `<div>${ap(x)}</div>`).join("")}</div>` : ""}</div></div>` : (live ? `<div class="card"><p class="eyebrow">다음 일정</p><div class="h2">오늘 남은 일정이 없어요</div></div>` : "")}
+        <div class="ti">${esc(next.title)}</div>${next.note ? `<div class="no">${String(next.note).split("\n").filter(x => x.trim()).map(x => `<div>${ap(x)}</div>`).join("")}</div>` : ""}${next.w != null ? goBtn(next) : ""}</div></div>` : (live ? `<div class="card"><p class="eyebrow">다음 일정</p><div class="h2">오늘 남은 일정이 없어요</div></div>` : "")}
       ${!after && CITY_LL[wxCityOf(d)] ? `<div class="card wxcard" data-wxnow="${esc(wxCityOf(d))}" hidden></div>` : ""}
       ${stay ? `<div class="card"><p class="eyebrow">오늘 숙소</p><div class="h2">${esc(stay.name)}</div>
         <div class="muted">${esc(stay.area)}</div><div class="addr" style="margin-top:6px">${esc(stay.addr)}</div>
@@ -1518,7 +1523,7 @@ details.card .in { padding: 0 16px 16px; display: flex; flex-direction: column; 
           <div class="optbody"${optOpen === ok ? "" : " hidden"}>${noteHtml}<div class="optseg" role="group" aria-label="갈지 고르기">
             <button data-optset="${ok}:go" aria-pressed="${oc === "go"}">갈래요</button><button data-optset="${ok}:skip" aria-pressed="${oc === "skip"}">건너뛸래요</button></div></div>` : noteHtml}
         ${e.place ? `<div class="pl">${esc(e.place)}</div>` : ""}
-        ${e.ticket ? `<div class="tk"><span class="pill">${esc(e.ticket)}</span></div>` : ""}
+        ${e.w != null ? goBtn(e) : e.ticket ? `<div class="tk"><span class="pill">${esc(e.ticket)}</span></div>` : ""}
         ${m ? `<button class="btn go" data-meal="${m.key}">${cnt ? `식당 후보 ${cnt}곳 보기` : "식당 찾아보기"}</button>` : ""}
       </div></div>`;
     }).join("");
@@ -1536,6 +1541,17 @@ details.card .in { padding: 0 16px 16px; display: flex; flex-direction: column; 
 
   /* ---------- 티켓 ---------- */
   let walletDay = null;
+  // 일정 → 티켓 탭의 그 카드 (예약번호 · 티켓 · 원본은 거기서)
+  const goBtn = e => { const w = D.wallet[e.w]; return w ? `<button class="btn go gow" data-gow="${w.id}">${ico(w.tix ? "ticket" : kindIco(w.kind))} ${w.tix ? "티켓 보기" : "예약 보기"}</button>` : ""; };
+  function goWallet(id) {
+    const w = D.wallet[id]; if (!w) return;
+    walletDay = w.day; picked.wallet = Date.now();
+    if ($("#v-wallet").hidden) show("wallet"); else renderWallet();
+    requestAnimationFrame(() => {
+      const c = $(`#v-wallet .wcard[data-wid="${id}"]`); if (!c) return;
+      reveal(c, false); c.classList.remove("flash"); void c.offsetWidth; c.classList.add("flash");
+    });
+  }
   function renderWallet() {
     const days = [...new Set(D.wallet.map(w => w.day))].sort((a, b) => a - b);
     if (!days.includes(walletDay)) { const { idx } = tripDay(); walletDay = days.find(d => d >= idx) || days[0]; }
@@ -1549,7 +1565,7 @@ details.card .in { padding: 0 16px 16px; display: flex; flex-direction: column; 
       <div class="dayhead"><div><div class="date">${esc(D.dates[d - 1])}</div><div class="muted">${esc(cityOf(d))} · 티켓 · 예약 ${list.length}개</div></div>
         <span class="pill" style="background:${colorOf(d)};color:#fff">Day ${d}</span></div>
       <p class="note">파란 버튼을 누르면 예약 앱이나 티켓 원본이 열려요. 아직 버튼이 없는 티켓은 링크를 알려주면 연결할게요.</p>
-      ${list.map(w => `<div class="card wcard">
+      ${list.map(w => `<div class="card wcard" data-wid="${w.id}">
         <div class="head"><span class="kind">${ico(kindIco(w.kind))}${esc(w.kind)}</span>${statusPill(w.status)}</div>
         <div class="ti">${esc(w.title)}</div><div class="muted">${ap(w.time)}</div>
         ${w.who ? `<div class="who">가지고 있는 사람 · <b>${esc(w.who)}</b></div>` : ""}
@@ -2088,6 +2104,7 @@ details.card .in { padding: 0 16px 16px; display: flex; flex-direction: column; 
     else if (ds.taxicard) { if (rideCur) openTaxi(rideCur); }
     else if (ds.close) $("#" + ds.close).hidden = true;
     else if (ds.tix) openTix(ds.tix, +(ds.tixi || 0));
+    else if (ds.gow) goWallet(+ds.gow);
     else if (ds.pdf) openPdf(b);
     else if (ds.tixgo !== undefined) { const r = $("#tix .tixrail"); if (r) r.scrollLeft = +ds.tixgo * r.clientWidth; }
     else if (ds.lang) { const es = b.closest(".say2").querySelector(".es2"); es.hidden = !es.hidden; b.setAttribute("aria-pressed", String(!es.hidden)); b.textContent = es.hidden ? "🇪🇸 스페인어" : "스페인어 숨기기"; }
@@ -2128,7 +2145,7 @@ details.card .in { padding: 0 16px 16px; display: flex; flex-direction: column; 
 </template>
 <script>
 (() => {
-  const KEY = "es26:key", BUILD = "cd7c545ae9";
+  const KEY = "es26:key", BUILD = "bd1f6e3529";
   const ub64 = s => Uint8Array.from(atob(s), c => c.charCodeAt(0));
   const tob64 = u => btoa(String.fromCharCode(...u));
   const get = k => { try { return localStorage.getItem(k); } catch (e) { return null; } };
