@@ -682,7 +682,8 @@ details.card .in { padding: 0 16px 16px; display: flex; flex-direction: column; 
 .tixfull { width: min(100%, 330px); border-radius: 14px; display: block; box-shadow: 0 2px 10px rgba(0,0,0,.12); }
 .tixnote { margin: 0; text-align: center; font-size: 14px; color: var(--muted); }
 /* 일정 → 티켓 탭 카드 버튼 · 도착한 카드 잠깐 강조 */
-.ev .gow, .next .gow { margin-top: 8px; }
+.evbtns { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
+.evbtns .btn { margin: 0; }
 .wcard.flash { animation: wflash 1.8s ease-out; }
 @keyframes wflash { 0%, 35% { box-shadow: 0 0 0 3px var(--accent); } 100% { box-shadow: 0 0 0 3px transparent; } }
 @media (prefers-reduced-motion: reduce) { .wcard.flash { animation: none; box-shadow: 0 0 0 3px var(--accent); } }
@@ -1475,7 +1476,7 @@ details.card .in { padding: 0 16px 16px; display: flex; flex-direction: column; 
       ${cur ? `<div class="card nowcard"><div class="nowline"><span class="nowpill">지금</span><span class="evi sm" style="--cat:${CAT[cur.cat]}">${ico(evIco(cur))}</span><b>${esc(cur.title)}</b><span class="muted">${ap(String(cur.time).split("\n")[0])}</span></div></div>` : ""}
       ${next ? `<div class="card"><p class="eyebrow">${live ? "다음 일정" : "첫 일정"}</p>
         <div class="next"><div class="tline"><span class="t" style="color:${CAT[next.cat]}">${ap(String(next.time).split("\n")[0])}</span>${leftTxt ? `<span class="in">${leftTxt}</span>` : ""}</div>
-        <div class="ti">${esc(next.title)}</div>${next.note ? `<div class="no">${String(next.note).split("\n").filter(x => x.trim()).map(x => `<div>${ap(x)}</div>`).join("")}</div>` : ""}${next.w != null ? goBtn(next) : ""}</div></div>` : (live ? `<div class="card"><p class="eyebrow">다음 일정</p><div class="h2">오늘 남은 일정이 없어요</div></div>` : "")}
+        <div class="ti">${esc(next.title)}</div>${next.note ? `<div class="no">${String(next.note).split("\n").filter(x => x.trim()).map(x => `<div>${ap(x)}</div>`).join("")}</div>` : ""}${evBtns(next)}</div></div>` : (live ? `<div class="card"><p class="eyebrow">다음 일정</p><div class="h2">오늘 남은 일정이 없어요</div></div>` : "")}
       ${!after && CITY_LL[wxCityOf(d)] ? `<div class="card wxcard" data-wxnow="${esc(wxCityOf(d))}" hidden></div>` : ""}
       ${stay ? `<div class="card"><p class="eyebrow">오늘 숙소</p><div class="h2">${esc(stay.name)}</div>
         <div class="muted">${esc(stay.area)}</div><div class="addr" style="margin-top:6px">${esc(stay.addr)}</div>
@@ -1523,8 +1524,8 @@ details.card .in { padding: 0 16px 16px; display: flex; flex-direction: column; 
           <div class="optbody"${optOpen === ok ? "" : " hidden"}>${noteHtml}<div class="optseg" role="group" aria-label="갈지 고르기">
             <button data-optset="${ok}:go" aria-pressed="${oc === "go"}">갈래요</button><button data-optset="${ok}:skip" aria-pressed="${oc === "skip"}">건너뛸래요</button></div></div>` : noteHtml}
         ${e.place ? `<div class="pl">${esc(e.place)}</div>` : ""}
-        ${e.w != null ? goBtn(e) : e.ticket ? `<div class="tk"><span class="pill">${esc(e.ticket)}</span></div>` : ""}
-        ${m ? `<button class="btn go" data-meal="${m.key}">${cnt ? `식당 후보 ${cnt}곳 보기` : "식당 찾아보기"}</button>` : ""}
+        ${e.w == null && e.ticket ? `<div class="tk"><span class="pill">${esc(e.ticket)}</span></div>` : ""}
+        ${evBtns(e, m, cnt)}
       </div></div>`;
     }).join("");
     paint($("#v-plan"), `<div class="days" role="group" aria-label="날짜">${chips}</div>`, `
@@ -1543,6 +1544,15 @@ details.card .in { padding: 0 16px 16px; display: flex; flex-direction: column; 
   let walletDay = null;
   // 일정 → 티켓 탭의 그 카드 (예약번호 · 티켓 · 원본은 거기서)
   const goBtn = e => { const w = D.wallet[e.w]; return w ? `<button class="btn go gow" data-gow="${w.id}">${ico(w.tix ? "ticket" : kindIco(w.kind))} ${w.tix ? "티켓 보기" : "예약 보기"}</button>` : ""; };
+  // 일정 칸 아래 버튼 줄: 티켓 · 프런트에 택시 부탁 · 택시/우버 · 식당 후보
+  const evBtns = (e, m, cnt) => {
+    const b = [];
+    if (e.w != null) b.push(goBtn(e));
+    if (e.tp != null && D.taxiplan[e.tp]) b.push(`<button class="btn go" data-taxiplan="${e.tp}">${ico("bed")} 프런트에 택시 부탁</button>`);
+    if (e.ride) b.push(`<button class="btn go" data-ride="${esc(e.ride)}">${ico("car")} 택시 · 우버</button>`);
+    if (m) b.push(`<button class="btn go" data-meal="${m.key}">${cnt ? `식당 후보 ${cnt}곳 보기` : "식당 찾아보기"}</button>`);
+    return b.length ? `<div class="evbtns">${b.join("")}</div>` : "";
+  };
   function goWallet(id) {
     const w = D.wallet[id]; if (!w) return;
     walletDay = w.day; picked.wallet = Date.now();
@@ -2145,7 +2155,7 @@ details.card .in { padding: 0 16px 16px; display: flex; flex-direction: column; 
 </template>
 <script>
 (() => {
-  const KEY = "es26:key", BUILD = "bd1f6e3529";
+  const KEY = "es26:key", BUILD = "eb8003a6a3";
   const ub64 = s => Uint8Array.from(atob(s), c => c.charCodeAt(0));
   const tob64 = u => btoa(String.fromCharCode(...u));
   const get = k => { try { return localStorage.getItem(k); } catch (e) { return null; } };
