@@ -682,6 +682,12 @@ details.card .in { padding: 0 16px 16px; display: flex; flex-direction: column; 
 .tixfull { width: min(100%, 330px); border-radius: 14px; display: block; box-shadow: 0 2px 10px rgba(0,0,0,.12); }
 .tixnote { margin: 0; text-align: center; font-size: 14px; color: var(--muted); }
 /* 일정 → 티켓 탭 카드 버튼 · 도착한 카드 잠깐 강조 */
+.place .orderbtn { width: 100%; justify-content: center; margin-top: 10px; }
+.orderlist { margin: 0; padding: 0 0 0 22px; display: grid; gap: 10px; }
+.orderlist li { font-size: 18px; line-height: 1.35; }
+.orderlist li b { display: block; font-size: 21px; }
+.orderlist li span { color: var(--muted); font-size: 15px; }
+.orderlist li em { font-style: normal; font-weight: 700; margin-left: 8px; font-size: 15px; font-variant-numeric: tabular-nums; }
 .evbtns { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
 .evbtns .btn { margin: 0; }
 .wcard.flash { animation: wflash 1.8s ease-out; }
@@ -1642,6 +1648,7 @@ details.card .in { padding: 0 16px 16px; display: flex; flex-direction: column; 
           <a class="btn" href="${gImg(nm + " " + city + " comida")}" target="_blank" rel="noopener">음식 사진</a>
           <a class="btn" href="${gImg(nm + " " + city + " carta menú")}" target="_blank" rel="noopener">메뉴판 사진</a>
         </div>
+        ${p.order ? `<button class="btn go orderbtn" data-order="${i}">${ico("fork")} 주문 목록 · 직원에게 보여주기</button>` : ""}
         <details class="moreinfo"><summary></summary>
         <dl class="kv">
           <dt>위치</dt><dd>${esc(loc)}</dd>
@@ -2010,6 +2017,19 @@ details.card .in { padding: 0 16px 16px; display: flex; flex-direction: column; 
     rail.onscroll = () => { const k = Math.round(rail.scrollLeft / rail.clientWidth); document.querySelectorAll("#tix [data-tixgo]").forEach((b, j) => b.setAttribute("aria-pressed", String(j === k))); };
     $("#tix .close").focus();
   }
+  // 식당 '주문 목록': 스페인어를 크게 → 직원에게 그대로 보여주기
+  function openOrder(i) {
+    const m = mealByKey[mealKey], p = m && m.places[i]; if (!p || !p.order) return;
+    const [nm] = String(p.name).split("\n");
+    const tot = p.order.reduce((s, o) => s + parseFloat(String(o[2]).replace(",", ".")), 0);
+    $("#ride").hidden = true;
+    $("#taxi").innerHTML = `<div class="wrap"><button class="btn close" data-close="taxi">닫기</button>
+      <p class="eyebrow">${esc(nm)} · 직원에게 보여주세요</p>
+      ${p.say ? `<div class="say2 big2"><div class="en">${esc(p.say[1])}</div><div class="ko2">${esc(p.say[2])}</div></div>` : ""}
+      <ol class="orderlist">${p.order.map(o => `<li><b>${esc(o[0])}</b><span>${esc(o[1])}</span><em>€${esc(o[2])}</em></li>`).join("")}</ol>
+      <p class="note" style="margin:0">합계 약 €${tot.toFixed(0)} (빵 · 음료 별도) · 붉은 새우 · 랑구스틴 · 랍스터는 시가라 가격을 먼저 물어보세요</p></div>`;
+    $("#taxi").hidden = false; $("#taxi .close").focus();
+  }
   function openTaxiPlan(i) {
     const t = D.taxiplan[i]; if (!t) return;
     $("#ride").hidden = true;
@@ -2115,6 +2135,7 @@ details.card .in { padding: 0 16px 16px; display: flex; flex-direction: column; 
     else if (ds.close) $("#" + ds.close).hidden = true;
     else if (ds.tix) openTix(ds.tix, +(ds.tixi || 0));
     else if (ds.gow) goWallet(+ds.gow);
+    else if (ds.order !== undefined) openOrder(+ds.order);
     else if (ds.pdf) openPdf(b);
     else if (ds.tixgo !== undefined) { const r = $("#tix .tixrail"); if (r) r.scrollLeft = +ds.tixgo * r.clientWidth; }
     else if (ds.lang) { const es = b.closest(".say2").querySelector(".es2"); es.hidden = !es.hidden; b.setAttribute("aria-pressed", String(!es.hidden)); b.textContent = es.hidden ? "🇪🇸 스페인어" : "스페인어 숨기기"; }
@@ -2155,7 +2176,7 @@ details.card .in { padding: 0 16px 16px; display: flex; flex-direction: column; 
 </template>
 <script>
 (() => {
-  const KEY = "es26:key", BUILD = "3d3ff443bf";
+  const KEY = "es26:key", BUILD = "fe7ff70e72";
   const ub64 = s => Uint8Array.from(atob(s), c => c.charCodeAt(0));
   const tob64 = u => btoa(String.fromCharCode(...u));
   const get = k => { try { return localStorage.getItem(k); } catch (e) { return null; } };
