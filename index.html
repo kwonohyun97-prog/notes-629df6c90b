@@ -1371,7 +1371,7 @@ details.card .in { padding: 0 16px 16px; display: flex; flex-direction: column; 
 
   function dayMaps(d, withList) {
     const S = SC.days[String(d)];
-    if (!S) return d === 10 ? `<div class="card"><div class="h2">인천 도착</div><p class="muted">수고 많으셨어요. 집까지 조심히 오세요.</p></div>` : "";
+    if (!S) return d === 10 ? `<div class="card"><div class="h2">인천 도착</div><p class="muted">11/10 (화) 17:00 (한국 시각) · 인천공항 2터미널 · 아시아나 OZ512<br>수고 많으셨어요. 집까지 조심히 오세요.</p></div>` : "";
     const city = S.title || (cityOf(d) === "귀국" ? "바르셀로나" : cityOf(d));
     let list = "";
     if (withList) {
@@ -1517,7 +1517,7 @@ details.card .in { padding: 0 16px 16px; display: flex; flex-direction: column; 
         ${w.code ? `<div class="code"><div><div class="lab">예약번호</div><div class="val">${esc(w.code)}</div></div><button class="btn" data-copy="${esc(w.code)}">복사</button></div>` : ""}
         ${(w.codes || []).map(([k, v]) => `<div class="code"><div><div class="lab">${esc(k)}</div><div class="val">${esc(v)}</div></div><button class="btn" data-copy="${esc(v)}">복사</button></div>`).join("")}
         ${w.memo ? `<div class="muted pre">${ap(w.memo)}</div>` : ""}
-        ${w.tix && ((D.tickets || {})[w.tix] || []).length ? (D.tickets[w.tix][0].bar
+        ${w.tix && ((D.tickets || {})[w.tix] || []).length ? (!D.tickets[w.tix][0].qr
           ? `<p class="tixwhohead">각자 자기 이름을 누르세요</p><div class="tixwho">${D.tickets[w.tix].map((t, i) => `<button class="btn${i === 0 ? "" : ""}" data-tix="${esc(w.tix)}" data-tixi="${i}">${ico("ticket")} ${esc(t.label)}</button>`).join("")}</div>`
           : `<button class="btn primary" data-tix="${esc(w.tix)}">${ico("ticket")} 티켓 보기 · QR ${D.tickets[w.tix].length}장</button>`) : ""}
         ${(w.open || []).map(l => `<a class="btn primary" href="${esc(l.url)}" target="_blank" rel="noopener">${esc(l.label)}</a>`).join("")}
@@ -1903,8 +1903,8 @@ details.card .in { padding: 0 16px 16px; display: flex; flex-direction: column; 
     const gate = (memo.find(x => /게이트/.test(x)) || "").replace(/ · \d+ 블록.*/, "");
     $("#tix").innerHTML = `<div class="tixtop"><div><b>${esc(w.title || "티켓")}</b><span>${ap(String(w.time || "").split(" · ")[0])}${gate ? " · " + esc(gate) : ""}</span></div><button class="btn close" data-close="tix">닫기</button></div>
       <div class="tixseg" style="--n:${T.length}">${T.map((t, i) => `<button data-tixgo="${i}" aria-pressed="${i === start}">${esc(t.chip || t.label)}</button>`).join("")}</div>
-      <div class="tixrail">${T.map((t, i) => `<div class="tixcard">${t.bar
-        ? `<div class="tixqr bar"><b>${esc(t.label)}</b><span>${esc(t.sub || "")}</span><img class="barimg" src="${t.bar}" alt="${esc(t.label)} 탑승권 바코드">
+      <div class="tixrail">${T.map((t, i) => `<div class="tixcard">${!t.qr
+        ? `<div class="tixqr bar"><b>${esc(t.label)}</b><span>${esc(t.sub || "")}</span>${t.bar ? `<img class="barimg" src="${t.bar}" alt="${esc(t.label)} 탑승권 바코드">` : ""}
             <div class="tixinfo">${(t.info || []).map(([k, v]) => `<div><small>${esc(k)}</small><b>${esc(v)}</b></div>`).join("")}</div></div>`
         : `<div class="tixqr"><img src="${t.qr}" alt="${esc(t.label)} 입장 QR"><b>${esc(t.label)}</b><span>${i + 1} / ${T.length}${gate ? " · " + esc(gate) : ""}</span></div>`}
         ${t.img ? `<img class="tixfull" src="${t.img}" alt="${esc(t.label)} 티켓 원본">` : ""}</div>`).join("")}</div>
@@ -2059,7 +2059,7 @@ details.card .in { padding: 0 16px 16px; display: flex; flex-direction: column; 
 </template>
 <script>
 (() => {
-  const KEY = "es26:key", BUILD = "e03535a0d7";
+  const KEY = "es26:key", BUILD = "0c35e959fc";
   const ub64 = s => Uint8Array.from(atob(s), c => c.charCodeAt(0));
   const tob64 = u => btoa(String.fromCharCode(...u));
   const get = k => { try { return localStorage.getItem(k); } catch (e) { return null; } };
