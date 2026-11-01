@@ -1556,6 +1556,7 @@ details.card .in { padding: 0 16px 16px; display: flex; flex-direction: column; 
     if (e.w != null) b.push(goBtn(e));
     if (e.tp != null && D.taxiplan[e.tp]) b.push(`<button class="btn go" data-taxiplan="${e.tp}">${ico("bed")} 프런트에 택시 부탁</button>`);
     if (e.ride) b.push(`<button class="btn go" data-ride="${esc(e.ride)}">${ico("car")} 택시 · 우버</button>`);
+    if (e.say) b.push(`<button class="btn go" data-say="${e.day}:${e.start}">${ico("car")} 기사에게 보여주기</button>`);
     if (m) b.push(`<button class="btn go" data-meal="${m.key}">${cnt ? `식당 후보 ${cnt}곳 보기` : "식당 찾아보기"}</button>`);
     return b.length ? `<div class="evbtns">${b.join("")}</div>` : "";
   };
@@ -2018,6 +2019,15 @@ details.card .in { padding: 0 16px 16px; display: flex; flex-direction: column; 
     $("#tix .close").focus();
   }
   // 식당 '주문 목록': 스페인어를 크게 → 직원에게 그대로 보여주기
+  // 일정의 '기사에게 보여주기': 스페인어를 크게
+  function openSay(key) {
+    const [d, st] = key.split(":").map(Number), e = D.events.find(x => x.day === d && x.start === st); if (!e || !e.say) return;
+    $("#ride").hidden = true;
+    $("#taxi").innerHTML = `<div class="wrap"><button class="btn close" data-close="taxi">닫기</button>
+      <p class="eyebrow">택시 기사에게 보여주세요</p>
+      <div class="say2 big2"><div class="en">${esc(e.say[0])}</div><div class="ko2">${esc(e.say[1])}</div></div></div>`;
+    $("#taxi").hidden = false; $("#taxi .close").focus();
+  }
   function openOrder(i) {
     const m = mealByKey[mealKey], p = m && m.places[i]; if (!p || !p.order) return;
     const [nm] = String(p.name).split("\n");
@@ -2136,6 +2146,7 @@ details.card .in { padding: 0 16px 16px; display: flex; flex-direction: column; 
     else if (ds.tix) openTix(ds.tix, +(ds.tixi || 0));
     else if (ds.gow) goWallet(+ds.gow);
     else if (ds.order !== undefined) openOrder(+ds.order);
+    else if (ds.say) openSay(ds.say);
     else if (ds.pdf) openPdf(b);
     else if (ds.tixgo !== undefined) { const r = $("#tix .tixrail"); if (r) r.scrollLeft = +ds.tixgo * r.clientWidth; }
     else if (ds.lang) { const es = b.closest(".say2").querySelector(".es2"); es.hidden = !es.hidden; b.setAttribute("aria-pressed", String(!es.hidden)); b.textContent = es.hidden ? "🇪🇸 스페인어" : "스페인어 숨기기"; }
@@ -2176,7 +2187,7 @@ details.card .in { padding: 0 16px 16px; display: flex; flex-direction: column; 
 </template>
 <script>
 (() => {
-  const KEY = "es26:key", BUILD = "fe7ff70e72";
+  const KEY = "es26:key", BUILD = "f127db9bc6";
   const ub64 = s => Uint8Array.from(atob(s), c => c.charCodeAt(0));
   const tob64 = u => btoa(String.fromCharCode(...u));
   const get = k => { try { return localStorage.getItem(k); } catch (e) { return null; } };
