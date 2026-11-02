@@ -685,8 +685,8 @@ details.card .in { padding: 0 16px 16px; display: flex; flex-direction: column; 
 .place .orderbtn { width: 100%; justify-content: center; margin-top: 10px; }
 .orderlist { margin: 0; padding: 0 0 0 22px; display: grid; gap: 10px; }
 .orderlist li { font-size: 18px; line-height: 1.35; }
-.orderlist li b { display: block; font-size: 21px; }
-.orderlist li span { color: var(--muted); font-size: 15px; }
+.orderlist li b { font-size: 20px; }
+.orderlist li span { font-size: 17px; }
 .orderlist li em { font-style: normal; font-weight: 700; margin-left: 8px; font-size: 15px; font-variant-numeric: tabular-nums; }
 .evbtns { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
 .evbtns .btn { margin: 0; }
@@ -1649,7 +1649,7 @@ details.card .in { padding: 0 16px 16px; display: flex; flex-direction: column; 
           <a class="btn" href="${gImg(nm + " " + city + " comida")}" target="_blank" rel="noopener">음식 사진</a>
           <a class="btn" href="${gImg(nm + " " + city + " carta menú")}" target="_blank" rel="noopener">메뉴판 사진</a>
         </div>
-        ${p.order ? `<button class="btn go orderbtn" data-order="${i}">${ico("fork")} 주문 목록 · 직원에게 보여주기</button>` : ""}
+        ${p.order ? `<button class="btn go orderbtn" data-order="${i}">${ico("fork")} 추천 메뉴 · 주문할 때 보여주기</button>` : ""}
         <details class="moreinfo"><summary></summary>
         <dl class="kv">
           <dt>위치</dt><dd>${esc(loc)}</dd>
@@ -2036,8 +2036,8 @@ details.card .in { padding: 0 16px 16px; display: flex; flex-direction: column; 
     $("#taxi").innerHTML = `<div class="wrap"><button class="btn close" data-close="taxi">닫기</button>
       <p class="eyebrow">${esc(nm)} · 직원에게 보여주세요</p>
       ${p.say ? `<div class="say2 big2"><div class="en">${esc(p.say[1])}</div><div class="ko2">${esc(p.say[2])}</div></div>` : ""}
-      <ol class="orderlist">${p.order.map(o => `<li><b>${esc(o[0])}</b><span>${esc(o[1])}</span><em>€${esc(o[2])}</em></li>`).join("")}</ol>
-      <p class="note" style="margin:0">합계 약 €${tot.toFixed(0)} (빵 · 음료 별도) · 붉은 새우 · 랑구스틴 · 랍스터는 시가라 가격을 먼저 물어보세요</p></div>`;
+      <ol class="orderlist">${p.order.map(o => `<li><b>${esc(o[1])}</b> <span>(${esc(o[0])})</span> <em>€${esc(o[2])}</em></li>`).join("")}</ol>
+      <p class="note" style="margin:0;white-space:pre-line">합계 약 €${tot.toFixed(0)} (음료 별도)${p.orderNote ? "\n" + esc(p.orderNote) : ""}</p></div>`;
     $("#taxi").hidden = false; $("#taxi .close").focus();
   }
   function openTaxiPlan(i) {
@@ -2187,7 +2187,7 @@ details.card .in { padding: 0 16px 16px; display: flex; flex-direction: column; 
 </template>
 <script>
 (() => {
-  const KEY = "es26:key", BUILD = "b9b689ca9a";
+  const KEY = "es26:key", BUILD = "b6c77baccf";
   const ub64 = s => Uint8Array.from(atob(s), c => c.charCodeAt(0));
   const tob64 = u => btoa(String.fromCharCode(...u));
   const get = k => { try { return localStorage.getItem(k); } catch (e) { return null; } };
